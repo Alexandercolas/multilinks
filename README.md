@@ -9,6 +9,6 @@ npm install
 npm run dev
 ```
 
-Abre `http://localhost:3000`. Perfil demo: `http://localhost:3000/alex`.
+Abre `http://localhost:3000`. Perfil demo: `http://localhost:3000/demo`.
 
-El dashboard persiste la edición demo en el navegador. El esquema Prisma deja preparada la persistencia real para la siguiente fase.
+El dashboard guarda el perfil en el navegador y lo refleja en su ruta pública dentro del mismo dispositivo. El esquema Prisma deja preparada la persistencia multiusuario real para la siguiente fase.

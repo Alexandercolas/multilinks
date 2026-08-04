@@ -1,15 +1,15 @@
 import type { Profile } from "@/types/profile";
 
 export const demoProfile: Profile = {
-  username: "alex",
+  username: "demo",
   displayName: "Perfil Demo",
   bio: "Contenido, proyectos y enlaces importantes en un solo lugar.",
   avatar: "ML",
   theme: "lime",
   links: [
-    { id: "1", title: "Mi portafolio", url: "https://example.com", active: true },
-    { id: "2", title: "Instagram", url: "https://instagram.com", active: true },
-    { id: "3", title: "Mi comunidad", url: "https://example.com/community", active: true }
+    { id: "1", title: "Crear mi página", url: "/dashboard", active: true },
+    { id: "2", title: "Ver cómo funciona", url: "/", active: true },
+    { id: "3", title: "Perfil de demostración", url: "/demo", active: true }
   ]
 };
 

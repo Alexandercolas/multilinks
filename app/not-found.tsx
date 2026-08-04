@@ -1,0 +1,2 @@
+import Link from "next/link";
+export default function NotFound() { return <main className="flex min-h-screen flex-col items-center justify-center px-6 text-center"><span className="text-7xl font-black">404</span><h1 className="mt-4 text-3xl font-black">Este MultiLink no existe todavía.</h1><p className="mt-3 text-black/60">Puedes ser la primera persona en reclamarlo.</p><Link href="/dashboard" className="mt-7 rounded-full bg-ink px-6 py-3 font-bold text-white">Crear mi MultiLink</Link></main>; }

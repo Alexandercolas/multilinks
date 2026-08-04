@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  profile   Profile?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Profile {
+  id          String   @id @default(cuid())
+  username    String   @unique
+  displayName String
+  bio         String   @default("")
+  avatarUrl   String?
+  theme       String   @default("lime")
+  published   Boolean  @default(true)
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  links       Link[]
+}
+
+model Link {
+  id        String   @id @default(cuid())
+  title     String
+  url       String
+  active    Boolean  @default(true)
+  position  Int      @default(0)
+  clicks    Int      @default(0)
+  profileId String
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}

@@ -6,6 +6,9 @@ export const demoProfile: Profile = {
   bio: "Contenido, proyectos y enlaces importantes en un solo lugar.",
   avatar: "ML",
   theme: "lime",
+  backgroundColor: "#c9ff58",
+  accentColor: "#8566ff",
+  buttonStyle: "rounded",
   links: [
     { id: "1", title: "Crear mi página", url: "/dashboard", active: true },
     { id: "2", title: "Ver cómo funciona", url: "/", active: true },

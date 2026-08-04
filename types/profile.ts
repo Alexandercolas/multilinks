@@ -10,6 +10,10 @@ export type Profile = {
   displayName: string;
   bio: string;
   avatar: string;
+  avatarImage?: string;
   theme: "lime" | "violet" | "sunset";
+  backgroundColor?: string;
+  accentColor?: string;
+  buttonStyle?: "rounded" | "pill" | "square";
   links: LinkItem[];
 };

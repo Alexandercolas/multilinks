@@ -42,7 +42,7 @@ export default function SignInPage() {
     setMessage("");
     const { error } = await createClient().auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback`, shouldCreateUser: false },
     });
     setMessage(error ? "No pudimos enviar el enlace. Inténtalo nuevamente." : "Te enviamos un enlace seguro para entrar sin contraseña.");
     setLoading(false);

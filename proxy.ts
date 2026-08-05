@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { supabaseAnonKey, supabaseUrl } from "@/lib/supabase/env";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
@@ -14,7 +14,6 @@ export async function middleware(request: NextRequest) {
       },
     },
   });
-
   const { data: { user } } = await supabase.auth.getUser();
   if ((request.nextUrl.pathname.startsWith("/dashboard") || request.nextUrl.pathname.startsWith("/admin")) && !user) {
     const url = request.nextUrl.clone();
@@ -31,6 +30,4 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
-export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
-};
+export const config = { matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"] };

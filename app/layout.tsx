@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   keywords: ["multilinks", "enlaces en bio", "link en bio", "página de enlaces", "redes sociales"],
   authors: [{ name: "MultiLinks" }],
   creator: "MultiLinks",
+  verification: {
+    google: "fLPfuWtVQLcRkpuNcEx9b_o5Ttno6uADEzXjisX6Lds",
+  },
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",

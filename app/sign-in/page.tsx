@@ -36,6 +36,18 @@ export default function SignInPage() {
     setLoading(false);
   }
 
+  async function sendMagicLink() {
+    if (!email || !email.includes("@")) { setMessage("Escribe primero tu correo electrónico."); return; }
+    setLoading(true);
+    setMessage("");
+    const { error } = await createClient().auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    });
+    setMessage(error ? "No pudimos enviar el enlace. Inténtalo nuevamente." : "Te enviamos un enlace seguro para entrar sin contraseña.");
+    setLoading(false);
+  }
+
   return <main className="grid min-h-screen place-items-center bg-[#8566ff] px-5 py-12">
     <section className="w-full max-w-md rounded-[32px] border-2 border-ink bg-cream p-7 shadow-[10px_10px_0_#c9ff58] sm:p-9">
       <Logo/>
@@ -46,6 +58,7 @@ export default function SignInPage() {
         <label className="block text-sm font-bold">Contraseña<input type="password" required minLength={8} autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} onChange={e => setPassword(e.target.value)} className="mt-2 w-full rounded-xl border border-black/15 bg-white px-4 py-3 font-normal outline-none focus:border-[#7055e8]"/></label>
         {message ? <p className="rounded-xl bg-black/5 px-4 py-3 text-sm font-semibold">{message}</p> : null}
         <button disabled={loading} className="w-full rounded-full bg-ink px-5 py-3.5 font-bold text-white disabled:opacity-50">{loading ? "Procesando…" : mode === "login" ? "Entrar" : "Crear cuenta"}</button>
+        {mode === "login" ? <button type="button" disabled={loading} onClick={sendMagicLink} className="w-full rounded-full border-2 border-ink bg-white px-5 py-3 font-bold text-ink disabled:opacity-50">Entrar con enlace al correo</button> : null}
       </form>
       {mode === "login" ? <Link href="/forgot-password" className="mt-4 block text-center text-sm font-bold text-[#5f45d6]">¿Olvidaste tu contraseña?</Link> : null}
       <button onClick={() => { setMode(mode === "login" ? "signup" : "login"); setMessage(""); }} className="mt-5 w-full text-sm font-bold text-[#5f45d6]">{mode === "login" ? "¿No tienes cuenta? Regístrate" : "¿Ya tienes cuenta? Inicia sesión"}</button>

@@ -10,10 +10,10 @@ export const demoProfile: Profile = {
   accentColor: "#8566ff",
   buttonStyle: "rounded",
   links: [
-    { id: "1", title: "Crear mi página", url: "/dashboard", active: true },
-    { id: "2", title: "Ver cómo funciona", url: "/", active: true },
-    { id: "3", title: "Perfil de demostración", url: "/demo", active: true }
-  ]
+    { id: "1", title: "Crear mi página", url: "/dashboard", active: true, icon: "✨", sectionTitle: "Empieza aquí" },
+    { id: "2", title: "Ver cómo funciona", url: "/", active: true, icon: "👀", sectionTitle: "Descubre MultiLinks" },
+    { id: "3", title: "Perfil de demostración", url: "/demo", active: true, icon: "🔗", sectionTitle: "Descubre MultiLinks" },
+  ],
 };
 
 export const themeClasses = {

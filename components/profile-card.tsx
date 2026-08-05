@@ -12,10 +12,11 @@ export function ProfileCard({ profile, preview = false }: { profile: Profile; pr
     <h1 className="mt-5 text-3xl font-black tracking-tight">{profile.displayName}</h1>
     <p className="mt-2 text-sm opacity-75">@{profile.username}</p>
     <p className="mx-auto mt-4 max-w-sm leading-6 opacity-80">{profile.bio}</p>
-    <div className="mx-auto mt-8 max-w-md space-y-3">{profile.links.filter(x => x.active && isSafeLink(x.url)).map(link => {
+    <div className="mx-auto mt-8 max-w-md space-y-3">{profile.links.filter(x => x.active && isSafeLink(x.url)).map((link, index, visibleLinks) => {
       const trackable = /^[0-9a-f-]{36}$/i.test(link.id);
       const href = preview ? undefined : trackable ? `/api/click/${link.id}` : link.url;
-      return <a key={link.id} href={href} target={!preview ? "_blank" : undefined} rel="noreferrer" className={`flex w-full items-center justify-between ${buttonRadius} border-2 border-ink bg-white px-5 py-4 text-left font-bold text-ink shadow-[4px_4px_0_#151515] transition hover:-translate-y-1`}>{link.title}<ArrowUpRight size={18}/></a>;
+      const showSection = link.sectionTitle && (index === 0 || visibleLinks[index - 1]?.sectionTitle !== link.sectionTitle);
+      return <div key={link.id}>{showSection ? <h2 className="mb-3 mt-7 text-sm font-black uppercase tracking-[.18em] opacity-75">{link.sectionTitle}</h2> : null}<a href={href} target={!preview ? "_blank" : undefined} rel="noreferrer" className={`flex w-full items-center gap-3 ${buttonRadius} border-2 border-ink bg-white px-4 py-3 text-left font-bold text-ink shadow-[4px_4px_0_#151515] transition hover:-translate-y-1`}>{link.icon ? <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full bg-black/5 text-xl">{/^https?:\/\//i.test(link.icon) ? <span role="img" aria-label="Icono del enlace" className="h-full w-full bg-cover bg-center" style={{ backgroundImage: `url(${link.icon})` }}/> : link.icon}</span> : null}<span className="min-w-0 flex-1">{link.title}</span><ArrowUpRight className="shrink-0" size={18}/></a></div>;
     })}</div>
     <p className="mt-10 text-xs font-black tracking-widest opacity-55">MULTI//LINKS</p>
   </div>;

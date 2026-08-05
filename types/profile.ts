@@ -4,6 +4,8 @@ export type LinkItem = {
   url: string;
   active: boolean;
   clicks?: number;
+  icon?: string;
+  sectionTitle?: string;
 };
 
 export type Profile = {

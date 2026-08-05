@@ -3,6 +3,7 @@ export type LinkItem = {
   title: string;
   url: string;
   active: boolean;
+  clicks?: number;
 };
 
 export type Profile = {

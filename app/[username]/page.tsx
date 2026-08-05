@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { ProfileCard } from "@/components/profile-card";
+import { ProfileViewTracker } from "@/components/profile-view-tracker";
 import { demoProfile } from "@/lib/demo-profile";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/types/profile";
@@ -47,7 +48,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
       buttonStyle: data.button_style,
       links: links ?? [],
     };
-    return <main className="min-h-screen p-6"><div className="mx-auto max-w-md"><ProfileCard profile={profile} /></div></main>;
+    return <main className="min-h-screen p-6"><ProfileViewTracker profileId={data.id} /><div className="mx-auto max-w-md"><ProfileCard profile={profile} /></div></main>;
   }
 
   if (normalizedUsername === "demo") {

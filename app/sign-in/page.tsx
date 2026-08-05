@@ -47,6 +47,7 @@ export default function SignInPage() {
         {message ? <p className="rounded-xl bg-black/5 px-4 py-3 text-sm font-semibold">{message}</p> : null}
         <button disabled={loading} className="w-full rounded-full bg-ink px-5 py-3.5 font-bold text-white disabled:opacity-50">{loading ? "Procesando…" : mode === "login" ? "Entrar" : "Crear cuenta"}</button>
       </form>
+      {mode === "login" ? <Link href="/forgot-password" className="mt-4 block text-center text-sm font-bold text-[#5f45d6]">¿Olvidaste tu contraseña?</Link> : null}
       <button onClick={() => { setMode(mode === "login" ? "signup" : "login"); setMessage(""); }} className="mt-5 w-full text-sm font-bold text-[#5f45d6]">{mode === "login" ? "¿No tienes cuenta? Regístrate" : "¿Ya tienes cuenta? Inicia sesión"}</button>
       <Link href="/" className="mt-5 block text-center text-xs font-semibold text-black/45">Volver al inicio</Link>
     </section>

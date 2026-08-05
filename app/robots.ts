@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/dashboard", "/auth/", "/sign-in", "/forgot-password", "/reset-password", "/api/"],
+      disallow: ["/dashboard", "/admin", "/auth/", "/sign-in", "/forgot-password", "/reset-password", "/api/"],
     },
     sitemap: "https://multilinks-app.vercel.app/sitemap.xml",
     host: "https://multilinks-app.vercel.app",

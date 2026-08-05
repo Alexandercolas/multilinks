@@ -33,12 +33,15 @@ export default function Dashboard() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [totalViews, setTotalViews] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
     async function loadProfile() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      const { data: adminAccess } = await supabase.rpc("is_admin");
+      setIsAdmin(Boolean(adminAccess));
       const [{ data: dbProfile }, { data: dbLinks }, { data: viewRows }] = await Promise.all([
         supabase.from("profiles").select("username,display_name,bio,avatar_url,theme,background_color,accent_color,button_style").eq("id", user.id).maybeSingle<DbProfile>(),
         supabase.from("links").select("id,title,url,active,clicks,icon,section_title").eq("profile_id", user.id).order("position"),
@@ -140,7 +143,7 @@ export default function Dashboard() {
   if (!ready) return <main className="grid min-h-screen place-items-center bg-[#f2efe7]"><p className="font-bold">Cargando tu espacio…</p></main>;
 
   return <main className="min-h-screen bg-[#f2efe7]">
-    <header className="flex h-20 items-center justify-between border-b border-black/10 bg-white px-5 lg:px-8"><Logo/><div className="flex items-center gap-2"><Link href={`/${profile.username}`} className="flex items-center gap-2 rounded-full border border-black/15 px-4 py-2 text-sm font-bold"><Eye size={16}/> Ver página</Link><button onClick={signOut} aria-label="Cerrar sesión" className="rounded-full p-2 hover:bg-black/5"><LogOut size={19}/></button></div></header>
+    <header className="flex h-20 items-center justify-between border-b border-black/10 bg-white px-5 lg:px-8"><Logo/><div className="flex items-center gap-2">{isAdmin ? <Link href="/admin" className="rounded-full bg-lime px-4 py-2 text-sm font-black">Administración</Link> : null}<Link href={`/${profile.username}`} className="flex items-center gap-2 rounded-full border border-black/15 px-4 py-2 text-sm font-bold"><Eye size={16}/> Ver página</Link><button onClick={signOut} aria-label="Cerrar sesión" className="rounded-full p-2 hover:bg-black/5"><LogOut size={19}/></button></div></header>
     <div className="mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-[1fr_410px]">
       <section>
         <div className="mb-7 flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm font-bold text-[#7055e8]">TU ESPACIO</p><h1 className="mt-1 text-4xl font-black tracking-tight">Personaliza tu página</h1></div><div className="text-right"><button onClick={save} disabled={saving} className="rounded-full bg-ink px-6 py-3 text-sm font-bold text-white disabled:opacity-50">{saving ? "Publicando…" : "Guardar y publicar"}</button>{message ? <p className="mt-2 max-w-xs text-xs font-semibold">{message}</p> : null}</div></div>

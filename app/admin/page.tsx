@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BarChart3, CreditCard, Eye, Link2, TrendingUp, Users } from "lucide-react";
+import { BarChart3, CreditCard, Eye, Home, LayoutDashboard, Link2, ShieldCheck, TrendingUp, Users } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { createClient } from "@/lib/supabase/server";
 
@@ -42,9 +42,10 @@ export default async function AdminPage() {
     today: allViews.filter((item) => item.profile_id === profile.id && item.day === todayKey).reduce((sum, item) => sum + item.views, 0),
   })).sort((a, b) => b.total - a.total);
 
-  return <main className="min-h-screen bg-[#f2efe7] text-ink">
-    <header className="flex h-20 items-center justify-between border-b border-black/10 bg-white px-5 lg:px-8"><Logo/><div className="flex items-center gap-3"><span className="rounded-full bg-lime px-4 py-2 text-xs font-black">SOLO ADMIN</span><Link href="/dashboard" className="rounded-full border border-black/15 px-4 py-2 text-sm font-bold">Mi dashboard</Link></div></header>
-    <div className="mx-auto max-w-7xl px-5 py-9">
+  return <main className="min-h-screen bg-[#f2efe7] text-ink"><div className="lg:grid lg:grid-cols-[260px_minmax(0,1fr)]">
+    <aside className="hidden min-h-screen border-r border-black/10 bg-white p-5 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col"><Logo/><div className="mt-8 flex items-center gap-3 rounded-2xl bg-[#8566ff] p-4 text-white"><span className="grid h-10 w-10 place-items-center rounded-xl bg-white/15"><ShieldCheck size={21}/></span><div><p className="text-xs font-bold text-white/65">ACCESO PRIVADO</p><p className="font-black">Administrador</p></div></div><nav className="mt-7 space-y-2 text-sm font-bold"><AdminNav href="#resumen" icon={<LayoutDashboard size={18}/>} label="Resumen"/><AdminNav href="#visitas" icon={<Eye size={18}/>} label="Visitas"/><AdminNav href="#usuarios" icon={<Users size={18}/>} label="Usuarios"/><AdminNav href="#planes" icon={<CreditCard size={18}/>} label="Planes"/></nav><div className="mt-auto space-y-2 border-t border-black/10 pt-5"><AdminNav href="/dashboard" icon={<LayoutDashboard size={18}/>} label="Mi dashboard"/><AdminNav href="/" icon={<Home size={18}/>} label="Ver inicio"/></div></aside>
+    <div className="min-w-0"><header className="flex h-20 items-center justify-between border-b border-black/10 bg-white px-5 lg:px-8"><div className="lg:hidden"><Logo/></div><div className="hidden lg:block"><p className="text-xs font-black text-black/40">MULTILINKS</p><p className="font-black">Centro de control</p></div><div className="flex items-center gap-3"><span className="rounded-full bg-lime px-4 py-2 text-xs font-black">SOLO ADMIN</span><Link href="/dashboard" className="hidden rounded-full border border-black/15 px-4 py-2 text-sm font-bold sm:block lg:hidden">Mi dashboard</Link></div></header>
+    <div id="resumen" className="mx-auto max-w-7xl px-5 py-9 lg:px-8">
       <p className="text-sm font-black text-[#7055e8]">CONTROL DE LA PLATAFORMA</p><h1 className="mt-1 text-4xl font-black tracking-tight">Panel administrativo</h1><p className="mt-2 text-black/55">Resumen privado de MultiLinks. Ningún usuario normal puede abrir esta página.</p>
       <section className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Metric icon={<Users/>} label="Usuarios" value={allUsers.length}/><Metric icon={<Link2/>} label="Perfiles publicados" value={publishedProfiles}/><Metric icon={<Eye/>} label="Visitas históricas" value={totalViews}/><Metric icon={<BarChart3/>} label="Clics" value={totalClicks}/></section>
 
@@ -55,9 +56,10 @@ export default async function AdminPage() {
       <section className="mt-7 overflow-hidden rounded-3xl bg-white shadow-sm"><div className="border-b border-black/10 px-6 py-5"><h2 className="text-xl font-black">Usuarios registrados</h2></div><div className="overflow-x-auto"><table className="w-full min-w-[720px] text-left text-sm"><thead className="bg-black/[.03] text-xs uppercase text-black/45"><tr><th className="px-6 py-4">Usuario</th><th className="px-6 py-4">Correo</th><th className="px-6 py-4">Plan</th><th className="px-6 py-4">Estado</th><th className="px-6 py-4">Registro</th></tr></thead><tbody>{allUsers.map(item => <tr key={item.id} className="border-t border-black/5"><td className="px-6 py-4 font-bold">{item.username ? `@${item.username}` : "Sin publicar"}</td><td className="px-6 py-4">{item.email}</td><td className="px-6 py-4"><span className="rounded-full bg-lime px-3 py-1 text-xs font-black">{item.plan_name}</span></td><td className="px-6 py-4 capitalize">{item.subscription_status}</td><td className="px-6 py-4 text-black/50">{new Intl.DateTimeFormat("es-DO", { dateStyle: "medium" }).format(new Date(item.created_at))}</td></tr>)}</tbody></table></div></section>
 
       <section className="mt-7"><div className="mb-4 flex items-center gap-2"><CreditCard size={22}/><h2 className="text-xl font-black">Planes preparados</h2></div><div className="grid gap-4 md:grid-cols-2">{(plans ?? []).map(plan => <article key={plan.id} className="rounded-3xl border border-black/10 bg-white p-6"><div className="flex items-start justify-between gap-4"><div><h3 className="text-2xl font-black">{plan.name}</h3><p className="mt-2 text-sm text-black/55">{plan.description}</p></div><p className="text-2xl font-black">{plan.price_monthly === 0 ? "Gratis" : `$${(plan.price_monthly / 100).toFixed(2)}`}<span className="text-xs text-black/40">/mes</span></p></div><ul className="mt-5 space-y-2 text-sm font-semibold">{(plan.features as string[]).map(feature => <li key={feature}>✓ {feature}</li>)}</ul></article>)}</div><p className="mt-3 text-xs text-black/45">Los planes están listos en la base de datos. Los cobros permanecerán desactivados hasta conectar y configurar un proveedor de pagos.</p></section>
-    </div>
-  </main>;
+    </div></div>
+  </div></main>;
 }
 
 function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) { return <article className="flex items-center gap-4 rounded-3xl border border-black/10 bg-white p-5 shadow-sm"><span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#8566ff] text-white">{icon}</span><div><p className="text-3xl font-black">{value.toLocaleString("es-DO")}</p><p className="text-xs font-bold text-black/45">{label}</p></div></article>; }
 function VisitPeriod({ label, value }: { label: string; value: number }) { return <article className="rounded-2xl bg-white/15 p-4"><p className="text-3xl font-black">{value.toLocaleString("es-DO")}</p><p className="mt-1 text-xs font-bold text-white/70">{label}</p></article>; }
+function AdminNav({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) { return <Link href={href} className="flex items-center gap-3 rounded-xl px-3 py-3 text-black/60 transition hover:bg-black/[.04] hover:text-black">{icon}<span>{label}</span></Link>; }

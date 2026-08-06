@@ -2,7 +2,7 @@ import type { Profile } from "@/types/profile";
 
 export const demoProfile: Profile = {
   username: "demo",
-  displayName: "Perfil Demo",
+  displayName: "MultiLinks",
   bio: "Contenido, proyectos y enlaces importantes en un solo lugar.",
   avatar: "ML",
   theme: "lime",
@@ -12,7 +12,7 @@ export const demoProfile: Profile = {
   links: [
     { id: "1", title: "Crear mi página", url: "/dashboard", active: true, icon: "✨", sectionTitle: "Empieza aquí" },
     { id: "2", title: "Ver cómo funciona", url: "/", active: true, icon: "👀", sectionTitle: "Descubre MultiLinks" },
-    { id: "3", title: "Perfil de demostración", url: "/demo", active: true, icon: "🔗", sectionTitle: "Descubre MultiLinks" },
+    { id: "3", title: "Mi comunidad", url: "/demo", active: true, icon: "🔗", sectionTitle: "Descubre MultiLinks" },
   ],
 };
 

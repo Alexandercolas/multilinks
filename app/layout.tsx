@@ -1,5 +1,19 @@
 import type { Metadata, Viewport } from "next";
+import { Inter, Unbounded } from "next/font/google";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const unbounded = Unbounded({
+  subsets: ["latin"],
+  weight: ["500", "700", "900"],
+  variable: "--font-unbounded",
+  display: "swap",
+});
 
 const siteUrl = "https://multilinks-app.vercel.app";
 
@@ -40,5 +54,9 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="es"><body>{children}</body></html>;
+  return (
+    <html lang="es" className={`${inter.variable} ${unbounded.variable}`}>
+      <body>{children}</body>
+    </html>
+  );
 }

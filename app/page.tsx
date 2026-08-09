@@ -142,6 +142,7 @@ export default function Home() {
             © {new Date().getFullYear()} MultiLinks · Hecho en República Dominicana
           </p>
           <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold">
+            <Link href="/planes" className="hover:underline">Planes</Link>
             <Link href="/demo" className="hover:underline">
               Ver ejemplo
             </Link>

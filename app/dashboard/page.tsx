@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Eye, GripVertical, ImagePlus, LogOut, MousePointerClick, Plus, Trash2 } from "lucide-react";
+import { Crown, Eye, GripVertical, ImagePlus, LogOut, MousePointerClick, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { ProfileCard } from "@/components/profile-card";
@@ -34,6 +34,7 @@ export default function Dashboard() {
   const [message, setMessage] = useState("");
   const [totalViews, setTotalViews] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isPro, setIsPro] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -42,11 +43,13 @@ export default function Dashboard() {
       if (!user) return;
       const { data: adminAccess } = await supabase.rpc("is_admin");
       setIsAdmin(Boolean(adminAccess));
-      const [{ data: dbProfile }, { data: dbLinks }, { data: viewRows }] = await Promise.all([
+      const [{ data: dbProfile }, { data: dbLinks }, { data: viewRows }, { data: subscription }] = await Promise.all([
         supabase.from("profiles").select("username,display_name,bio,avatar_url,theme,background_color,accent_color,button_style").eq("id", user.id).maybeSingle<DbProfile>(),
         supabase.from("links").select("id,title,url,active,clicks,icon,section_title").eq("profile_id", user.id).order("position"),
         supabase.from("profile_daily_views").select("views").eq("profile_id", user.id),
+        supabase.from("subscriptions").select("plan_id,status").eq("user_id", user.id).maybeSingle(),
       ]);
+      setIsPro(subscription?.plan_id === "pro" && ["active", "trialing"].includes(subscription.status));
       setTotalViews((viewRows ?? []).reduce((total, row) => total + row.views, 0));
       if (dbProfile) {
         setProfile({
@@ -71,7 +74,13 @@ export default function Dashboard() {
   }, []);
 
   const updateLink = (id: string, change: Partial<LinkItem>) => setProfile(p => ({ ...p, links: p.links.map(link => link.id === id ? { ...link, ...change } : link) }));
-  const addLink = () => setProfile(p => ({ ...p, links: [...p.links, { id: crypto.randomUUID(), title: "Nuevo enlace", url: "https://", active: true, icon: "🔗" }] }));
+  const addLink = () => {
+    if (!isPro && profile.links.filter(link => link.active).length >= 10) {
+      setMessage("El plan Gratis permite hasta 10 enlaces activos. Mejora a Pro para añadir enlaces ilimitados.");
+      return;
+    }
+    setProfile(p => ({ ...p, links: [...p.links, { id: crypto.randomUUID(), title: "Nuevo enlace", url: "https://", active: true, icon: "🔗" }] }));
+  };
 
   function uploadPhoto(file?: File) {
     setPhotoError("");
@@ -88,6 +97,7 @@ export default function Dashboard() {
   async function save() {
     if (profile.username.length < 3) { setMessage("El usuario debe tener al menos 3 caracteres."); return; }
     if (profile.links.some(link => !isSafeLink(link.url))) { setMessage("Corrige las direcciones marcadas en rojo."); return; }
+    if (!isPro && profile.links.filter(link => link.active).length > 10) { setMessage("El plan Gratis permite hasta 10 enlaces activos."); return; }
     setSaving(true);
     setMessage("");
     const supabase = createClient();
@@ -148,6 +158,7 @@ export default function Dashboard() {
       <section>
         <div className="mb-7 flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm font-bold text-[#7055e8]">TU ESPACIO</p><h1 className="mt-1 text-4xl font-black tracking-tight">Personaliza tu página</h1></div><div className="text-right"><button onClick={save} disabled={saving} className="rounded-full bg-ink px-6 py-3 text-sm font-bold text-white disabled:opacity-50">{saving ? "Publicando…" : "Guardar y publicar"}</button>{message ? <p className="mt-2 max-w-xs text-xs font-semibold">{message}</p> : null}</div></div>
         <div className="mb-6 grid gap-4 sm:grid-cols-2"><StatCard icon={<Eye size={20}/>} label="Visitas al perfil" value={totalViews}/><StatCard icon={<MousePointerClick size={20}/>} label="Clics en enlaces" value={profile.links.reduce((total, link) => total + (link.clicks ?? 0), 0)}/></div>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-[3px] border-ink bg-grape p-5 text-white shadow-hard"><div className="flex items-center gap-4"><span className="grid h-11 w-11 place-items-center border-2 border-ink bg-lime text-ink"><Crown size={21}/></span><div><p className="font-display font-black">Desbloquea MultiLinks Pro</p><p className="mt-1 text-sm text-white/75">Enlaces ilimitados, estadísticas completas y más personalización.</p></div></div><Link href="/planes" className="rounded-full border-2 border-ink bg-lime px-5 py-3 text-sm font-black text-ink shadow-[3px_3px_0_#151515]">Ver planes</Link></div>
         <div className="rounded-3xl bg-white p-6 shadow-sm"><h2 className="text-lg font-black">Perfil</h2><div className="mt-5 flex flex-wrap items-center gap-4"><div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-ink bg-lime text-xl font-black">{profile.avatarImage ? <div role="img" aria-label="Foto seleccionada" className="h-full w-full bg-cover bg-center" style={{ backgroundImage: `url(${profile.avatarImage})` }}/> : profile.avatar}</div><div><label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-black/15 px-4 py-2 text-sm font-bold hover:bg-black/5"><ImagePlus size={17}/> Subir foto<input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={e => uploadPhoto(e.target.files?.[0])}/></label>{profile.avatarImage ? <button onClick={() => { setProfile({ ...profile, avatarImage: undefined }); setPhotoFile(null); }} className="ml-2 text-sm font-semibold text-red-500">Quitar</button> : null}<p className="mt-2 text-xs text-black/45">JPG, PNG o WebP · máximo 1 MB</p>{photoError ? <p className="mt-1 text-xs font-semibold text-red-500">{photoError}</p> : null}</div></div><div className="mt-5 grid gap-4 sm:grid-cols-2"><Field label="Nombre" value={profile.displayName} onChange={displayName => setProfile({ ...profile, displayName })}/><Field label="Usuario" value={profile.username} onChange={username => setProfile({ ...profile, username: username.toLowerCase().replace(/[^a-z0-9_-]/g, "") })}/></div><label className="mt-4 block text-sm font-bold">Biografía<textarea maxLength={240} value={profile.bio} onChange={e => setProfile({ ...profile, bio: e.target.value })} rows={3} className="mt-2 w-full resize-none rounded-xl border border-black/15 px-4 py-3 font-normal outline-none focus:border-[#7055e8]"/></label></div>
         <div className="mt-6 rounded-3xl bg-white p-6 shadow-sm"><h2 className="text-lg font-black">Apariencia</h2><div className="mt-5"><p className="text-sm font-bold">Temas rápidos</p><div className="mt-3 flex gap-3">{(["lime", "violet", "sunset"] as const).map(theme => { const color = theme === "lime" ? "#c9ff58" : theme === "violet" ? "#8566ff" : "#ff7356"; return <button key={theme} aria-label={`Tema ${theme}`} onClick={() => setProfile({ ...profile, theme, backgroundColor: color })} className={`h-10 w-10 rounded-full border-2 ${profile.theme === theme ? "border-ink ring-2 ring-offset-2 ring-ink" : "border-transparent"}`} style={{ backgroundColor: color }}/>; })}</div></div><div className="mt-6 grid gap-4 sm:grid-cols-2"><ColorField label="Color de fondo" value={profile.backgroundColor ?? "#c9ff58"} onChange={backgroundColor => setProfile({ ...profile, backgroundColor })}/><ColorField label="Color de acento" value={profile.accentColor ?? "#8566ff"} onChange={accentColor => setProfile({ ...profile, accentColor })}/></div><div className="mt-6"><p className="text-sm font-bold">Forma de botones</p><div className="mt-3 flex flex-wrap gap-2">{(["rounded", "pill", "square"] as const).map(style => <button key={style} onClick={() => setProfile({ ...profile, buttonStyle: style })} className={`border-2 px-4 py-2 text-sm font-bold ${style === "pill" ? "rounded-full" : style === "square" ? "rounded-md" : "rounded-2xl"} ${profile.buttonStyle === style ? "border-ink bg-lime" : "border-black/10"}`}>{style === "rounded" ? "Redondeado" : style === "pill" ? "Cápsula" : "Cuadrado"}</button>)}</div></div></div>
         <div className="mt-6 rounded-3xl bg-white p-6 shadow-sm"><div className="flex items-center justify-between"><div><h2 className="text-lg font-black">Mis enlaces</h2><p className="mt-1 text-xs text-black/45">Añade títulos de sección e íconos opcionales para organizar mejor tu página.</p></div><button onClick={addLink} className="flex items-center gap-2 rounded-full bg-lime px-4 py-2 text-sm font-black"><Plus size={17}/> Agregar</button></div><div className="mt-5 space-y-3">{profile.links.map(link => <div key={link.id} className={`flex items-start gap-3 rounded-2xl border p-3 ${isSafeLink(link.url) ? "border-black/10" : "border-red-400"}`}><GripVertical className="mt-2 hidden shrink-0 text-black/25 sm:block" size={20}/><div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-[1fr_1fr_90px]"><input value={link.title} aria-label="Título del enlace" placeholder="Título" onChange={e => updateLink(link.id, { title: e.target.value })} className="min-w-0 rounded-lg bg-[#f5f3ed] px-3 py-2 text-sm font-semibold outline-none"/><input value={link.url} aria-label="Dirección del enlace" placeholder="https://..." onChange={e => updateLink(link.id, { url: e.target.value })} className="min-w-0 rounded-lg bg-[#f5f3ed] px-3 py-2 text-sm outline-none"/><input value={link.icon ?? ""} maxLength={500} aria-label="Ícono del enlace" placeholder="Emoji o URL" onChange={e => updateLink(link.id, { icon: e.target.value })} className="min-w-0 rounded-lg bg-[#f5f3ed] px-3 py-2 text-sm outline-none"/><input value={link.sectionTitle ?? ""} maxLength={60} aria-label="Título de sección" placeholder="Sección opcional, por ejemplo: Mis redes" onChange={e => updateLink(link.id, { sectionTitle: e.target.value })} className="min-w-0 rounded-lg bg-[#f5f3ed] px-3 py-2 text-sm outline-none sm:col-span-3"/></div><button aria-label="Activar enlace" onClick={() => updateLink(link.id, { active: !link.active })} className={`mt-2 h-6 w-11 shrink-0 rounded-full p-1 ${link.active ? "bg-[#7055e8]" : "bg-black/15"}`}><span className={`block h-4 w-4 rounded-full bg-white transition ${link.active ? "translate-x-5" : ""}`}/></button><button aria-label="Eliminar" onClick={() => setProfile({ ...profile, links: profile.links.filter(item => item.id !== link.id) })} className="mt-1 p-2 text-black/35 hover:text-red-500"><Trash2 size={18}/></button></div>)}</div></div>

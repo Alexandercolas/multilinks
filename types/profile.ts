@@ -14,7 +14,7 @@ export type Profile = {
   bio: string;
   avatar: string;
   avatarImage?: string;
-  theme: "lime" | "violet" | "sunset";
+  theme: "lime" | "violet" | "sunset" | "neon";
   backgroundColor?: string;
   accentColor?: string;
   buttonStyle?: "rounded" | "pill" | "square";

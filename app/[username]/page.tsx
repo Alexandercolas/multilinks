@@ -42,17 +42,18 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
       bio: data.bio,
       avatar: data.display_name.slice(0, 2).toUpperCase(),
       avatarImage: data.avatar_url ?? undefined,
-      theme: data.theme,
-      backgroundColor: data.background_color,
-      accentColor: data.accent_color,
+      theme: data.theme === "neon" && !hasPro ? "lime" : data.theme,
+      backgroundColor: data.theme === "neon" && !hasPro ? "#c9ff58" : data.background_color,
+      accentColor: data.theme === "neon" && !hasPro ? "#8566ff" : data.accent_color,
       buttonStyle: data.button_style,
       links: (links ?? []).map((link) => ({ ...link, icon: link.icon ?? undefined, sectionTitle: link.section_title ?? undefined })),
     };
-    return <main className="min-h-screen bg-cream px-4 py-5 sm:px-6 sm:py-7"><ProfileViewTracker profileId={data.id} /><div className="mx-auto mb-5 flex max-w-md animate-fade-up justify-end"><ShareProfileButton title={profile.displayName}/></div><div className="mx-auto max-w-md overflow-hidden rounded-[2.5rem] border-[3px] border-ink shadow-hard-lg"><ProfileCard profile={profile} showBranding={!hasPro}/></div></main>;
+    const premiumDark = profile.theme === "neon";
+    return <main className={`min-h-screen px-4 py-5 sm:px-6 sm:py-7 ${premiumDark ? "bg-[#090b0d]" : "bg-cream"}`}><ProfileViewTracker profileId={data.id} /><div className="mx-auto mb-5 flex max-w-md animate-fade-up justify-end"><ShareProfileButton title={profile.displayName} dark={premiumDark}/></div><div className={`mx-auto max-w-md overflow-hidden rounded-[2.5rem] ${premiumDark ? "border border-white/15 shadow-[0_24px_80px_rgba(0,0,0,.55)]" : "border-[3px] border-ink shadow-hard-lg"}`}><ProfileCard profile={profile} showBranding={!hasPro}/></div></main>;
   }
 
   if (normalizedUsername === "demo") {
-    return <main className="min-h-screen bg-cream px-4 py-7 sm:px-6"><div className="mx-auto max-w-md overflow-hidden rounded-[2.5rem] border-[3px] border-ink shadow-hard-lg"><ProfileCard profile={demoProfile} /></div></main>;
+    return <main className="min-h-screen bg-[#090b0d] px-4 py-7 sm:px-6"><div className="mx-auto max-w-md overflow-hidden rounded-[2.5rem] border border-white/15 shadow-[0_24px_80px_rgba(0,0,0,.55)]"><ProfileCard profile={demoProfile}/></div></main>;
   }
 
   return (

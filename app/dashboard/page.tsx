@@ -49,7 +49,7 @@ export default function Dashboard() {
         supabase.from("profile_daily_views").select("views").eq("profile_id", user.id),
         supabase.from("subscriptions").select("plan_id,status").eq("user_id", user.id).maybeSingle(),
       ]);
-      setIsPro(subscription?.plan_id === "pro" && ["active", "trialing"].includes(subscription.status));
+      setIsPro(Boolean(adminAccess) || (subscription?.plan_id === "pro" && ["active", "trialing"].includes(subscription.status)));
       setTotalViews((viewRows ?? []).reduce((total, row) => total + row.views, 0));
       if (dbProfile) {
         setProfile({

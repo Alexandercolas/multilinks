@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/logo";
-import { createClient } from "@/lib/supabase/client";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -14,38 +13,50 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("suspended") === "1") {
+      setMessage("Esta cuenta está suspendida. Contacta a soporte si crees que se trata de un error.");
+    }
+  }, []);
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
     setMessage("");
-    const supabase = createClient();
-    if (mode === "signup") {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    try {
+      const response = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode, email, password }),
       });
-      if (error) setMessage(error.message);
-      else if (!data.session) setMessage("Revisa tu correo para confirmar la cuenta.");
-      else router.push("/dashboard");
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) setMessage("Correo o contraseña incorrectos.");
+      const result = await response.json() as { needsEmailConfirmation?: boolean; message?: string };
+      if (!response.ok) setMessage(result.message ?? "No pudimos completar la solicitud.");
+      else if (result.needsEmailConfirmation) setMessage("Revisa tu correo para confirmar la cuenta.");
       else { router.push("/dashboard"); router.refresh(); }
+    } catch {
+      setMessage("No pudimos conectar con el servidor. Inténtalo nuevamente.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   async function sendMagicLink() {
     if (!email || !email.includes("@")) { setMessage("Escribe primero tu correo electrónico."); return; }
     setLoading(true);
     setMessage("");
-    const { error } = await createClient().auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback`, shouldCreateUser: false },
-    });
-    setMessage(error ? "No pudimos enviar el enlace. Inténtalo nuevamente." : "Te enviamos un enlace seguro para entrar sin contraseña.");
-    setLoading(false);
+    try {
+      const response = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "magic", email }),
+      });
+      const result = await response.json() as { message?: string };
+      setMessage(response.ok ? "Te enviamos un enlace seguro para entrar sin contraseña." : result.message ?? "No pudimos enviar el enlace.");
+    } catch {
+      setMessage("No pudimos conectar con el servidor. Inténtalo nuevamente.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return <main className="grid min-h-screen place-items-center bg-[#8566ff] px-5 py-12">

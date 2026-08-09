@@ -141,13 +141,16 @@ export default function Home() {
           <p className="text-sm text-black/50">
             © {new Date().getFullYear()} MultiLinks · Hecho en República Dominicana
           </p>
-          <div className="flex gap-6 text-sm font-semibold">
+          <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold">
             <Link href="/demo" className="hover:underline">
               Ver ejemplo
             </Link>
             <Link href="/dashboard" className="hover:underline">
               Crear cuenta
             </Link>
+            <Link href="/ayuda" className="hover:underline">Ayuda</Link>
+            <Link href="/terminos" className="hover:underline">Términos</Link>
+            <Link href="/privacidad" className="hover:underline">Privacidad</Link>
           </div>
         </div>
       </footer>

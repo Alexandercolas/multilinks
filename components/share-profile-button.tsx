@@ -17,5 +17,5 @@ export function ShareProfileButton({ title }: { title: string }) {
     window.setTimeout(() => setCopied(false), 1800);
   }
 
-  return <button onClick={share} className="inline-flex items-center gap-2 rounded-full border-2 border-ink bg-white px-4 py-2 text-sm font-black text-ink shadow-[3px_3px_0_#151515] transition hover:-translate-y-0.5">{copied ? <Check size={17}/> : <Share2 size={17}/>} {copied ? "Enlace copiado" : "Compartir"}</button>;
+  return <button onClick={share} className="inline-flex items-center gap-2 rounded-full border-[3px] border-ink bg-white px-4 py-2 font-display text-xs font-black text-ink shadow-hard transition hover:-translate-y-0.5 hover:bg-lime">{copied ? <Check size={17}/> : <Share2 size={17}/>} {copied ? "Enlace copiado" : "Compartir"}</button>;
 }

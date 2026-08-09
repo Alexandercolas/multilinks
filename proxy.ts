@@ -15,13 +15,43 @@ export async function proxy(request: NextRequest) {
     },
   });
   const { data: { user } } = await supabase.auth.getUser();
-  if ((request.nextUrl.pathname.startsWith("/dashboard") || request.nextUrl.pathname.startsWith("/admin")) && !user) {
+  const isDashboard = request.nextUrl.pathname.startsWith("/dashboard");
+  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
+  const isSignIn = request.nextUrl.pathname.startsWith("/sign-in");
+  const isProtected = isDashboard || isAdminRoute;
+
+  if (isProtected && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/sign-in";
     url.searchParams.set("next", request.nextUrl.pathname);
     return NextResponse.redirect(url);
   }
-  if (request.nextUrl.pathname.startsWith("/sign-in") && user) {
+
+  let suspended = false;
+  if (user && (isProtected || isSignIn)) {
+    const { data } = await supabase.rpc("account_is_suspended");
+    suspended = data === true;
+  }
+
+  if (user && suspended && isProtected) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/sign-in";
+    url.search = "";
+    url.searchParams.set("suspended", "1");
+    return NextResponse.redirect(url);
+  }
+
+  if (user && isAdminRoute) {
+    const { data: isAdmin } = await supabase.rpc("is_admin");
+    if (!isAdmin) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+  }
+
+  if (isSignIn && user && !suspended) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     url.search = "";

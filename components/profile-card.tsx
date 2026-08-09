@@ -1,10 +1,11 @@
-import { ArrowUpRight, Flag, Sparkles } from "lucide-react";
+import { ArrowUpRight, Flag } from "lucide-react";
 import Link from "next/link";
 import type { Profile } from "@/types/profile";
 import { themeClasses } from "@/lib/demo-profile";
 import { isSafeLink } from "@/lib/profile-storage";
+import { LinkFavicon } from "@/components/link-favicon";
 
-export function ProfileCard({ profile, preview = false }: { profile: Profile; preview?: boolean }) {
+export function ProfileCard({ profile, preview = false, showBranding = true }: { profile: Profile; preview?: boolean; showBranding?: boolean }) {
   const buttonRadius = profile.buttonStyle === "pill" ? "rounded-full" : profile.buttonStyle === "square" ? "rounded-md" : "rounded-2xl";
   const visibleLinks = profile.links.filter((link) => link.active && isSafeLink(link.url));
 
@@ -91,7 +92,7 @@ export function ProfileCard({ profile, preview = false }: { profile: Profile; pr
                         />
                       ) : link.icon}
                     </span>
-                  ) : null}
+                  ) : <span className="ml-1 grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-ink bg-cream"><LinkFavicon url={link.url} title={link.title}/></span>}
                   <span className="min-w-0 flex-1">{link.title}</span>
                   <ArrowUpRight className="shrink-0 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" size={19} />
                 </a>
@@ -100,23 +101,7 @@ export function ProfileCard({ profile, preview = false }: { profile: Profile; pr
           })}
         </div>
 
-        {!preview ? (
-          <div className="pin mx-auto mt-16 max-w-md animate-fade-up rotate-[1deg] border-[3px] border-ink bg-white p-6 text-ink shadow-hard-lg [animation-delay:520ms]">
-            <Sparkles className="mx-auto text-grape-dark" size={24} />
-            <p className="mt-3 font-display text-sm font-black">¿Te gustó esta página?</p>
-            <p className="mt-2 text-sm leading-6 opacity-65">Reúne tus redes, proyectos y contactos en un solo enlace.</p>
-            <Link
-              href="/sign-in"
-              className="mt-5 inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-sm font-black text-white transition hover:-translate-y-0.5 hover:shadow-hard"
-            >
-              Crea tu propio MultiLinks gratis <ArrowUpRight size={17} />
-            </Link>
-          </div>
-        ) : null}
-
-        <p className="mt-10 font-display text-xs font-black tracking-[.16em] opacity-55">
-          MULTI<span className="text-grape-dark">//</span>LINKS
-        </p>
+        {!preview && showBranding ? <Link href="/sign-in" className="group mx-auto mt-12 inline-flex animate-fade-up items-center gap-2 rounded-full border-2 border-current px-4 py-2 font-display text-[10px] font-black uppercase tracking-[.08em] opacity-65 transition hover:-translate-y-0.5 hover:bg-white hover:text-grape-dark hover:opacity-100 [animation-delay:520ms]"><span className="text-grape-dark" aria-hidden="true">✦</span> Hecho con MultiLinks <ArrowUpRight size={14} className="transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5"/></Link> : null}
         {!preview ? <div className="mt-5 flex items-center justify-center gap-4 text-xs font-bold opacity-60"><Link href={`/report/${profile.username}`} className="inline-flex items-center gap-1.5 hover:underline"><Flag size={13}/> Reportar</Link><Link href="/ayuda" className="hover:underline">Ayuda</Link></div> : null}
       </div>
     </section>

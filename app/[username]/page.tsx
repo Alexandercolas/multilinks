@@ -32,12 +32,10 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     .maybeSingle<DbProfile>();
 
   if (data) {
-    const { data: links } = await supabase
-      .from("links")
-      .select("id,title,url,active,icon,section_title")
-      .eq("profile_id", data.id)
-      .eq("active", true)
-      .order("position");
+    const [{ data: links }, { data: hasPro }] = await Promise.all([
+      supabase.from("links").select("id,title,url,active,icon,section_title").eq("profile_id", data.id).eq("active", true).order("position"),
+      supabase.rpc("profile_has_pro", { target_profile: data.id }),
+    ]);
     const profile: Profile = {
       username: data.username,
       displayName: data.display_name,
@@ -50,7 +48,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
       buttonStyle: data.button_style,
       links: (links ?? []).map((link) => ({ ...link, icon: link.icon ?? undefined, sectionTitle: link.section_title ?? undefined })),
     };
-    return <main className="min-h-screen bg-cream px-4 py-5 sm:px-6 sm:py-7"><ProfileViewTracker profileId={data.id} /><div className="mx-auto mb-5 flex max-w-md animate-fade-up justify-end"><ShareProfileButton title={profile.displayName}/></div><div className="mx-auto max-w-md overflow-hidden rounded-[2.5rem] border-[3px] border-ink shadow-hard-lg"><ProfileCard profile={profile} /></div></main>;
+    return <main className="min-h-screen bg-cream px-4 py-5 sm:px-6 sm:py-7"><ProfileViewTracker profileId={data.id} /><div className="mx-auto mb-5 flex max-w-md animate-fade-up justify-end"><ShareProfileButton title={profile.displayName}/></div><div className="mx-auto max-w-md overflow-hidden rounded-[2.5rem] border-[3px] border-ink shadow-hard-lg"><ProfileCard profile={profile} showBranding={!hasPro}/></div></main>;
   }
 
   if (normalizedUsername === "demo") {

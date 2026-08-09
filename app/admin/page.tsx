@@ -52,24 +52,24 @@ export default async function AdminPage() {
     <div className="lg:grid lg:grid-cols-[260px_minmax(0,1fr)]">
       <aside className="hidden min-h-screen border-r-[3px] border-ink bg-white p-5 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
         <Logo/>
-        <div className="mt-8 rotate-[-1deg] border-[3px] border-ink bg-grape p-4 text-white shadow-hard">
-          <div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center border-2 border-ink bg-lime text-ink"><ShieldCheck/></span><div><p className="font-display text-[10px] font-black uppercase tracking-[.13em] text-lime">Acceso privado</p><p className="font-black">Administrador</p></div></div>
+        <div className="mt-8 border-[3px] border-ink bg-ink p-4 text-white shadow-hard">
+          <div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center border-2 border-white/30 bg-white/10 text-lime"><ShieldCheck/></span><div><p className="font-display text-[10px] font-black uppercase tracking-[.13em] text-white/55">Acceso privado</p><p className="font-black">Administrador</p></div></div>
         </div>
         <nav className="mt-8 space-y-2 font-display text-xs font-black"><AdminNav href="#resumen" label="Resumen"/><AdminNav href="#reportes" label="Reportes"/><AdminNav href="#soporte" label="Soporte"/><AdminNav href="#usuarios" label="Usuarios"/><AdminNav href="#actividad" label="Actividad"/></nav>
-        <div className="mt-auto space-y-2 border-t-[3px] border-ink pt-5"><Link href="/dashboard" className="flex items-center gap-2 border-2 border-ink bg-lime px-3 py-3 text-sm font-black shadow-[3px_3px_0_#151515]">Mi dashboard <ArrowUpRight size={17}/></Link><Link href="/" className="flex items-center gap-2 px-3 py-2 text-sm font-bold"><Home size={17}/> Ver inicio</Link></div>
+        <div className="mt-auto space-y-2 border-t-2 border-ink/15 pt-5"><Link href="/dashboard" className="flex items-center gap-2 border-2 border-ink bg-white px-3 py-3 text-sm font-black shadow-[3px_3px_0_#151515]">Mi dashboard <ArrowUpRight size={17}/></Link><Link href="/" className="flex items-center gap-2 px-3 py-2 text-sm font-bold"><Home size={17}/> Ver inicio</Link></div>
       </aside>
 
       <div className="min-w-0">
-        <header className="border-b-[3px] border-ink bg-white px-5 py-4 lg:px-8"><div className="mx-auto flex max-w-7xl items-center justify-between"><div className="lg:hidden"><Logo/></div><div className="hidden lg:block"><p className="font-display text-[10px] font-black uppercase tracking-[.15em] text-grape-dark">MultiLinks</p><p className="font-black">Centro de control</p></div><span className="rotate-[1deg] border-2 border-ink bg-lime px-3 py-2 font-display text-[10px] font-black shadow-[3px_3px_0_#151515]">SOLO ADMIN</span></div></header>
+        <header className="border-b-2 border-ink/15 bg-white px-5 py-4 lg:px-8"><div className="mx-auto flex max-w-7xl items-center justify-between"><div className="lg:hidden"><Logo/></div><div className="hidden lg:block"><p className="font-display text-[10px] font-black uppercase tracking-[.15em] text-black/40">MultiLinks</p><p className="font-black">Centro de control</p></div><span className="border-2 border-ink bg-ink px-3 py-2 font-display text-[10px] font-black text-white shadow-[3px_3px_0_#151515]">SOLO ADMIN</span></div></header>
 
         <div id="resumen" className="mx-auto max-w-7xl px-5 py-9 lg:px-8 lg:py-12">
           <div className="animate-fade-up"><p className="font-display text-xs font-black uppercase tracking-[.16em] text-grape-dark">Control de la plataforma</p><h1 className="mt-3 max-w-4xl font-display text-3xl font-black leading-tight tracking-[-.04em] sm:text-5xl">Todo MultiLinks,<br/><span className="text-grape-dark">bajo control.</span></h1><p className="mt-4 max-w-2xl text-black/60">Usuarios, moderación y actividad general en un panel privado protegido por sesión y rol administrativo.</p></div>
 
           <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <Metric icon={<Users/>} label="Usuarios totales" value={users.length} color="bg-lime" delay="80ms"/>
-            <Metric icon={<Activity/>} label="Perfiles activos" value={activeProfiles} color="bg-white" delay="140ms"/>
-            <Metric icon={<MousePointerClick/>} label="Clics de hoy" value={clicksToday} color="bg-grape text-white" delay="200ms"/>
-            <Metric icon={<Flag/>} label="Reportes pendientes" value={reports.length} color="bg-orange-200" delay="260ms"/>
+            <Metric icon={<Users/>} label="Usuarios totales" value={users.length} accent="bg-ink text-white" delay="80ms"/>
+            <Metric icon={<Activity/>} label="Perfiles activos" value={activeProfiles} accent="bg-grape text-white" delay="140ms"/>
+            <Metric icon={<MousePointerClick/>} label="Clics de hoy" value={clicksToday} accent="bg-lime text-ink" delay="200ms"/>
+            <Metric icon={<Flag/>} label="Reportes pendientes" value={reports.length} accent="bg-cream text-ink" delay="260ms"/>
           </section>
 
           <AdminReports reports={reports}/>
@@ -87,10 +87,10 @@ export default async function AdminPage() {
   </main>;
 }
 
-function Metric({ icon, label, value, color, delay }: { icon: React.ReactNode; label: string; value: number; color: string; delay: string }) {
-  return <article className={`animate-fade-up border-[3px] border-ink ${color} p-5 shadow-hard`} style={{ animationDelay: delay }}><div className="flex items-start justify-between gap-3"><span className="grid h-11 w-11 place-items-center border-2 border-ink bg-cream text-ink">{icon}</span><span className="font-display text-3xl font-black">{value.toLocaleString("es-DO")}</span></div><p className="mt-5 font-display text-[10px] font-black uppercase tracking-[.12em]">{label}</p></article>;
+function Metric({ icon, label, value, accent, delay }: { icon: React.ReactNode; label: string; value: number; accent: string; delay: string }) {
+  return <article className="animate-fade-up border-[3px] border-ink bg-white p-5 shadow-hard" style={{ animationDelay: delay }}><div className="flex items-start justify-between gap-3"><span className={`grid h-11 w-11 place-items-center border-2 border-ink ${accent}`}>{icon}</span><span className="font-display text-3xl font-black">{value.toLocaleString("es-DO")}</span></div><p className="mt-5 font-display text-[10px] font-black uppercase tracking-[.12em] text-black/55">{label}</p></article>;
 }
 
 function AdminNav({ href, label }: { href: string; label: string }) {
-  return <a href={href} className="block border-2 border-transparent px-3 py-3 transition hover:border-ink hover:bg-lime hover:shadow-[3px_3px_0_#151515]">{label}</a>;
+  return <a href={href} className="block border-l-[3px] border-transparent px-3 py-3 text-black/55 transition hover:border-grape-dark hover:bg-cream hover:text-ink">{label}</a>;
 }

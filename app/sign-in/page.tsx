@@ -59,8 +59,8 @@ export default function SignInPage() {
     }
   }
 
-  return <main className="grid min-h-screen place-items-center bg-[#8566ff] px-5 py-12">
-    <section className="w-full max-w-md rounded-[32px] border-2 border-ink bg-cream p-7 shadow-[10px_10px_0_#c9ff58] sm:p-9">
+  return <main className="grid min-h-screen place-items-center bg-cream px-5 py-12">
+    <section className="w-full max-w-md rounded-[32px] border-[3px] border-ink bg-white p-7 shadow-hard-lg sm:p-9">
       <Logo/>
       <h1 className="mt-8 text-4xl font-black tracking-tight">{mode === "login" ? "Qué bueno verte" : "Crea tu MultiLink"}</h1>
       <p className="mt-2 text-sm text-black/55">{mode === "login" ? "Entra para administrar tu página." : "Tu página pública empieza aquí."}</p>

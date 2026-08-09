@@ -9,8 +9,8 @@ body {
   background: #f7f4ed;
   color: #151515;
   font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background-image: radial-gradient(#15151514 1px, transparent 1px);
-  background-size: 22px 22px;
+  background-image: radial-gradient(#15151509 1px, transparent 1px);
+  background-size: 28px 28px;
 }
 button, input, textarea { font: inherit; }
 ::selection { background: #151515; color: #c9ff58; }

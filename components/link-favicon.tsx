@@ -7,12 +7,20 @@ export function LinkFavicon({ url, title }: { url: string; title: string }) {
   const sources = useMemo(() => {
     try {
       const parsed = new URL(url);
-      const hostname = parsed.hostname;
+      const hostname = parsed.hostname.toLowerCase().replace(/^www\./, "");
+      const brand = hostname.includes("tiktok.com") ? "tiktok"
+        : hostname.includes("instagram.com") ? "instagram"
+        : hostname.includes("youtube.com") || hostname.includes("youtu.be") ? "youtube"
+        : hostname.includes("spotify.com") ? "spotify"
+        : hostname.includes("github.com") ? "github"
+        : hostname.includes("linkedin.com") ? "linkedin"
+        : null;
       return [
-        `https://www.google.com/s2/favicons?domain_url=${encodeURIComponent(parsed.origin)}&sz=64`,
-        `https://icons.duckduckgo.com/ip3/${encodeURIComponent(hostname)}.ico`,
+        brand ? `https://cdn.simpleicons.org/${brand}` : null,
         new URL("/favicon.ico", parsed.origin).toString(),
-      ];
+        `https://icons.duckduckgo.com/ip3/${encodeURIComponent(hostname)}.ico`,
+        `https://www.google.com/s2/favicons?domain_url=${encodeURIComponent(parsed.origin)}&sz=64`,
+      ].filter((source): source is string => Boolean(source));
     } catch { return []; }
   }, [url]);
   const [sourceIndex, setSourceIndex] = useState(0);

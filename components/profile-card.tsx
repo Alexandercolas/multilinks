@@ -77,7 +77,7 @@ export function ProfileCard({ profile, preview = false, showBranding = true }: {
                     style={{ backgroundColor: profile.accentColor }}
                     aria-hidden="true"
                   />
-                  {link.icon ? (
+                  {link.icon && !["🔗", "ðŸ”—"].includes(link.icon) ? (
                     <span className={`ml-1 grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl text-xl ${premiumDark ? "border border-white/10 bg-white/[.05]" : "border-2 border-ink bg-cream"}`}>
                       {/^https?:\/\//i.test(link.icon) ? (
                         <span

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Crown, Eye, GripVertical, ImagePlus, LogOut, MousePointerClick, Plus, Trash2 } from "lucide-react";
+import { Crown, Eye, GripVertical, Home, ImagePlus, LogOut, MousePointerClick, Plus, ShieldAlert, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { ProfileCard } from "@/components/profile-card";
@@ -35,12 +35,16 @@ export default function Dashboard() {
   const [totalViews, setTotalViews] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isPro, setIsPro] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
     async function loadProfile() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      setUserEmail(user.email ?? "");
       const { data: adminAccess } = await supabase.rpc("is_admin");
       setIsAdmin(Boolean(adminAccess));
       const [{ data: dbProfile }, { data: dbLinks }, { data: viewRows }, { data: subscription }] = await Promise.all([
@@ -151,12 +155,36 @@ export default function Dashboard() {
     router.refresh();
   }
 
+  async function deleteAccount() {
+    if (deleteConfirmation !== "ELIMINAR") {
+      setMessage("Escribe ELIMINAR para confirmar la eliminación de la cuenta.");
+      return;
+    }
+    if (!window.confirm("Esta acción eliminará permanentemente tu cuenta, perfil, enlaces y estadísticas. ¿Deseas continuar?")) return;
+    setDeleting(true);
+    setMessage("");
+    const response = await fetch("/api/account", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ confirmation: deleteConfirmation }),
+    });
+    const result = await response.json() as { error?: string };
+    if (!response.ok) {
+      setMessage(result.error ?? "No pudimos eliminar la cuenta.");
+      setDeleting(false);
+      return;
+    }
+    await createClient().auth.signOut();
+    router.replace("/");
+    router.refresh();
+  }
+
   if (!ready) return <main className="grid min-h-screen place-items-center bg-[#090b0d] text-white"><p className="font-bold text-white/60">Cargando tu espacio…</p></main>;
 
   return <main className="relative min-h-screen overflow-hidden bg-[#090b0d] text-white">
     <span aria-hidden="true" className="pointer-events-none fixed -left-48 -top-48 h-[34rem] w-[34rem] rounded-full bg-lime/10 blur-3xl"/>
     <span aria-hidden="true" className="pointer-events-none fixed -bottom-56 right-[-10rem] h-[38rem] w-[38rem] rounded-full bg-grape/10 blur-3xl"/>
-    <header className="relative flex h-20 items-center justify-between border-b border-white/10 bg-[#0d1014]/80 px-5 backdrop-blur-xl lg:px-8"><div className="text-white"><Logo/></div><div className="flex items-center gap-2">{isAdmin ? <Link href="/admin" className="rounded-xl border border-lime/25 bg-lime/10 px-4 py-2 text-sm font-black text-lime transition hover:border-lime/50 motion-reduce:transition-none">Administración</Link> : null}<Link href={`/${profile.username}`} className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/[.045] px-4 py-2 text-sm font-bold text-white/70 transition hover:border-lime/45 hover:text-lime motion-reduce:transition-none"><Eye size={16}/> Ver página</Link><button onClick={signOut} aria-label="Cerrar sesión" className="rounded-xl p-2 text-white/45 transition hover:bg-white/[.06] hover:text-white motion-reduce:transition-none"><LogOut size={19}/></button></div></header>
+    <header className="relative flex min-h-20 items-center justify-between gap-3 border-b border-white/10 bg-[#0d1014]/80 px-4 py-3 backdrop-blur-xl lg:px-8"><Link href="/" aria-label="Volver al inicio" className="text-white"><Logo/></Link><div className="flex flex-wrap items-center justify-end gap-2"><Link href="/" className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/[.045] px-3 py-2 text-sm font-bold text-white/70 transition hover:border-lime/45 hover:text-lime motion-reduce:transition-none"><Home size={16}/><span className="hidden sm:inline">Inicio</span></Link>{isAdmin ? <Link href="/admin" className="rounded-xl border border-lime/25 bg-lime/10 px-3 py-2 text-sm font-black text-lime transition hover:border-lime/50 motion-reduce:transition-none">Administración</Link> : null}<Link href={`/${profile.username}`} className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/[.045] px-3 py-2 text-sm font-bold text-white/70 transition hover:border-lime/45 hover:text-lime motion-reduce:transition-none"><Eye size={16}/><span className="hidden sm:inline">Ver página</span></Link><button onClick={signOut} aria-label="Cerrar sesión" className="rounded-xl p-2 text-white/45 transition hover:bg-white/[.06] hover:text-white motion-reduce:transition-none"><LogOut size={19}/></button></div></header>
     <div className="relative mx-auto grid max-w-7xl gap-8 px-5 py-8 lg:grid-cols-[1fr_410px]">
       <section>
         <div className="mb-7 flex flex-wrap items-end justify-between gap-4"><div><p className="font-display text-xs font-black uppercase tracking-[.16em] text-lime">TU ESPACIO</p><h1 className="mt-2 font-display text-3xl font-black tracking-[-.04em] text-white sm:text-4xl">Personaliza tu página</h1></div><div className="text-right"><button onClick={save} disabled={saving} className="rounded-xl bg-lime px-6 py-3 text-sm font-black text-ink transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(201,255,88,.18)] disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none">{saving ? "Publicando…" : "Guardar y publicar"}</button>{message ? <p className="mt-2 max-w-xs rounded-lg border border-white/10 bg-white/[.04] px-3 py-2 text-xs font-semibold text-white/60">{message}</p> : null}</div></div>
@@ -170,6 +198,7 @@ export default function Dashboard() {
           <div className="mt-6"><p className="text-sm font-bold text-white/75">Forma de botones</p><div className="mt-3 flex flex-wrap gap-2">{(["rounded", "pill", "square"] as const).map(style => <button key={style} onClick={() => setProfile({ ...profile, buttonStyle: style })} className={`border px-4 py-2 text-sm font-bold transition motion-reduce:transition-none ${style === "pill" ? "rounded-full" : style === "square" ? "rounded-md" : "rounded-2xl"} ${profile.buttonStyle === style ? "border-lime bg-lime text-ink" : "border-white/15 bg-white/[.035] text-white/60 hover:border-white/30 hover:text-white"}`}>{style === "rounded" ? "Redondeado" : style === "pill" ? "Cápsula" : "Cuadrado"}</button>)}</div></div>
         </div>
         <div className="mt-6 rounded-[2rem] border border-white/15 bg-[#101318]/95 p-6 shadow-[0_24px_75px_rgba(0,0,0,.30)]"><div className="flex items-center justify-between"><div><h2 className="font-display text-lg font-black">Mis enlaces</h2><p className="mt-1 text-xs text-white/35">Añade títulos de sección e íconos opcionales para organizar mejor tu página.</p></div><button onClick={addLink} className="flex items-center gap-2 rounded-xl bg-lime px-4 py-2 text-sm font-black text-ink transition hover:shadow-[0_10px_26px_rgba(201,255,88,.16)] motion-reduce:transition-none"><Plus size={17}/> Agregar</button></div><div className="mt-5 space-y-3">{profile.links.map(link => <div key={link.id} className={`flex items-start gap-3 rounded-2xl border bg-white/[.025] p-3 ${isSafeLink(link.url) ? "border-white/10" : "border-red-400/60"}`}><GripVertical className="mt-2 hidden shrink-0 text-white/20 sm:block" size={20}/><div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-[1fr_1fr_90px]"><input value={link.title} aria-label="Título del enlace" placeholder="Título" onChange={e => updateLink(link.id, { title: e.target.value })} className="min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm font-semibold text-white outline-none placeholder:text-white/25 focus:border-lime/70"/><input value={link.url} aria-label="Dirección del enlace" placeholder="https://..." onChange={e => updateLink(link.id, { url: e.target.value })} className="min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70"/><input value={link.icon ?? ""} maxLength={500} aria-label="Ícono del enlace" placeholder="Emoji o URL" onChange={e => updateLink(link.id, { icon: e.target.value })} className="min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70"/><input value={link.sectionTitle ?? ""} maxLength={60} aria-label="Título de sección" placeholder="Sección opcional, por ejemplo: Mis redes" onChange={e => updateLink(link.id, { sectionTitle: e.target.value })} className="min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70 sm:col-span-3"/></div><button aria-label="Activar enlace" onClick={() => updateLink(link.id, { active: !link.active })} className={`mt-2 h-6 w-11 shrink-0 rounded-full p-1 ${link.active ? "bg-lime" : "bg-white/15"}`}><span className={`block h-4 w-4 rounded-full bg-[#101318] transition motion-reduce:transition-none ${link.active ? "translate-x-5" : ""}`}/></button><button aria-label="Eliminar" onClick={() => setProfile({ ...profile, links: profile.links.filter(item => item.id !== link.id) })} className="mt-1 p-2 text-white/30 transition hover:text-red-300 motion-reduce:transition-none"><Trash2 size={18}/></button></div>)}</div></div>
+        <div className="mt-6 rounded-[2rem] border border-red-300/15 bg-[#101318]/95 p-6 shadow-[0_24px_75px_rgba(0,0,0,.30)]"><div className="flex items-start gap-4"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-red-300/20 bg-red-300/10 text-red-200"><ShieldAlert size={20}/></span><div className="min-w-0 flex-1"><h2 className="font-display text-lg font-black text-white">Cuenta y seguridad</h2><p className="mt-1 break-all text-sm text-white/45">Sesión iniciada como {userEmail}</p><button onClick={signOut} className="mt-4 inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[.04] px-4 py-2 text-sm font-bold text-white/70 transition hover:border-white/30 hover:text-white motion-reduce:transition-none"><LogOut size={16}/> Cerrar sesión</button><div className="mt-6 border-t border-white/10 pt-5"><h3 className="font-bold text-red-200">Eliminar cuenta permanentemente</h3><p className="mt-2 max-w-2xl text-sm leading-6 text-white/45">Se eliminarán tu perfil, enlaces, estadísticas y acceso. Esta acción no se puede deshacer. Si tienes una suscripción activa, cancélala primero desde la página de planes.</p><div className="mt-4 flex flex-col gap-3 sm:flex-row"><input value={deleteConfirmation} onChange={event => setDeleteConfirmation(event.target.value.toUpperCase())} placeholder="Escribe ELIMINAR" aria-label="Confirmación para eliminar la cuenta" className="rounded-xl border border-red-300/20 bg-white/[.035] px-4 py-3 text-sm font-bold text-white outline-none placeholder:text-white/25 focus:border-red-300/60"/><button onClick={deleteAccount} disabled={deleting || deleteConfirmation !== "ELIMINAR"} className="rounded-xl border border-red-300/30 bg-red-300/10 px-4 py-3 text-sm font-black text-red-100 transition hover:bg-red-300/15 disabled:cursor-not-allowed disabled:opacity-35 motion-reduce:transition-none">{deleting ? "Eliminando…" : "Eliminar mi cuenta"}</button></div></div></div></div></div>
       </section>
       <aside className="hidden lg:block"><div className="sticky top-6"><p className="mb-3 text-center text-xs font-black uppercase tracking-widest text-white/30">Vista previa</p><div className="mx-auto h-[720px] max-w-[390px] overflow-hidden rounded-[42px] border-[10px] border-[#171a1f] bg-[#171a1f] shadow-[0_30px_90px_rgba(0,0,0,.45)]"><div className="h-full overflow-y-auto rounded-[30px]"><ProfileCard profile={profile} preview/></div></div></div></aside>
     </div>

@@ -12,7 +12,7 @@ export function ProfileCard({ profile, preview = false, showBranding = true }: {
 
   return (
     <section
-      className={`relative min-h-full overflow-hidden ${themeClasses[profile.theme]} px-5 py-10 text-center sm:px-7 sm:py-12`}
+      className={`relative min-h-full overflow-hidden ${themeClasses[profile.theme]} ${premiumDark ? "text-white" : ""} px-5 py-10 text-center sm:px-7 sm:py-12`}
       style={{ backgroundColor: premiumDark ? "#0f1115" : profile.backgroundColor }}
     >
       {premiumDark ? <><span className="absolute -left-24 top-8 h-64 w-64 rounded-full bg-lime/20 blur-3xl" aria-hidden="true"/><span className="absolute -right-24 top-72 h-72 w-72 rounded-full bg-lime/10 blur-3xl" aria-hidden="true"/><span className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,.06),transparent_42%)]" aria-hidden="true"/></> : <><span className="absolute -left-8 top-24 h-24 w-24 rotate-12 border-[3px] border-ink bg-white/20" aria-hidden="true"/><span className="absolute -right-10 top-6 h-28 w-28 rounded-full border-[3px] border-ink opacity-40" style={{ backgroundColor: profile.accentColor }} aria-hidden="true"/></>}
@@ -35,7 +35,7 @@ export function ProfileCard({ profile, preview = false, showBranding = true }: {
         </div>
 
         <div className="animate-fade-up [animation-delay:80ms]">
-          <h1 className="mt-7 font-display text-3xl font-black leading-tight tracking-[-.03em] sm:text-4xl">
+          <h1 className={`mt-7 font-display text-3xl font-black leading-tight tracking-[-.03em] sm:text-4xl ${premiumDark ? "text-white" : ""}`}>
             {profile.displayName}
           </h1>
           <p className={`mt-3 inline-flex items-center px-3 py-1 font-display text-xs font-bold ${premiumDark ? "text-lime" : "rotate-[-1deg] border-2 border-ink bg-white text-ink shadow-[3px_3px_0_#151515]"}`}>
@@ -43,7 +43,7 @@ export function ProfileCard({ profile, preview = false, showBranding = true }: {
           </p>
         </div>
 
-        <p className="mx-auto mt-6 max-w-sm animate-fade-up text-base font-semibold leading-7 opacity-80 [animation-delay:160ms]">
+        <p className={`mx-auto mt-6 max-w-sm animate-fade-up text-base font-semibold leading-7 [animation-delay:160ms] ${premiumDark ? "text-white/75" : "opacity-80"}`}>
           {profile.bio}
         </p>
 
@@ -97,7 +97,7 @@ export function ProfileCard({ profile, preview = false, showBranding = true }: {
           })}
         </div>
 
-        {!preview && showBranding ? <Link href="/sign-in" className={`group mx-auto mt-12 inline-flex animate-fade-up items-center gap-2 rounded-full px-4 py-2 font-display text-[10px] font-black uppercase tracking-[.08em] opacity-65 transition hover:-translate-y-0.5 hover:opacity-100 [animation-delay:520ms] ${premiumDark ? "border border-white/15 text-white hover:border-lime hover:text-lime" : "border-2 border-current hover:bg-white hover:text-grape-dark"}`}><span className={premiumDark ? "text-lime" : "text-grape-dark"} aria-hidden="true">✦</span> Hecho con MultiLinks <ArrowUpRight size={14} className="transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5"/></Link> : null}
+        {!preview && showBranding ? <Link href="/sign-in?mode=signup" className={`group mx-auto mt-12 inline-flex animate-fade-up items-center gap-2 rounded-full px-4 py-2 font-display text-[10px] font-black uppercase tracking-[.08em] opacity-75 transition hover:-translate-y-0.5 hover:opacity-100 [animation-delay:520ms] motion-reduce:transform-none motion-reduce:transition-none ${premiumDark ? "border border-white/15 text-white hover:border-lime hover:text-lime" : "border-2 border-current hover:bg-white hover:text-grape-dark"}`}><span className={premiumDark ? "text-lime" : "text-grape-dark"} aria-hidden="true">✦</span> Crea tu MultiLinks gratis <ArrowUpRight size={14} className="transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none"/></Link> : null}
         {!preview ? <div className="mt-5 flex items-center justify-center gap-4 text-xs font-bold opacity-60"><Link href={`/report/${profile.username}`} className="inline-flex items-center gap-1.5 hover:underline"><Flag size={13}/> Reportar</Link><Link href="/ayuda" className="hover:underline">Ayuda</Link></div> : null}
       </div>
     </section>

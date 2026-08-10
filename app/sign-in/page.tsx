@@ -15,7 +15,9 @@ export default function SignInPage() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("suspended") === "1") {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("mode") === "signup") setMode("signup");
+    if (params.get("suspended") === "1") {
       setMessage("Esta cuenta está suspendida. Contacta a soporte si crees que se trata de un error.");
     }
   }, []);

@@ -49,7 +49,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
       links: (links ?? []).map((link) => ({ ...link, icon: link.icon ?? undefined, sectionTitle: link.section_title ?? undefined })),
     };
     const premiumDark = profile.theme === "neon";
-    return <main className={`min-h-screen px-4 py-5 sm:px-6 sm:py-7 ${premiumDark ? "bg-[#090b0d]" : "bg-cream"}`}><ProfileViewTracker profileId={data.id} /><div className="mx-auto mb-5 flex max-w-md animate-fade-up justify-end"><ShareProfileButton title={profile.displayName} dark={premiumDark}/></div><div className={`mx-auto max-w-md overflow-hidden rounded-[2.5rem] ${premiumDark ? "border border-white/15 shadow-[0_24px_80px_rgba(0,0,0,.55)]" : "border-[3px] border-ink shadow-hard-lg"}`}><ProfileCard profile={profile} showBranding={!hasPro}/></div></main>;
+    return <main className={`min-h-screen px-4 py-5 sm:px-6 sm:py-7 ${premiumDark ? "bg-[#090b0d]" : "bg-cream"}`}><ProfileViewTracker profileId={data.id} /><div className="mx-auto mb-5 flex max-w-md animate-fade-up justify-end"><ShareProfileButton title={profile.displayName} dark={premiumDark}/></div><div className={`mx-auto max-w-md overflow-hidden rounded-[2.5rem] ${premiumDark ? "border border-white/15 shadow-[0_24px_80px_rgba(0,0,0,.55)]" : "border-[3px] border-ink shadow-hard-lg"}`}><ProfileCard profile={profile}/></div></main>;
   }
 
   if (normalizedUsername === "demo") {

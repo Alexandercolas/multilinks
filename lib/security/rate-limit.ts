@@ -16,3 +16,15 @@ export async function allowRequest(scope: string, identity: string, maxHits: num
   });
   return !error && data === true;
 }
+
+export async function allowRouteRequest(request: Request, scope: string, identity: string, maxHits: number, windowSeconds: number) {
+  const forwarded = request.headers.get("x-vercel-forwarded-for") ?? request.headers.get("x-forwarded-for") ?? "unknown";
+  const ip = forwarded.split(",")[0]?.trim() || "unknown";
+  const key = createHash("sha256").update(`${scope}:${ip}:${identity.toLowerCase()}`).digest("hex");
+  const { data, error } = await createAdminClient().rpc("check_request_rate_limit", {
+    target_key: key,
+    max_hits: maxHits,
+    window_seconds: windowSeconds,
+  });
+  return !error && data === true;
+}

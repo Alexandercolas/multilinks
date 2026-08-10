@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { allowRouteRequest } from "@/lib/security/rate-limit";
 
 const querySchema = z.object({
   search: z.string().trim().max(120).default(""),
@@ -13,6 +14,8 @@ export async function GET(request: Request) {
   if (!user) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
   const { data: isAdmin } = await supabase.rpc("is_admin");
   if (!isAdmin) return NextResponse.json({ error: "No autorizado." }, { status: 403 });
+  const allowed = await allowRouteRequest(request, "admin-users-search", user.id, 60, 60);
+  if (!allowed) return NextResponse.json({ error: "Demasiadas consultas. Espera un momento." }, { status: 429 });
 
   const url = new URL(request.url);
   const parsed = querySchema.safeParse({ search: url.searchParams.get("search") ?? "", page: url.searchParams.get("page") ?? 1 });

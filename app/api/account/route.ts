@@ -2,13 +2,18 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { allowRouteRequest } from "@/lib/security/rate-limit";
+import { isSameOriginRequest } from "@/lib/security/same-origin";
 
 const requestSchema = z.object({ confirmation: z.literal("ELIMINAR") });
 
 export async function DELETE(request: Request) {
+  if (!isSameOriginRequest(request)) return NextResponse.json({ error: "Origen no autorizado." }, { status: 403 });
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Inicia sesión para continuar." }, { status: 401 });
+  const allowed = await allowRouteRequest(request, "account-delete", user.id, 3, 60 * 60);
+  if (!allowed) return NextResponse.json({ error: "Demasiados intentos. Espera antes de volver a intentarlo." }, { status: 429 });
 
   const parsed = requestSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Escribe ELIMINAR para confirmar." }, { status: 400 });

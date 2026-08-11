@@ -16,6 +16,7 @@ export type Profile = {
   avatarImage?: string;
   theme: "lime" | "violet" | "sunset" | "neon";
   backgroundColor?: string;
+  backgroundPreset?: string;
   accentColor?: string;
   buttonStyle?: "rounded" | "pill" | "square";
   links: LinkItem[];

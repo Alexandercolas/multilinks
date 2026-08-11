@@ -4,18 +4,20 @@ import type { Profile } from "@/types/profile";
 import { themeClasses } from "@/lib/demo-profile";
 import { isSafeLink } from "@/lib/profile-storage";
 import { LinkFavicon } from "@/components/link-favicon";
+import { getPremiumBackground, premiumBackgroundStyle } from "@/lib/profile-backgrounds";
 
 export function ProfileCard({ profile, preview = false, showBranding = true }: { profile: Profile; preview?: boolean; showBranding?: boolean }) {
   const buttonRadius = profile.buttonStyle === "pill" ? "rounded-full" : profile.buttonStyle === "square" ? "rounded-md" : "rounded-2xl";
   const visibleLinks = profile.links.filter((link) => link.active && isSafeLink(link.url));
-  const premiumDark = profile.theme === "neon";
+  const selectedBackground = getPremiumBackground(profile.backgroundPreset);
+  const premiumDark = selectedBackground ? selectedBackground.dark : profile.theme === "neon";
 
   return (
     <section
       className={`relative min-h-full overflow-hidden ${themeClasses[profile.theme]} ${premiumDark ? "text-white" : ""} px-5 py-10 text-center sm:px-7 sm:py-12`}
-      style={{ backgroundColor: premiumDark ? "#0f1115" : profile.backgroundColor }}
+      style={{ backgroundColor: premiumDark ? "#0f1115" : profile.backgroundColor, ...premiumBackgroundStyle(profile.backgroundPreset) }}
     >
-      {premiumDark ? <><span className="absolute -left-24 top-8 h-64 w-64 rounded-full bg-lime/20 blur-3xl" aria-hidden="true"/><span className="absolute -right-24 top-72 h-72 w-72 rounded-full bg-lime/10 blur-3xl" aria-hidden="true"/><span className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,.06),transparent_42%)]" aria-hidden="true"/></> : <><span className="absolute -left-8 top-24 h-24 w-24 rotate-12 border-[3px] border-ink bg-white/20" aria-hidden="true"/><span className="absolute -right-10 top-6 h-28 w-28 rounded-full border-[3px] border-ink opacity-40" style={{ backgroundColor: profile.accentColor }} aria-hidden="true"/></>}
+      {profile.backgroundPreset ? <span className={`absolute inset-0 ${premiumDark ? "bg-black/30" : "bg-white/15"}`} aria-hidden="true"/> : premiumDark ? <><span className="absolute -left-24 top-8 h-64 w-64 rounded-full bg-lime/20 blur-3xl" aria-hidden="true"/><span className="absolute -right-24 top-72 h-72 w-72 rounded-full bg-lime/10 blur-3xl" aria-hidden="true"/><span className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,.06),transparent_42%)]" aria-hidden="true"/></> : <><span className="absolute -left-8 top-24 h-24 w-24 rotate-12 border-[3px] border-ink bg-white/20" aria-hidden="true"/><span className="absolute -right-10 top-6 h-28 w-28 rounded-full border-[3px] border-ink opacity-40" style={{ backgroundColor: profile.accentColor }} aria-hidden="true"/></>}
 
       <div className="relative mx-auto max-w-md">
         <div className="animate-fade-up">

@@ -7,6 +7,7 @@ import { ShareProfileButton } from "@/components/share-profile-button";
 import { demoProfile } from "@/lib/demo-profile";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/types/profile";
+import { decodeStoredBackground, getPremiumBackground } from "@/lib/profile-backgrounds";
 
 type DbProfile = {
   id: string;
@@ -36,6 +37,8 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
       supabase.from("links").select("id,title,url,active,icon,section_title").eq("profile_id", data.id).eq("active", true).order("position"),
       supabase.rpc("profile_has_pro", { target_profile: data.id }),
     ]);
+    const storedBackground = decodeStoredBackground(data.background_color);
+    const allowedPreset = hasPro ? storedBackground.preset : undefined;
     const profile: Profile = {
       username: data.username,
       displayName: data.display_name,
@@ -43,12 +46,13 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
       avatar: data.display_name.slice(0, 2).toUpperCase(),
       avatarImage: data.avatar_url ?? undefined,
       theme: data.theme === "neon" && !hasPro ? "lime" : data.theme,
-      backgroundColor: data.theme === "neon" && !hasPro ? "#c9ff58" : data.background_color,
+      backgroundColor: data.theme === "neon" && !hasPro ? "#c9ff58" : storedBackground.color,
+      backgroundPreset: allowedPreset,
       accentColor: data.theme === "neon" && !hasPro ? "#8566ff" : data.accent_color,
       buttonStyle: data.button_style,
       links: (links ?? []).map((link) => ({ ...link, icon: link.icon ?? undefined, sectionTitle: link.section_title ?? undefined })),
     };
-    const premiumDark = profile.theme === "neon";
+    const premiumDark = profile.theme === "neon" || Boolean(getPremiumBackground(profile.backgroundPreset)?.dark);
     return <main className={`min-h-screen px-4 py-5 sm:px-6 sm:py-7 ${premiumDark ? "bg-[#090b0d]" : "bg-cream"}`}><ProfileViewTracker profileId={data.id} /><div className="mx-auto mb-5 flex max-w-md animate-fade-up justify-end"><ShareProfileButton title={profile.displayName} dark={premiumDark}/></div><div className={`mx-auto max-w-md overflow-hidden rounded-[2.5rem] ${premiumDark ? "border border-white/15 shadow-[0_24px_80px_rgba(0,0,0,.55)]" : "border-[3px] border-ink shadow-hard-lg"}`}><ProfileCard profile={profile}/></div></main>;
   }
 

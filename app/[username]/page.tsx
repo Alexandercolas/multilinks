@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CircleCheck, Sparkles } from "lucide-react";
+import { ArrowRight, CircleCheck, Pencil, Sparkles } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ProfileCard } from "@/components/profile-card";
 import { ProfileViewTracker } from "@/components/profile-view-tracker";
@@ -33,10 +33,12 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     .maybeSingle<DbProfile>();
 
   if (data) {
-    const [{ data: links }, { data: hasPro }] = await Promise.all([
+    const [{ data: links }, { data: hasPro }, { data: authData }] = await Promise.all([
       supabase.from("links").select("id,title,url,active,icon,section_title").eq("profile_id", data.id).eq("active", true).order("position"),
       supabase.rpc("profile_has_pro", { target_profile: data.id }),
+      supabase.auth.getUser(),
     ]);
+    const isOwner = authData.user?.id === data.id;
     const storedBackground = decodeStoredBackground(data.background_color);
     const allowedPreset = hasPro ? storedBackground.preset : undefined;
     const profile: Profile = {
@@ -53,7 +55,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
       links: (links ?? []).map((link) => ({ ...link, icon: link.icon ?? undefined, sectionTitle: link.section_title ?? undefined })),
     };
     const premiumDark = profile.theme === "neon" || Boolean(getPremiumBackground(profile.backgroundPreset)?.dark);
-    return <main className={`min-h-screen px-4 py-5 sm:px-6 sm:py-7 ${premiumDark ? "bg-[#090b0d]" : "bg-cream"}`}><ProfileViewTracker profileId={data.id} /><div className="mx-auto mb-5 flex max-w-md animate-fade-up justify-end"><ShareProfileButton title={profile.displayName} dark={premiumDark}/></div><div className={`mx-auto max-w-md overflow-hidden rounded-[2.5rem] ${premiumDark ? "border border-white/15 shadow-[0_24px_80px_rgba(0,0,0,.55)]" : "border-[3px] border-ink shadow-hard-lg"}`}><ProfileCard profile={profile}/></div></main>;
+    return <main className={`min-h-screen px-4 py-5 sm:px-6 sm:py-7 ${premiumDark ? "bg-[#090b0d]" : "bg-cream"}`}>{!isOwner ? <ProfileViewTracker profileId={data.id} /> : null}<div className={`mx-auto mb-5 flex max-w-md animate-fade-up items-center gap-2 ${isOwner ? "justify-between" : "justify-end"}`}>{isOwner ? <Link href="/dashboard" className={`inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-black transition hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none ${premiumDark ? "border border-lime/30 bg-lime/10 text-lime hover:border-lime/60" : "border-2 border-ink bg-lime text-ink shadow-[3px_3px_0_#151515]"}`}><Pencil size={16}/> Editar mi perfil</Link> : null}<ShareProfileButton title={profile.displayName} dark={premiumDark}/></div><div className={`mx-auto max-w-md overflow-hidden rounded-[2.5rem] ${premiumDark ? "border border-white/15 shadow-[0_24px_80px_rgba(0,0,0,.55)]" : "border-[3px] border-ink shadow-hard-lg"}`}><ProfileCard profile={profile}/></div></main>;
   }
 
   if (normalizedUsername === "demo") {

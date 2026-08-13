@@ -43,6 +43,12 @@ export default function Home() {
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="hidden items-center gap-5 text-sm font-bold lg:flex"><a href="#ejemplos" className="hover:text-grape-dark">Ejemplos</a><a href="#funciones" className="hover:text-grape-dark">Funciones</a><Link href="/planes" className="hover:text-grape-dark">Precios</Link><Link href="/ayuda" className="hover:text-grape-dark">Ayuda</Link></div>
           <Link
+            href="/sign-in"
+            className="hidden rounded-full border-2 border-ink px-4 py-2 font-display text-[10px] font-black transition hover:-translate-y-0.5 hover:bg-white sm:inline-flex"
+          >
+            Iniciar sesión
+          </Link>
+          <Link
             href="/dashboard"
             className="rounded-full bg-ink px-4 py-2.5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:shadow-hard sm:px-5"
           >
@@ -71,6 +77,12 @@ export default function Home() {
             >
               Comenzar gratis
               <ArrowUpRight size={19} className="transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </Link>
+            <Link
+              href="/sign-in"
+              className="inline-flex items-center justify-center rounded-full border-2 border-ink px-6 py-3.5 font-display text-xs font-black transition hover:-translate-y-0.5 hover:bg-white hover:shadow-hard"
+            >
+              Iniciar sesión
             </Link>
             <span className="flex items-center gap-2 px-3 text-sm font-semibold">
               <Check size={18} /> Sin tarjeta

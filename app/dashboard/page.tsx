@@ -70,6 +70,9 @@ type DbLink = {
   section_title: string | null;
 };
 
+const FREE_ACTIVE_LINK_LIMIT = 5;
+const PRO_ACTIVE_LINK_LIMIT = 100;
+
 type SortableLinkRowProps = {
   link: LinkItem;
   reducedMotion: boolean;
@@ -314,9 +317,16 @@ export default function Dashboard() {
     });
   };
   const addLink = () => {
-    if (!isPro && profile.links.filter((link) => link.active).length >= 10) {
+    const activeLinkLimit = isPro
+      ? PRO_ACTIVE_LINK_LIMIT
+      : FREE_ACTIVE_LINK_LIMIT;
+    if (
+      profile.links.filter((link) => link.active).length >= activeLinkLimit
+    ) {
       setMessage(
-        "El plan Gratis permite hasta 10 enlaces activos. Mejora a Pro para añadir enlaces ilimitados.",
+        isPro
+          ? "El plan Pro permite hasta 100 enlaces activos."
+          : "El plan Gratis permite hasta 5 enlaces activos. Mejora a Pro para añadir hasta 100.",
       );
       return;
     }
@@ -362,8 +372,17 @@ export default function Dashboard() {
       setMessage("Corrige las direcciones marcadas en rojo.");
       return;
     }
-    if (!isPro && profile.links.filter((link) => link.active).length > 10) {
-      setMessage("El plan Gratis permite hasta 10 enlaces activos.");
+    const activeLinkLimit = isPro
+      ? PRO_ACTIVE_LINK_LIMIT
+      : FREE_ACTIVE_LINK_LIMIT;
+    if (
+      profile.links.filter((link) => link.active).length > activeLinkLimit
+    ) {
+      setMessage(
+        isPro
+          ? "El plan Pro permite hasta 100 enlaces activos."
+          : "El plan Gratis permite hasta 5 enlaces activos.",
+      );
       return;
     }
     if (!isPro && (profile.theme === "neon" || profile.backgroundPreset)) {
@@ -571,7 +590,7 @@ export default function Dashboard() {
                   Desbloquea MultiLinks Pro
                 </p>
                 <p className="mt-1 text-sm text-white/50">
-                  Enlaces ilimitados, estadísticas completas y más
+                  Hasta 100 enlaces, estadísticas completas y más
                   personalización.
                 </p>
               </div>

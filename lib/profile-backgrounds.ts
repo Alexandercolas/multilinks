@@ -9,12 +9,25 @@ export const premiumBackgrounds = [
   { id: "violet-stone", name: "Violet Stone", position: "33.333% 100%", dark: true },
   { id: "ivory-gold", name: "Ivory Gold", position: "66.667% 100%", dark: false },
   { id: "soft-lavender", name: "Soft Lavender", position: "100% 100%", dark: false },
+  { id: "fuchsia-ribbon", name: "Fuchsia Ribbon", asset: "/backgrounds/fuchsia-ribbon.png", dark: true },
+  { id: "purple-silk", name: "Purple Silk", asset: "/backgrounds/purple-silk.png", dark: true },
+  { id: "black-gold-marble", name: "Black Gold", asset: "/backgrounds/black-gold-marble.png", dark: true },
+  { id: "rose-gold-flow", name: "Rose Gold", asset: "/backgrounds/rose-gold-flow.png", dark: false },
+  { id: "pink-marble", name: "Pink Marble", asset: "/backgrounds/pink-marble.png", dark: false },
+  { id: "ivory-gold-flow", name: "Ivory Gold Flow", asset: "/backgrounds/ivory-gold-flow.png", dark: false },
+  { id: "lavender-silk", name: "Lavender Silk", asset: "/backgrounds/lavender-silk.png", dark: false },
+  { id: "blush-veil", name: "Blush Veil", asset: "/backgrounds/blush-veil.png", dark: false, free: true },
 ] as const;
 
 export type PremiumBackgroundId = (typeof premiumBackgrounds)[number]["id"];
 
 export function getPremiumBackground(id?: string) {
   return premiumBackgrounds.find(background => background.id === id);
+}
+
+export function isFreeBackground(id?: string) {
+  const background = getPremiumBackground(id);
+  return Boolean(background && "free" in background);
 }
 
 export function decodeStoredBackground(value?: string) {
@@ -32,6 +45,14 @@ export function encodeStoredBackground(color?: string, preset?: string) {
 export function premiumBackgroundStyle(id?: string) {
   const background = getPremiumBackground(id);
   if (!background) return undefined;
+  if ("asset" in background) {
+    return {
+      backgroundImage: `url('${background.asset}')`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
+    } as const;
+  }
   return {
     backgroundImage: "url('/backgrounds/premium-collection.webp')",
     backgroundSize: "400% 200%",

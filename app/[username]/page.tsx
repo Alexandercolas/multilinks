@@ -7,7 +7,7 @@ import { ShareProfileButton } from "@/components/share-profile-button";
 import { demoProfile } from "@/lib/demo-profile";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/types/profile";
-import { decodeStoredBackground, getPremiumBackground } from "@/lib/profile-backgrounds";
+import { decodeStoredBackground, getPremiumBackground, isFreeBackground } from "@/lib/profile-backgrounds";
 
 type DbProfile = {
   id: string;
@@ -40,7 +40,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     ]);
     const isOwner = authData.user?.id === data.id;
     const storedBackground = decodeStoredBackground(data.background_color);
-    const allowedPreset = hasPro ? storedBackground.preset : undefined;
+    const allowedPreset = hasPro || isFreeBackground(storedBackground.preset) ? storedBackground.preset : undefined;
     const profile: Profile = {
       username: data.username,
       displayName: data.display_name,

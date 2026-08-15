@@ -45,6 +45,7 @@ import {
   encodeStoredBackground,
   premiumBackgrounds,
   premiumBackgroundStyle,
+  isFreeBackground,
 } from "@/lib/profile-backgrounds";
 import { createClient } from "@/lib/supabase/client";
 import type { LinkItem, Profile } from "@/types/profile";
@@ -385,7 +386,11 @@ export default function Dashboard() {
       );
       return;
     }
-    if (!isPro && (profile.theme === "neon" || profile.backgroundPreset)) {
+    if (
+      !isPro &&
+      (profile.theme === "neon" ||
+        (profile.backgroundPreset && !isFreeBackground(profile.backgroundPreset)))
+    ) {
       setMessage(
         "Los temas y fondos premium son exclusivos de MultiLinks Pro.",
       );
@@ -765,7 +770,7 @@ export default function Dashboard() {
                     <Crown size={16} className="text-lime" /> Fondos Premium
                   </span>
                   <span className="mt-1 block text-xs text-white/35">
-                    8 diseños exclusivos · toca para desplegar
+                    16 diseños · 1 gratis · toca para desplegar
                   </span>
                 </span>
                 <ChevronDown
@@ -777,12 +782,13 @@ export default function Dashboard() {
                 <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {premiumBackgrounds.map((background) => {
                     const selected = profile.backgroundPreset === background.id;
+                    const availableForFree = isFreeBackground(background.id);
                     return (
                       <button
                         key={background.id}
                         type="button"
                         onClick={() => {
-                          if (!isPro) {
+                          if (!isPro && !availableForFree) {
                             setMessage(
                               "Los fondos Premium están disponibles con MultiLinks Pro.",
                             );
@@ -809,9 +815,13 @@ export default function Dashboard() {
                         <span className="absolute inset-x-0 bottom-0 bg-black/70 px-2 py-2 text-[10px] font-black text-white backdrop-blur-sm">
                           {background.name}
                         </span>
-                        {!isPro ? (
+                        {!isPro && !availableForFree ? (
                           <span className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-lime text-ink">
                             <Crown size={13} />
+                          </span>
+                        ) : !isPro && availableForFree ? (
+                          <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-ink">
+                            Gratis
                           </span>
                         ) : null}
                       </button>

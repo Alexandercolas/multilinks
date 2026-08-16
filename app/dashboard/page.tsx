@@ -22,6 +22,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
+  Check,
   ChevronDown,
   Crown,
   Eye,
@@ -189,11 +190,6 @@ export default function Dashboard() {
   const [totalViews, setTotalViews] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isPro, setIsPro] = useState(false);
-  const [subscriptionDetails, setSubscriptionDetails] = useState<{
-    billingInterval: "monthly" | "annual" | null;
-    currentPeriodEnd: string | null;
-    portalUrl: string | null;
-  } | null>(null);
   const [activeLinkId, setActiveLinkId] = useState<string | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
   const sensors = useSensors(
@@ -234,9 +230,7 @@ export default function Dashboard() {
           .eq("profile_id", user.id),
         supabase
           .from("subscriptions")
-          .select(
-            "plan_id,status,billing_interval,current_period_end,billing_portal_url",
-          )
+          .select("plan_id,status")
           .eq("user_id", user.id)
           .maybeSingle(),
       ]);
@@ -244,15 +238,6 @@ export default function Dashboard() {
         Boolean(adminAccess) ||
           (subscription?.plan_id === "pro" &&
             ["active", "trialing"].includes(subscription.status)),
-      );
-      setSubscriptionDetails(
-        subscription?.plan_id === "pro"
-          ? {
-              billingInterval: subscription.billing_interval,
-              currentPeriodEnd: subscription.current_period_end,
-              portalUrl: subscription.billing_portal_url,
-            }
-          : null,
       );
       setTotalViews(
         (viewRows ?? []).reduce((total, row) => total + row.views, 0),
@@ -519,9 +504,18 @@ export default function Dashboard() {
       />
       <header className="relative border-b border-white/10 bg-surface-header/80 px-4 py-3 backdrop-blur-xl lg:px-8">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <Link href="/" aria-label="Volver al inicio" className="text-white">
-            <Logo />
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/" aria-label="Volver al inicio" className="text-white">
+              <Logo />
+            </Link>
+            {isPro ? (
+              <span className="rounded-full bg-gradient-to-r from-lime/55 to-grape/55 p-px">
+                <span className="block rounded-full bg-surface-header px-2.5 py-1 font-display text-[9px] font-black tracking-[.18em] text-white">
+                  PRO
+                </span>
+              </span>
+            ) : null}
+          </div>
           <nav
             aria-label="Acciones de la cuenta"
             className="flex items-center gap-2"
@@ -601,51 +595,29 @@ export default function Dashboard() {
               )}
             />
           </div>
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-lime/25 bg-lime/[.07] p-5 text-white shadow-[0_18px_55px_rgba(201,255,88,.07)]">
-            <div className="flex items-center gap-4">
-              <span className="grid h-11 w-11 place-items-center rounded-xl border border-lime/25 bg-lime/10 text-lime">
-                <Crown size={21} />
-              </span>
-              <div>
-                <p className="font-display font-black text-white">
-                  {isAdmin
-                    ? "Acceso Pro de administrador"
-                    : isPro
-                      ? "Tu plan Pro está activo"
-                      : "Desbloquea MultiLinks Pro"}
-                </p>
-                <p className="mt-1 text-sm text-white/50">
-                  {isAdmin
-                    ? "Todas las funciones están disponibles para tus pruebas."
-                    : isPro
-                      ? `Modalidad ${subscriptionDetails?.billingInterval === "annual" ? "anual" : "mensual"}${subscriptionDetails?.currentPeriodEnd ? ` · próximo cambio o renovación: ${new Intl.DateTimeFormat("es-DO", { dateStyle: "medium" }).format(new Date(subscriptionDetails.currentPeriodEnd))}` : ""}.`
-                      : "Hasta 100 enlaces, estadísticas completas y más personalización."}
-                </p>
+          {!isPro ? (
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-lime/25 bg-lime/[.07] p-5 text-white shadow-[0_18px_55px_rgba(201,255,88,.07)]">
+              <div className="flex items-center gap-4">
+                <span className="grid h-11 w-11 place-items-center rounded-xl border border-lime/25 bg-lime/10 text-lime">
+                  <Crown size={21} />
+                </span>
+                <div>
+                  <p className="font-display font-black text-white">
+                    Desbloquea MultiLinks Pro
+                  </p>
+                  <p className="mt-1 text-sm text-white/50">
+                    Hasta 100 enlaces, estadísticas completas y más personalización.
+                  </p>
+                </div>
               </div>
-            </div>
-            {isAdmin ? (
-              <Link
-                href="/admin"
-                className="rounded-xl bg-lime px-5 py-3 text-sm font-black text-ink transition hover:shadow-[0_10px_26px_rgba(201,255,88,.16)] motion-reduce:transition-none"
-              >
-                Abrir administración
-              </Link>
-            ) : isPro && subscriptionDetails?.portalUrl ? (
-              <a
-                href={subscriptionDetails.portalUrl}
-                className="rounded-xl bg-lime px-5 py-3 text-sm font-black text-ink transition hover:shadow-[0_10px_26px_rgba(201,255,88,.16)] motion-reduce:transition-none"
-              >
-                Administrar suscripción
-              </a>
-            ) : (
               <Link
                 href="/planes"
                 className="rounded-xl bg-lime px-5 py-3 text-sm font-black text-ink transition hover:shadow-[0_10px_26px_rgba(201,255,88,.16)] motion-reduce:transition-none"
               >
-                {isPro ? "Ver mi plan" : "Ver planes"}
+                Ver planes
               </Link>
-            )}
-          </div>
+            </div>
+          ) : null}
           <div
             id="perfil"
             className="scroll-mt-24 rounded-[2rem] border border-white/15 bg-card/95 p-6 shadow-[0_24px_75px_rgba(0,0,0,.30)]"
@@ -806,7 +778,12 @@ export default function Dashboard() {
               >
                 <span>
                   <span className="flex items-center gap-2 font-display text-sm font-black">
-                    <Crown size={16} className="text-lime" /> Fondos Premium
+                    {isPro ? (
+                      <Check size={16} className="text-lime" />
+                    ) : (
+                      <Crown size={16} className="text-lime" />
+                    )}
+                    Fondos Premium
                   </span>
                   <span className="mt-1 block text-xs text-white/35">
                     16 diseños · 1 gratis · toca para desplegar

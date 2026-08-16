@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 
-export function CheckoutButton({ interval }: { interval: "monthly" | "annual" }) {
+export function CheckoutButton({ interval, userId }: { interval: "monthly" | "annual"; userId: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   async function checkout() {
@@ -17,6 +17,7 @@ export function CheckoutButton({ interval }: { interval: "monthly" | "annual" })
       });
       const data = await response.json().catch(() => null);
       if (response.ok && data?.url) {
+        window.sessionStorage.setItem("multilinks:pro-checkout-pending", userId);
         window.location.assign(data.url);
         return;
       }

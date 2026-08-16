@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -31,11 +32,13 @@ export function ProActivationStatus({
     const pendingUserId = window.sessionStorage.getItem(
       "multilinks:pro-checkout-pending",
     );
-    if (pendingUserId !== userId) return;
+    const checkoutStartedHere = pendingUserId === userId;
+
+    if (initialIsPro && !checkoutStartedHere) return;
 
     previousIsPro.current = false;
     setHasPendingCheckout(true);
-  }, [checkoutSuccess, userId]);
+  }, [checkoutSuccess, initialIsPro, userId]);
 
   useEffect(() => {
     if (!checkoutSuccess || !hasPendingCheckout || isPro) return;
@@ -78,17 +81,29 @@ export function ProActivationStatus({
   useEffect(() => {
     if (!hasPendingCheckout) return;
 
-    const welcomeKey = `multilinks:pro-welcomed:${userId}`;
+    let cancelled = false;
     if (!previousIsPro.current && isPro) {
-      if (!window.localStorage.getItem(welcomeKey)) {
-        window.localStorage.setItem(welcomeKey, "true");
-        setShowWelcome(true);
+      async function claimWelcome() {
+        const { data: claimed } = await createClient().rpc(
+          "claim_pro_welcome",
+        );
+        if (cancelled) return;
+
+        if (claimed === true) {
+          setShowWelcome(true);
+        } else {
+          router.refresh();
+        }
+        window.sessionStorage.removeItem("multilinks:pro-checkout-pending");
+        setHasPendingCheckout(false);
       }
-      window.sessionStorage.removeItem("multilinks:pro-checkout-pending");
-      setHasPendingCheckout(false);
+      void claimWelcome();
     }
     previousIsPro.current = isPro;
-  }, [hasPendingCheckout, isPro, userId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [hasPendingCheckout, isPro, router]);
 
   useEffect(() => {
     if (!showWelcome) return;
@@ -131,9 +146,17 @@ export function ProActivationStatus({
         </p>
         <p className="mt-1 text-sm font-semibold text-white/45">
           {timedOut
-            ? "No necesitas repetir el pago. Activaremos Pro en cuanto Lemon Squeezy confirme la suscripción."
+            ? "Esto está tardando más de lo normal. Tu pago se procesó correctamente y tu cuenta Pro se activará en los próximos minutos. Puedes seguir usando MultiLinks mientras tanto."
             : "Lemon Squeezy ya nos devolvió al sitio. Estamos confirmando la activación de Pro."}
         </p>
+        {timedOut ? (
+          <Link
+            href="/dashboard"
+            className="mt-4 inline-flex rounded-xl bg-lime px-4 py-2.5 text-sm font-black text-ink transition hover:-translate-y-0.5 hover:shadow-[0_10px_26px_rgba(201,255,88,.16)] motion-reduce:transform-none motion-reduce:transition-none"
+          >
+            Ir al dashboard
+          </Link>
+        ) : null}
       </div>
     );
   }

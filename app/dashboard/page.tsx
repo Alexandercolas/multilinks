@@ -189,6 +189,11 @@ export default function Dashboard() {
   const [totalViews, setTotalViews] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isPro, setIsPro] = useState(false);
+  const [subscriptionDetails, setSubscriptionDetails] = useState<{
+    billingInterval: "monthly" | "annual" | null;
+    currentPeriodEnd: string | null;
+    portalUrl: string | null;
+  } | null>(null);
   const [activeLinkId, setActiveLinkId] = useState<string | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
   const sensors = useSensors(
@@ -229,7 +234,9 @@ export default function Dashboard() {
           .eq("profile_id", user.id),
         supabase
           .from("subscriptions")
-          .select("plan_id,status")
+          .select(
+            "plan_id,status,billing_interval,current_period_end,billing_portal_url",
+          )
           .eq("user_id", user.id)
           .maybeSingle(),
       ]);
@@ -237,6 +244,15 @@ export default function Dashboard() {
         Boolean(adminAccess) ||
           (subscription?.plan_id === "pro" &&
             ["active", "trialing"].includes(subscription.status)),
+      );
+      setSubscriptionDetails(
+        subscription?.plan_id === "pro"
+          ? {
+              billingInterval: subscription.billing_interval,
+              currentPeriodEnd: subscription.current_period_end,
+              portalUrl: subscription.billing_portal_url,
+            }
+          : null,
       );
       setTotalViews(
         (viewRows ?? []).reduce((total, row) => total + row.views, 0),
@@ -592,20 +608,43 @@ export default function Dashboard() {
               </span>
               <div>
                 <p className="font-display font-black text-white">
-                  Desbloquea MultiLinks Pro
+                  {isAdmin
+                    ? "Acceso Pro de administrador"
+                    : isPro
+                      ? "Tu plan Pro está activo"
+                      : "Desbloquea MultiLinks Pro"}
                 </p>
                 <p className="mt-1 text-sm text-white/50">
-                  Hasta 100 enlaces, estadísticas completas y más
-                  personalización.
+                  {isAdmin
+                    ? "Todas las funciones están disponibles para tus pruebas."
+                    : isPro
+                      ? `Modalidad ${subscriptionDetails?.billingInterval === "annual" ? "anual" : "mensual"}${subscriptionDetails?.currentPeriodEnd ? ` · próximo cambio o renovación: ${new Intl.DateTimeFormat("es-DO", { dateStyle: "medium" }).format(new Date(subscriptionDetails.currentPeriodEnd))}` : ""}.`
+                      : "Hasta 100 enlaces, estadísticas completas y más personalización."}
                 </p>
               </div>
             </div>
-            <Link
-              href="/planes"
-              className="rounded-xl bg-lime px-5 py-3 text-sm font-black text-ink transition hover:shadow-[0_10px_26px_rgba(201,255,88,.16)] motion-reduce:transition-none"
-            >
-              Ver planes
-            </Link>
+            {isAdmin ? (
+              <Link
+                href="/admin"
+                className="rounded-xl bg-lime px-5 py-3 text-sm font-black text-ink transition hover:shadow-[0_10px_26px_rgba(201,255,88,.16)] motion-reduce:transition-none"
+              >
+                Abrir administración
+              </Link>
+            ) : isPro && subscriptionDetails?.portalUrl ? (
+              <a
+                href={subscriptionDetails.portalUrl}
+                className="rounded-xl bg-lime px-5 py-3 text-sm font-black text-ink transition hover:shadow-[0_10px_26px_rgba(201,255,88,.16)] motion-reduce:transition-none"
+              >
+                Administrar suscripción
+              </a>
+            ) : (
+              <Link
+                href="/planes"
+                className="rounded-xl bg-lime px-5 py-3 text-sm font-black text-ink transition hover:shadow-[0_10px_26px_rgba(201,255,88,.16)] motion-reduce:transition-none"
+              >
+                {isPro ? "Ver mi plan" : "Ver planes"}
+              </Link>
+            )}
           </div>
           <div
             id="perfil"

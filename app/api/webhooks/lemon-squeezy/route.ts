@@ -15,11 +15,18 @@ function isValidSignature(body: string, signature: string | null) {
   return expected.length === received.length && crypto.timingSafeEqual(expected, received);
 }
 
-function mapStatus(value: unknown) {
+function mapStatus(eventName: string, value: unknown, endsAt: unknown) {
+  if (
+    eventName === "subscription_cancelled" &&
+    typeof endsAt === "string" &&
+    new Date(endsAt).getTime() > Date.now()
+  ) {
+    return { planId: "pro", status: "active" };
+  }
   if (value === "on_trial") return { planId: "pro", status: "trialing" };
   if (value === "active") return { planId: "pro", status: "active" };
   if (["past_due", "unpaid", "paused"].includes(String(value))) return { planId: "pro", status: "past_due" };
-  return { planId: "free", status: "active" };
+  return { planId: "free", status: "canceled" };
 }
 
 export async function POST(request: Request) {
@@ -45,7 +52,7 @@ export async function POST(request: Request) {
     userId = data?.user_id;
   }
   if (eventName.startsWith("subscription_") && userId && providerSubscriptionId) {
-    const mapped = mapStatus(attributes.status);
+    const mapped = mapStatus(eventName, attributes.status, attributes.ends_at);
     const urls = attributes.urls as { customer_portal?: string; update_payment_method?: string } | undefined;
     const variantId = attributes.variant_id ? String(attributes.variant_id) : null;
     const monthlyVariant = process.env.LEMONSQUEEZY_PRO_MONTHLY_VARIANT_ID;

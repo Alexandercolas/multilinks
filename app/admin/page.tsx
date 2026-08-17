@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import * as Sentry from "@sentry/nextjs";
 import { Activity, ArrowUpRight, Flag, Home, MousePointerClick, ShieldCheck, Users } from "lucide-react";
 import { AdminAudit, type AdminLogRow } from "@/components/admin/admin-audit";
 import { AdminReports, type AdminReportRow } from "@/components/admin/admin-reports";
@@ -28,6 +29,9 @@ export default async function AdminPage() {
   ]);
 
   if (usersResult.error || metricsResult.error || reportsResult.error || supportResult.error || clicksResult.error || logsResult.error) {
+    const error = usersResult.error ?? metricsResult.error ?? reportsResult.error ?? supportResult.error ?? clicksResult.error ?? logsResult.error;
+    Sentry.captureException(new Error("Admin dashboard loading failed"));
+    console.error("Admin dashboard loading failed", error);
     throw new Error("No se pudieron cargar los datos administrativos.");
   }
 

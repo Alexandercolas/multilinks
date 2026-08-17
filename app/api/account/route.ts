@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -29,6 +30,7 @@ export async function DELETE(request: Request) {
 
   const { error } = await createAdminClient().auth.admin.deleteUser(user.id);
   if (error) {
+    Sentry.captureException(new Error("Account deletion failed"));
     console.error("Account deletion failed", error);
     return NextResponse.json({ error: "No pudimos eliminar la cuenta. Contacta a soporte." }, { status: 500 });
   }

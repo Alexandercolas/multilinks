@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import * as Sentry from "@sentry/nextjs";
 import { allowRequest } from "@/lib/security/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
@@ -36,6 +37,10 @@ export async function submitProfileReport(_previous: ReportState, formData: Form
     reason: parsed.data.reason,
     description: parsed.data.description,
   });
-  if (error) return { status: "error", message: "No pudimos guardar el reporte. Inténtalo nuevamente." };
+  if (error) {
+    Sentry.captureException(new Error("Profile report creation failed"));
+    console.error("Profile report creation failed", error);
+    return { status: "error", message: "No pudimos guardar el reporte. Inténtalo nuevamente." };
+  }
   return { status: "success", message: "Reporte recibido. Nuestro equipo lo revisará de forma privada." };
 }

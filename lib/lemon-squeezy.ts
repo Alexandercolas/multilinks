@@ -1,4 +1,5 @@
 import "server-only";
+import * as Sentry from "@sentry/nextjs";
 
 const API_URL = "https://api.lemonsqueezy.com/v1";
 
@@ -41,6 +42,7 @@ export async function createProCheckout(user: { id: string; email?: string }, in
   });
   const payload = await response.json();
   if (!response.ok || !payload?.data?.attributes?.url) {
+    Sentry.captureException(new Error("Lemon Squeezy checkout request failed"));
     console.error("Lemon Squeezy checkout error", response.status, payload?.errors);
     throw new Error("Checkout unavailable");
   }

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -39,7 +40,11 @@ export async function POST(request: Request) {
     window_seconds: limit.windowSeconds,
   });
 
-  if (limitError) return NextResponse.json({ message: "No pudimos validar el acceso. Inténtalo nuevamente." }, { status: 503 });
+  if (limitError) {
+    Sentry.captureException(new Error("Authentication rate limit check failed"));
+    console.error("Authentication rate limit check failed", limitError);
+    return NextResponse.json({ message: "No pudimos validar el acceso. Inténtalo nuevamente." }, { status: 503 });
+  }
   if (!allowed) return NextResponse.json({ message: "Demasiados intentos. Espera unos minutos antes de volver a intentarlo." }, { status: 429 });
 
   const supabase = await createClient();

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
 import { createProCheckout } from "@/lib/lemon-squeezy";
 import { createClient } from "@/lib/supabase/server";
@@ -20,6 +21,7 @@ export async function POST(request: Request) {
     const url = await createProCheckout({ id: user.id, email: user.email }, parsed.data.interval);
     return NextResponse.json({ url });
   } catch (error) {
+    Sentry.captureException(new Error("Checkout creation failed"));
     console.error("Checkout creation failed", error);
     return NextResponse.json({ error: "No pudimos iniciar el pago. Intenta nuevamente." }, { status: 503 });
   }

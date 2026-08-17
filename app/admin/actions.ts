@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 
@@ -46,7 +47,11 @@ export async function setUserSuspension(formData: FormData) {
     should_suspend: shouldSuspend,
     reason: values.reason ?? null,
   });
-  if (error) throw new Error("No se pudo actualizar el estado de la cuenta.");
+  if (error) {
+    Sentry.captureException(new Error("Admin suspension action failed"));
+    console.error("Admin suspension action failed", error);
+    throw new Error("No se pudo actualizar el estado de la cuenta.");
+  }
   revalidatePath("/admin");
 }
 
@@ -62,7 +67,11 @@ export async function reviewProfileReport(formData: FormData) {
     new_status: values.status,
     note: values.note ?? null,
   });
-  if (error) throw new Error("No se pudo actualizar el reporte.");
+  if (error) {
+    Sentry.captureException(new Error("Admin report review failed"));
+    console.error("Admin report review failed", error);
+    throw new Error("No se pudo actualizar el reporte.");
+  }
   revalidatePath("/admin");
 }
 
@@ -73,6 +82,10 @@ export async function updateSupportRequest(formData: FormData) {
     target_request: values.requestId,
     new_status: values.status,
   });
-  if (error) throw new Error("No se pudo actualizar la solicitud de soporte.");
+  if (error) {
+    Sentry.captureException(new Error("Admin support update failed"));
+    console.error("Admin support update failed", error);
+    throw new Error("No se pudo actualizar la solicitud de soporte.");
+  }
   revalidatePath("/admin");
 }

@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import * as Sentry from "@sentry/nextjs";
 import { allowRequest } from "@/lib/security/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
@@ -21,6 +22,10 @@ export async function submitSupportRequest(_previous: ContactState, formData: Fo
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { error } = await supabase.from("support_requests").insert({ user_id: user?.id ?? null, ...parsed.data });
-  if (error) return { status: "error", message: "No pudimos enviar tu solicitud. Inténtalo nuevamente." };
+  if (error) {
+    Sentry.captureException(new Error("Support request creation failed"));
+    console.error("Support request creation failed", error);
+    return { status: "error", message: "No pudimos enviar tu solicitud. Inténtalo nuevamente." };
+  }
   return { status: "success", message: "Mensaje recibido. Te responderemos al correo indicado." };
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowRight, CircleCheck, Pencil, Sparkles } from "lucide-react";
+import { ArrowRight, CircleCheck, LogIn, Pencil, Sparkles } from "lucide-react";
+import { headers } from "next/headers";
 import { Logo } from "@/components/logo";
 import { ProfileCard } from "@/components/profile-card";
 import { ProfileViewTracker } from "@/components/profile-view-tracker";
@@ -21,9 +22,18 @@ type DbProfile = {
   button_style: Profile["buttonStyle"];
 };
 
+function isSocialWebView(userAgent: string) {
+  return /Instagram|FBAN|FBAV|FB_IAB|FBIOS|TikTok|musical_ly|BytedanceWebview/i.test(
+    userAgent,
+  );
+}
+
 export default async function PublicProfilePage({ params }: { params: Promise<{ username: string }> }) {
-  const { username } = await params;
+  const [{ username }, requestHeaders] = await Promise.all([params, headers()]);
   const normalizedUsername = decodeURIComponent(username).toLowerCase();
+  const inSocialWebView = isSocialWebView(
+    requestHeaders.get("user-agent") ?? "",
+  );
   const supabase = await createClient();
   const { data } = await supabase
     .from("profiles")
@@ -55,7 +65,39 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
       links: (links ?? []).map((link) => ({ ...link, icon: link.icon ?? undefined, sectionTitle: link.section_title ?? undefined })),
     };
     const premiumDark = profile.theme === "neon" || Boolean(getPremiumBackground(profile.backgroundPreset)?.dark);
-    return <main className={`min-h-screen px-4 py-5 sm:px-6 sm:py-7 ${premiumDark ? "bg-[#090b0d]" : "bg-cream"}`}>{!isOwner ? <ProfileViewTracker profileId={data.id} /> : null}<div className={`mx-auto mb-5 flex max-w-md animate-fade-up items-center gap-2 ${isOwner ? "justify-between" : "justify-end"}`}>{isOwner ? <Link href="/dashboard" className={`inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-black transition hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none ${premiumDark ? "border border-lime/30 bg-lime/10 text-lime hover:border-lime/60" : "border-2 border-ink bg-lime text-ink shadow-[3px_3px_0_#151515]"}`}><Pencil size={16}/> Editar mi perfil</Link> : null}<ShareProfileButton title={profile.displayName} dark={premiumDark}/></div><div className={`mx-auto max-w-md overflow-hidden rounded-[2.5rem] ${premiumDark ? "border border-white/15 shadow-[0_24px_80px_rgba(0,0,0,.55)]" : "border-[3px] border-ink shadow-hard-lg"}`}><ProfileCard profile={profile}/></div></main>;
+    const showWebViewSignIn = !authData.user && inSocialWebView;
+    return (
+      <main
+        className={`min-h-screen px-4 py-5 sm:px-6 sm:py-7 ${premiumDark ? "bg-[#090b0d]" : "bg-cream"}`}
+      >
+        {!isOwner ? <ProfileViewTracker profileId={data.id} /> : null}
+        <div
+          className={`mx-auto mb-5 flex max-w-md animate-fade-up items-center gap-2 ${isOwner || showWebViewSignIn ? "justify-between" : "justify-end"}`}
+        >
+          {isOwner ? (
+            <Link
+              href="/dashboard"
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-black transition hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none ${premiumDark ? "border border-lime/30 bg-lime/10 text-lime hover:border-lime/60" : "border-2 border-ink bg-lime text-ink shadow-[3px_3px_0_#151515]"}`}
+            >
+              <Pencil size={16} /> Editar mi perfil
+            </Link>
+          ) : showWebViewSignIn ? (
+            <Link
+              href="/sign-in?next=/dashboard"
+              className={`inline-flex items-center gap-1.5 text-[11px] font-semibold transition hover:underline motion-reduce:transition-none ${premiumDark ? "text-white/45 hover:text-lime" : "text-ink/50 hover:text-ink"}`}
+            >
+              <LogIn size={13} /> ¿Eres tú? Inicia sesión para editar →
+            </Link>
+          ) : null}
+          <ShareProfileButton title={profile.displayName} dark={premiumDark} />
+        </div>
+        <div
+          className={`mx-auto max-w-md overflow-hidden rounded-[2.5rem] ${premiumDark ? "border border-white/15 shadow-[0_24px_80px_rgba(0,0,0,.55)]" : "border-[3px] border-ink shadow-hard-lg"}`}
+        >
+          <ProfileCard profile={profile} />
+        </div>
+      </main>
+    );
   }
 
   if (normalizedUsername === "demo") {

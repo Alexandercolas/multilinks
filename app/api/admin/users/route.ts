@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { allowRouteRequest } from "@/lib/security/rate-limit";
@@ -27,7 +28,11 @@ export async function GET(request: Request) {
     page_size: pageSize,
     page_offset: (parsed.data.page - 1) * pageSize,
   });
-  if (error) return NextResponse.json({ error: "No pudimos cargar los usuarios." }, { status: 500 });
+  if (error) {
+    Sentry.captureException(new Error("Admin user search failed"));
+    console.error("Admin user search failed", error);
+    return NextResponse.json({ error: "No pudimos cargar los usuarios." }, { status: 500 });
+  }
   const rows = data ?? [];
   return NextResponse.json({ users: rows, total: Number(rows[0]?.total_count ?? 0) });
 }

@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type LemonPayload = {
@@ -73,11 +74,16 @@ export async function POST(request: Request) {
       updated_at: new Date().toISOString(),
     }, { onConflict: "user_id" });
     if (error) {
+      Sentry.captureException(new Error("Subscription synchronization failed"));
       console.error("Subscription sync failed", error);
       return NextResponse.json({ error: "No se pudo sincronizar" }, { status: 500 });
     }
   }
   const { error: eventError } = await admin.from("billing_webhook_events").insert({ id: eventId, event_name: eventName });
-  if (eventError) return NextResponse.json({ error: "No se pudo registrar el evento" }, { status: 500 });
+  if (eventError) {
+    Sentry.captureException(new Error("Billing webhook event registration failed"));
+    console.error("Billing webhook event registration failed", eventError);
+    return NextResponse.json({ error: "No se pudo registrar el evento" }, { status: 500 });
+  }
   return NextResponse.json({ received: true });
 }

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { Logo } from "@/components/logo";
-import { createClient } from "@/lib/supabase/client";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -13,9 +12,15 @@ export default function ForgotPasswordPage() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
-    const redirectTo = `${window.location.origin}/auth/callback?next=/reset-password`;
-    const { error } = await createClient().auth.resetPasswordForEmail(email, { redirectTo });
-    setMessage(error ? "No pudimos enviar el correo. Inténtalo nuevamente." : "Si existe una cuenta con ese correo, recibirás un enlace para cambiar la contraseña.");
+    const response = await fetch("/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: "forgot", email }),
+    });
+    const result = await response.json().catch(() => null) as { message?: string } | null;
+    setMessage(response.ok
+      ? "Si existe una cuenta con ese correo, recibirás un enlace para cambiar la contraseña."
+      : result?.message ?? "No pudimos enviar el correo. Inténtalo nuevamente.");
     setLoading(false);
   }
 

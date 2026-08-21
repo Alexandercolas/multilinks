@@ -9,12 +9,14 @@ const requestSchema = z.discriminatedUnion("mode", [
   z.object({ mode: z.literal("login"), email: z.string().email().max(320), password: z.string().min(1).max(128) }),
   z.object({ mode: z.literal("signup"), email: z.string().email().max(320), password: z.string().min(8).max(128) }),
   z.object({ mode: z.literal("magic"), email: z.string().email().max(320) }),
+  z.object({ mode: z.literal("forgot"), email: z.string().email().max(320) }),
 ]);
 
 const limits = {
   login: { maxHits: 5, windowSeconds: 15 * 60 },
   signup: { maxHits: 3, windowSeconds: 60 * 60 },
   magic: { maxHits: 3, windowSeconds: 15 * 60 },
+  forgot: { maxHits: 3, windowSeconds: 15 * 60 },
 } as const;
 
 function requestFingerprint(request: Request, mode: keyof typeof limits, email: string) {
@@ -59,6 +61,18 @@ export async function POST(request: Request) {
   if (mode === "magic") {
     const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo, shouldCreateUser: false } });
     if (error) return NextResponse.json({ message: "No pudimos enviar el enlace. Inténtalo nuevamente." }, { status: 400 });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (mode === "forgot") {
+    const resetRedirectTo = `${new URL(request.url).origin}/auth/callback?next=/reset-password`;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: resetRedirectTo,
+    });
+    if (error) {
+      Sentry.captureException(new Error("Password recovery email request failed"));
+      console.error("Password recovery email request failed", error);
+    }
     return NextResponse.json({ ok: true });
   }
 

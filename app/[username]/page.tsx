@@ -112,7 +112,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
         <Sparkles className="mx-auto mt-7 text-grape-dark" size={34}/>
         <h1 className="mt-4 font-display text-3xl font-black leading-tight tracking-[-.03em] sm:text-4xl">¡Este enlace puede ser tuyo!</h1>
         <p className="mx-auto mt-4 max-w-sm leading-7 text-black/60">El nombre <strong className="text-ink">@{normalizedUsername}</strong> está libre. Crea tu página, añade tus redes y compártela en minutos.</p>
-        <div className="mt-6 rotate-[1deg] border-2 border-ink bg-cream px-4 py-3 text-sm font-bold text-black/55 shadow-[3px_3px_0_#151515]">multilinks-app.vercel.app/<span className="text-grape-dark">{normalizedUsername}</span></div>
+        <div className="mt-6 rotate-[1deg] border-2 border-ink bg-cream px-4 py-3 text-sm font-bold text-black/55 shadow-[3px_3px_0_#151515]">multilinksrd.vercel.app/<span className="text-grape-dark">{normalizedUsername}</span></div>
         <Link href="/sign-in" className="mt-8 inline-flex items-center gap-2 rounded-full bg-ink px-7 py-4 font-bold text-white transition hover:-translate-y-1 hover:shadow-hard">Quiero este enlace <ArrowRight size={19}/></Link></div>
       </div>
     </main>

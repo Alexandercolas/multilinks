@@ -15,7 +15,7 @@ const unbounded = Unbounded({
   display: "swap",
 });
 
-const siteUrl = "https://multilinks-app.vercel.app";
+const siteUrl = "https://multilinksrd.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

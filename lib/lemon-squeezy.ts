@@ -29,7 +29,7 @@ export async function createProCheckout(user: { id: string; email?: string }, in
           ...(interval === "monthly" ? { custom_price: 350 } : {}),
           checkout_data: { email: user.email, custom: { user_id: user.id } },
           product_options: {
-            redirect_url: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://multilinks-app.vercel.app"}/planes?checkout=success`,
+            redirect_url: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://multilinksrd.vercel.app"}/planes?checkout=success`,
           },
         },
         relationships: {

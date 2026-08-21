@@ -74,6 +74,14 @@ type DbLink = {
 
 const FREE_ACTIVE_LINK_LIMIT = 5;
 const PRO_ACTIVE_LINK_LIMIT = 100;
+const CURATED_PALETTES = [
+  { name: "Nocturno lima", background: "#111510", accent: "#c9ff58" },
+  { name: "Grafito grape", background: "#14131a", accent: "#9b83ff" },
+  { name: "Teal profundo", background: "#0e1a1a", accent: "#5eead4" },
+  { name: "Azul medianoche", background: "#101722", accent: "#7dd3fc" },
+  { name: "Ciruela suave", background: "#1a1118", accent: "#f0a6c2" },
+  { name: "Carbón cálido", background: "#191713", accent: "#e7c66b" },
+] as const;
 
 type SortableLinkRowProps = {
   link: LinkItem;
@@ -846,25 +854,85 @@ export default function Dashboard() {
                 </div>
               ) : null}
             </div>
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <ColorField
-                label="Color de fondo"
-                value={profile.backgroundColor ?? "#c9ff58"}
-                onChange={(backgroundColor) =>
-                  setProfile({
-                    ...profile,
-                    backgroundColor,
-                    backgroundPreset: undefined,
-                  })
-                }
-              />
-              <ColorField
-                label="Color de acento"
-                value={profile.accentColor ?? "#8566ff"}
-                onChange={(accentColor) =>
-                  setProfile({ ...profile, accentColor })
-                }
-              />
+            <div className="mt-6 border-t border-white/10 pt-6">
+              <p className="text-sm font-bold text-white/75">Paletas curadas</p>
+              <p className="mt-1 text-xs text-white/35">
+                Combinaciones equilibradas para mantener una presencia visual limpia.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                {CURATED_PALETTES.map((palette) => {
+                  const selected =
+                    !profile.backgroundPreset &&
+                    profile.backgroundColor?.toLowerCase() === palette.background &&
+                    profile.accentColor?.toLowerCase() === palette.accent;
+
+                  return (
+                    <button
+                      key={palette.name}
+                      type="button"
+                      title={palette.name}
+                      aria-label={`Usar paleta ${palette.name}`}
+                      aria-pressed={selected}
+                      onClick={() =>
+                        setProfile({
+                          ...profile,
+                          theme: "violet",
+                          backgroundPreset: undefined,
+                          backgroundColor: palette.background,
+                          accentColor: palette.accent,
+                        })
+                      }
+                      className={`relative h-11 w-11 overflow-hidden rounded-full border-2 transition hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none ${selected ? "border-lime ring-2 ring-lime/35 ring-offset-2 ring-offset-card" : "border-white/15 hover:border-white/35"}`}
+                    >
+                      <span
+                        className="absolute inset-0"
+                        style={{
+                          backgroundColor: palette.background,
+                          clipPath: "polygon(0 0, 100% 0, 0 100%)",
+                        }}
+                        aria-hidden="true"
+                      />
+                      <span
+                        className="absolute inset-0"
+                        style={{
+                          backgroundColor: palette.accent,
+                          clipPath: "polygon(100% 0, 100% 100%, 0 100%)",
+                        }}
+                        aria-hidden="true"
+                      />
+                      {selected ? (
+                        <span className="absolute inset-0 grid place-items-center text-white drop-shadow-[0_1px_2px_rgba(0,0,0,.8)]">
+                          <Check size={15} strokeWidth={3} />
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <p className="mt-6 text-xs font-black uppercase tracking-[.12em] text-white/35">
+                Personalizado
+              </p>
+              <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                <ColorField
+                  label="Color de fondo"
+                  value={profile.backgroundColor ?? "#c9ff58"}
+                  onChange={(backgroundColor) =>
+                    setProfile({
+                      ...profile,
+                      backgroundColor,
+                      backgroundPreset: undefined,
+                    })
+                  }
+                />
+                <ColorField
+                  label="Color de acento"
+                  value={profile.accentColor ?? "#8566ff"}
+                  onChange={(accentColor) =>
+                    setProfile({ ...profile, accentColor })
+                  }
+                />
+              </div>
             </div>
             <div className="mt-6">
               <p className="text-sm font-bold text-white/75">

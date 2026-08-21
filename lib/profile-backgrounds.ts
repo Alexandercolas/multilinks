@@ -21,6 +21,65 @@ export const premiumBackgrounds = [
 
 export type PremiumBackgroundId = (typeof premiumBackgrounds)[number]["id"];
 
+const LIGHT_PROFILE_TEXT = "#ffffff";
+const DARK_PROFILE_TEXT = "#151515";
+const MINIMUM_TEXT_CONTRAST = 4.5;
+
+function hexToRgb(color: string) {
+  const normalized = color.trim().replace(/^#/, "");
+  const expanded = normalized.length === 3
+    ? normalized.split("").map((character) => character.repeat(2)).join("")
+    : normalized;
+
+  if (!/^[0-9a-f]{6}$/i.test(expanded)) return null;
+
+  return {
+    red: Number.parseInt(expanded.slice(0, 2), 16),
+    green: Number.parseInt(expanded.slice(2, 4), 16),
+    blue: Number.parseInt(expanded.slice(4, 6), 16),
+  };
+}
+
+export function relativeLuminance(color: string) {
+  const rgb = hexToRgb(color);
+  if (!rgb) return null;
+
+  const linearize = (channel: number) => {
+    const value = channel / 255;
+    return value <= 0.04045
+      ? value / 12.92
+      : ((value + 0.055) / 1.055) ** 2.4;
+  };
+
+  return 0.2126 * linearize(rgb.red)
+    + 0.7152 * linearize(rgb.green)
+    + 0.0722 * linearize(rgb.blue);
+}
+
+export function contrastRatio(firstColor: string, secondColor: string) {
+  const first = relativeLuminance(firstColor);
+  const second = relativeLuminance(secondColor);
+  if (first === null || second === null) return 1;
+
+  const lighter = Math.max(first, second);
+  const darker = Math.min(first, second);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+export function accessibleProfileTextColor(backgroundColor?: string) {
+  const background = backgroundColor || "#c9ff58";
+  const lightContrast = contrastRatio(background, LIGHT_PROFILE_TEXT);
+  const darkContrast = contrastRatio(background, DARK_PROFILE_TEXT);
+
+  if (lightContrast >= darkContrast && lightContrast >= MINIMUM_TEXT_CONTRAST) {
+    return LIGHT_PROFILE_TEXT;
+  }
+  if (darkContrast >= MINIMUM_TEXT_CONTRAST) return DARK_PROFILE_TEXT;
+
+  const blackContrast = contrastRatio(background, "#000000");
+  return lightContrast >= blackContrast ? LIGHT_PROFILE_TEXT : "#000000";
+}
+
 export function getPremiumBackground(id?: string) {
   return premiumBackgrounds.find(background => background.id === id);
 }

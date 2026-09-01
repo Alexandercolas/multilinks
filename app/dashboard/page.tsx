@@ -40,7 +40,7 @@ import { ProfileCard } from "@/components/profile-card";
 import { DashboardNavigation } from "@/components/dashboard-navigation";
 import { DashboardSkeleton } from "@/components/dashboard-skeleton";
 import { demoProfile } from "@/lib/demo-profile";
-import { isSafeLink, saveStoredProfile } from "@/lib/profile-storage";
+import { isSafeLink } from "@/lib/profile-storage";
 import {
   decodeStoredBackground,
   encodeStoredBackground,
@@ -481,12 +481,10 @@ export default function Dashboard() {
       return;
     }
 
-    const stored = {
+    setProfile({
       ...profile,
       avatarImage: avatarUrl?.startsWith("data:") ? undefined : avatarUrl,
-    };
-    setProfile(stored);
-    saveStoredProfile(stored);
+    });
     setPhotoFile(null);
     setMessage("¡Cambios publicados!");
     setSaving(false);
@@ -1023,7 +1021,7 @@ export default function Dashboard() {
             </p>
             <div className="mx-auto h-[720px] max-w-[390px] overflow-hidden rounded-[42px] border-[10px] border-card-border bg-card-border shadow-[0_30px_90px_rgba(0,0,0,.45)]">
               <div className="h-full overflow-y-auto rounded-[30px]">
-                <ProfileCard profile={profile} preview />
+                <ProfileCard profile={profile} preview showBranding={!isPro} />
               </div>
             </div>
           </div>

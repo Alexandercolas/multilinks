@@ -105,7 +105,13 @@ export function ProfileCard({ profile, preview = false, showBranding = true }: {
           })}
         </div>
 
-        {!preview && showBranding ? <Link href="/sign-in?mode=signup" className={`group mx-auto mt-12 inline-flex animate-fade-up items-center gap-2 rounded-full px-4 py-2 font-display text-[10px] font-black uppercase tracking-[.08em] transition hover:-translate-y-0.5 [animation-delay:520ms] motion-reduce:transform-none motion-reduce:transition-none ${darkSurface ? "border border-white/15 hover:border-lime hover:text-lime" : "border-2 border-current hover:bg-white hover:text-grape-dark"}`}><span className={darkSurface ? "text-lime" : "text-grape-dark"} aria-hidden="true">✦</span> Crea tu MultiLinks gratis <ArrowUpRight size={14} className="transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none"/></Link> : null}
+        {showBranding ? (() => {
+          const brandingClass = `mx-auto mt-12 inline-flex animate-fade-up items-center gap-1.5 rounded-full px-3 py-1.5 font-display text-[10px] font-black uppercase tracking-[.1em] opacity-70 transition [animation-delay:520ms] motion-reduce:transform-none motion-reduce:transition-none ${darkSurface ? "border border-white/12 text-white/75" : "border border-ink/15 text-ink/60"}`;
+          const mark = <span className={darkSurface ? "text-lime" : "text-grape-dark"} aria-hidden="true">⚡</span>;
+          return preview
+            ? <span className={brandingClass}>{mark} Hecho con MultiLinks</span>
+            : <Link href="/sign-in?mode=signup" className={`${brandingClass} hover:-translate-y-0.5 hover:opacity-100 ${darkSurface ? "hover:border-lime/50 hover:text-lime" : "hover:border-ink/40 hover:text-grape-dark"}`}>{mark} Hecho con MultiLinks</Link>;
+        })() : null}
         {!preview ? <div className="mt-5 flex items-center justify-center gap-4 text-xs font-bold"><Link href={`/report/${profile.username}`} className="inline-flex items-center gap-1.5 hover:underline"><Flag size={13}/> Reportar</Link><Link href="/ayuda" className="hover:underline">Ayuda</Link></div> : null}
       </div>
     </section>

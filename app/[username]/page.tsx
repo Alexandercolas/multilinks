@@ -94,7 +94,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
         <div
           className={`mx-auto max-w-md overflow-hidden rounded-[2.5rem] ${premiumDark ? "border border-white/15 shadow-[0_24px_80px_rgba(0,0,0,.55)]" : "border-[3px] border-ink shadow-hard-lg"}`}
         >
-          <ProfileCard profile={profile} />
+          <ProfileCard profile={profile} showBranding={!hasPro} />
         </div>
       </main>
     );

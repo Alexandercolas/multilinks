@@ -41,6 +41,7 @@ import { DashboardNavigation } from "@/components/dashboard-navigation";
 import { DashboardSkeleton } from "@/components/dashboard-skeleton";
 import { demoProfile } from "@/lib/demo-profile";
 import { isSafeLink } from "@/lib/profile-storage";
+import { getLinkMedia } from "@/lib/link-media";
 import {
   decodeStoredBackground,
   encodeStoredBackground,
@@ -86,6 +87,7 @@ const CURATED_PALETTES = [
 type SortableLinkRowProps = {
   link: LinkItem;
   reducedMotion: boolean;
+  isPro: boolean;
   onUpdate: (id: string, change: Partial<LinkItem>) => void;
   onRemove: (id: string) => void;
 };
@@ -93,9 +95,11 @@ type SortableLinkRowProps = {
 function SortableLinkRow({
   link,
   reducedMotion,
+  isPro,
   onUpdate,
   onRemove,
 }: SortableLinkRowProps) {
+  const media = getLinkMedia(link.url);
   const {
     attributes,
     isDragging,
@@ -153,6 +157,21 @@ function SortableLinkRow({
           onChange={(event) => onUpdate(link.id, { icon: event.target.value })}
           className="min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70"
         />
+        {media?.kind === "youtube" ? (
+          <p
+            className={`sm:col-span-3 flex items-center gap-1.5 text-xs font-semibold ${isPro ? "text-lime" : "text-white/40"}`}
+          >
+            {isPro ? (
+              <>
+                <Check size={13} /> Miniatura de YouTube activada
+              </>
+            ) : (
+              <>
+                <Crown size={13} className="text-lime" /> Con Pro este enlace muestra la miniatura del video
+              </>
+            )}
+          </p>
+        ) : null}
         <input
           value={link.sectionTitle ?? ""}
           maxLength={60}
@@ -991,6 +1010,7 @@ export default function Dashboard() {
                       key={link.id}
                       link={link}
                       reducedMotion={reducedMotion}
+                      isPro={isPro}
                       onUpdate={updateLink}
                       onRemove={removeLink}
                     />
@@ -1021,7 +1041,7 @@ export default function Dashboard() {
             </p>
             <div className="mx-auto h-[720px] max-w-[390px] overflow-hidden rounded-[42px] border-[10px] border-card-border bg-card-border shadow-[0_30px_90px_rgba(0,0,0,.45)]">
               <div className="h-full overflow-y-auto rounded-[30px]">
-                <ProfileCard profile={profile} preview showBranding={!isPro} />
+                <ProfileCard profile={profile} preview showBranding={!isPro} richMedia={isPro} />
               </div>
             </div>
           </div>

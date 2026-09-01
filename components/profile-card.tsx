@@ -1,12 +1,13 @@
-import { ArrowUpRight, Flag } from "lucide-react";
+import { ArrowUpRight, Flag, Play } from "lucide-react";
 import Link from "next/link";
 import type { Profile } from "@/types/profile";
 import { themeClasses } from "@/lib/demo-profile";
 import { isSafeLink } from "@/lib/profile-storage";
+import { getLinkMedia } from "@/lib/link-media";
 import { LinkFavicon } from "@/components/link-favicon";
 import { accessibleProfileTextColor, getPremiumBackground, premiumBackgroundStyle } from "@/lib/profile-backgrounds";
 
-export function ProfileCard({ profile, preview = false, showBranding = true }: { profile: Profile; preview?: boolean; showBranding?: boolean }) {
+export function ProfileCard({ profile, preview = false, showBranding = true, richMedia = false }: { profile: Profile; preview?: boolean; showBranding?: boolean; richMedia?: boolean }) {
   const buttonRadius = profile.buttonStyle === "pill" ? "rounded-full" : profile.buttonStyle === "square" ? "rounded-md" : "rounded-2xl";
   const visibleLinks = profile.links.filter((link) => link.active && isSafeLink(link.url));
   const selectedBackground = getPremiumBackground(profile.backgroundPreset);
@@ -60,6 +61,33 @@ export function ProfileCard({ profile, preview = false, showBranding = true }: {
             const trackable = /^[0-9a-f-]{36}$/i.test(link.id);
             const href = preview ? undefined : trackable ? `/api/click/${link.id}` : link.url;
             const showSection = link.sectionTitle && (index === 0 || visibleLinks[index - 1]?.sectionTitle !== link.sectionTitle);
+            const media = richMedia ? getLinkMedia(link.url) : null;
+            const youtubeThumb = media?.kind === "youtube" ? media.thumbnail : null;
+
+            const iconSlot = link.icon && !["🔗", "ðŸ”—"].includes(link.icon) ? (
+              <span className={`ml-1 grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl text-xl ${darkSurface ? "border border-white/10 bg-white/[.05]" : "border-2 border-ink bg-cream"}`}>
+                {/^https?:\/\//i.test(link.icon) ? (
+                  <span
+                    role="img"
+                    aria-label="Icono del enlace"
+                    className="h-full w-full bg-cover bg-center"
+                    style={{ backgroundImage: `url(${link.icon})` }}
+                  />
+                ) : link.icon}
+              </span>
+            ) : <span className={`ml-1 grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl ${darkSurface ? "border border-white/10 bg-white/[.05]" : "border-2 border-ink bg-cream"}`}><LinkFavicon url={link.url} title={link.title}/></span>;
+
+            const rowInner = (
+              <>
+                {iconSlot}
+                <span className="min-w-0 flex-1">{link.title}</span>
+                <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${darkSurface ? "border border-white/15 text-lime" : ""}`}><ArrowUpRight size={19}/></span>
+              </>
+            );
+
+            const surfaceClass = darkSurface
+              ? "border border-white/15 bg-black/20 text-white shadow-[0_12px_32px_rgba(0,0,0,.32)] hover:border-lime/60 hover:bg-black/10"
+              : "border-[3px] border-ink bg-white text-ink shadow-hard hover:shadow-hard-lg";
 
             return (
               <div
@@ -74,32 +102,42 @@ export function ProfileCard({ profile, preview = false, showBranding = true }: {
                     <span className="h-2 w-2 rotate-45 bg-current" aria-hidden="true" />
                   </h2>
                 ) : null}
-                <a
-                  href={href}
-                  target={!preview ? "_blank" : undefined}
-                  rel="noreferrer"
-                  className={`group relative flex w-full items-center gap-3 overflow-hidden ${buttonRadius} px-4 py-3.5 text-left font-bold transition hover:-translate-y-1 ${darkSurface ? "border border-white/15 bg-black/20 text-white shadow-[0_12px_32px_rgba(0,0,0,.32)] hover:border-lime/60 hover:bg-black/10" : "border-[3px] border-ink bg-white text-ink shadow-hard hover:shadow-hard-lg"}`}
-                >
-                  <span
-                    className={`absolute inset-y-0 left-0 ${darkSurface ? "w-0.5" : "w-2 border-r-2 border-ink"}`}
-                    style={{ backgroundColor: profile.accentColor }}
-                    aria-hidden="true"
-                  />
-                  {link.icon && !["🔗", "ðŸ”—"].includes(link.icon) ? (
-                    <span className={`ml-1 grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl text-xl ${darkSurface ? "border border-white/10 bg-white/[.05]" : "border-2 border-ink bg-cream"}`}>
-                      {/^https?:\/\//i.test(link.icon) ? (
-                        <span
-                          role="img"
-                          aria-label="Icono del enlace"
-                          className="h-full w-full bg-cover bg-center"
-                          style={{ backgroundImage: `url(${link.icon})` }}
-                        />
-                      ) : link.icon}
+                {youtubeThumb ? (
+                  <a
+                    href={href}
+                    target={!preview ? "_blank" : undefined}
+                    rel="noreferrer"
+                    className={`group relative flex w-full flex-col overflow-hidden ${buttonRadius} text-left font-bold transition hover:-translate-y-1 ${surfaceClass}`}
+                  >
+                    <span className="relative block w-full">
+                      <span
+                        role="img"
+                        aria-label={`Miniatura de ${link.title}`}
+                        className="block aspect-video w-full bg-cover bg-center"
+                        style={{ backgroundImage: `url(${youtubeThumb})` }}
+                      />
+                      <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent" />
+                      <span aria-hidden="true" className="absolute left-1/2 top-1/2 grid h-14 w-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-black/55 text-white backdrop-blur-sm transition group-hover:scale-105 motion-reduce:transition-none">
+                        <Play size={22} className="translate-x-0.5 fill-current" />
+                      </span>
                     </span>
-                  ) : <span className={`ml-1 grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl ${darkSurface ? "border border-white/10 bg-white/[.05]" : "border-2 border-ink bg-cream"}`}><LinkFavicon url={link.url} title={link.title}/></span>}
-                  <span className="min-w-0 flex-1">{link.title}</span>
-                  <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${darkSurface ? "border border-white/15 text-lime" : ""}`}><ArrowUpRight size={19}/></span>
-                </a>
+                    <span className="relative flex items-center gap-3 px-4 py-3.5">{rowInner}</span>
+                  </a>
+                ) : (
+                  <a
+                    href={href}
+                    target={!preview ? "_blank" : undefined}
+                    rel="noreferrer"
+                    className={`group relative flex w-full items-center gap-3 overflow-hidden ${buttonRadius} px-4 py-3.5 text-left font-bold transition hover:-translate-y-1 ${surfaceClass}`}
+                  >
+                    <span
+                      className={`absolute inset-y-0 left-0 ${darkSurface ? "w-0.5" : "w-2 border-r-2 border-ink"}`}
+                      style={{ backgroundColor: profile.accentColor }}
+                      aria-hidden="true"
+                    />
+                    {rowInner}
+                  </a>
+                )}
               </div>
             );
           })}

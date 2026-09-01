@@ -5,26 +5,31 @@ import { themeClasses } from "@/lib/demo-profile";
 import { isSafeLink } from "@/lib/profile-storage";
 import { getLinkMedia } from "@/lib/link-media";
 import { LinkFavicon } from "@/components/link-favicon";
-import { accessibleProfileTextColor, getPremiumBackground, premiumBackgroundStyle } from "@/lib/profile-backgrounds";
+import { accessibleProfileTextColor, backgroundImageStyle, getPremiumBackground, premiumBackgroundStyle } from "@/lib/profile-backgrounds";
 
 export function ProfileCard({ profile, preview = false, showBranding = true, richMedia = false }: { profile: Profile; preview?: boolean; showBranding?: boolean; richMedia?: boolean }) {
   const buttonRadius = profile.buttonStyle === "pill" ? "rounded-full" : profile.buttonStyle === "square" ? "rounded-md" : "rounded-2xl";
   const visibleLinks = profile.links.filter((link) => link.active && isSafeLink(link.url));
+  const customImage = profile.backgroundImage;
   const selectedBackground = getPremiumBackground(profile.backgroundPreset);
-  const profileTextColor = selectedBackground
-    ? selectedBackground.dark ? "#ffffff" : "#151515"
-    : accessibleProfileTextColor(profile.backgroundColor);
+  const profileTextColor = customImage
+    ? "#ffffff"
+    : selectedBackground
+      ? selectedBackground.dark ? "#ffffff" : "#151515"
+      : accessibleProfileTextColor(profile.backgroundColor);
   const darkSurface = profileTextColor === "#ffffff";
-  const backgroundColor = selectedBackground
-    ? selectedBackground.dark ? "#0f1115" : "#f7f4ed"
-    : profile.backgroundColor;
+  const backgroundColor = customImage
+    ? "#0f1115"
+    : selectedBackground
+      ? selectedBackground.dark ? "#0f1115" : "#f7f4ed"
+      : profile.backgroundColor;
 
   return (
     <section
       className={`relative min-h-full overflow-hidden ${themeClasses[profile.theme]} px-5 py-10 text-center sm:px-7 sm:py-12`}
-      style={{ backgroundColor, color: profileTextColor, ...premiumBackgroundStyle(profile.backgroundPreset) }}
+      style={{ backgroundColor, color: profileTextColor, ...premiumBackgroundStyle(profile.backgroundPreset), ...backgroundImageStyle(customImage) }}
     >
-      {profile.backgroundPreset ? <span className={`absolute inset-0 ${darkSurface ? "bg-black/30" : "bg-white/15"}`} aria-hidden="true"/> : darkSurface ? <><span className="absolute -left-24 top-8 h-64 w-64 rounded-full bg-lime/20 blur-3xl" aria-hidden="true"/><span className="absolute -right-24 top-72 h-72 w-72 rounded-full bg-lime/10 blur-3xl" aria-hidden="true"/><span className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,.06),transparent_42%)]" aria-hidden="true"/></> : <><span className="absolute left-3 top-28 h-16 w-16 rotate-12 border-[3px] border-ink bg-white/20 sm:left-5 sm:h-20 sm:w-20" aria-hidden="true"/><span className="absolute right-3 top-10 h-20 w-20 rounded-full border-[3px] border-ink opacity-30 sm:right-5 sm:h-24 sm:w-24" style={{ backgroundColor: profile.accentColor }} aria-hidden="true"/></>}
+      {customImage ? <span className="absolute inset-0 bg-black/45" aria-hidden="true"/> : profile.backgroundPreset ? <span className={`absolute inset-0 ${darkSurface ? "bg-black/30" : "bg-white/15"}`} aria-hidden="true"/> : darkSurface ? <><span className="absolute -left-24 top-8 h-64 w-64 rounded-full bg-lime/20 blur-3xl" aria-hidden="true"/><span className="absolute -right-24 top-72 h-72 w-72 rounded-full bg-lime/10 blur-3xl" aria-hidden="true"/><span className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,.06),transparent_42%)]" aria-hidden="true"/></> : <><span className="absolute left-3 top-28 h-16 w-16 rotate-12 border-[3px] border-ink bg-white/20 sm:left-5 sm:h-20 sm:w-20" aria-hidden="true"/><span className="absolute right-3 top-10 h-20 w-20 rounded-full border-[3px] border-ink opacity-30 sm:right-5 sm:h-24 sm:w-24" style={{ backgroundColor: profile.accentColor }} aria-hidden="true"/></>}
 
       <div className="relative mx-auto max-w-md">
         <div className="animate-fade-up">

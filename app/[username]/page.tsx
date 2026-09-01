@@ -8,7 +8,7 @@ import { ShareProfileButton } from "@/components/share-profile-button";
 import { demoProfile } from "@/lib/demo-profile";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/types/profile";
-import { decodeStoredBackground, getPremiumBackground, isFreeBackground } from "@/lib/profile-backgrounds";
+import { BACKGROUND_IMAGE_BUCKET, decodeStoredBackground, getPremiumBackground, isFreeBackground, isValidBackgroundImagePath } from "@/lib/profile-backgrounds";
 
 type DbProfile = {
   id: string;
@@ -51,20 +51,25 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     const isOwner = authData.user?.id === data.id;
     const storedBackground = decodeStoredBackground(data.background_color);
     const allowedPreset = hasPro || isFreeBackground(storedBackground.preset) ? storedBackground.preset : undefined;
+    const allowedImage = hasPro && isValidBackgroundImagePath(storedBackground.imagePath)
+      ? supabase.storage.from(BACKGROUND_IMAGE_BUCKET).getPublicUrl(storedBackground.imagePath).data.publicUrl
+      : undefined;
+    const downgraded = !hasPro && (data.theme === "neon" || Boolean(storedBackground.imagePath));
     const profile: Profile = {
       username: data.username,
       displayName: data.display_name,
       bio: data.bio,
       avatar: data.display_name.slice(0, 2).toUpperCase(),
       avatarImage: data.avatar_url ?? undefined,
-      theme: data.theme === "neon" && !hasPro ? "lime" : data.theme,
-      backgroundColor: data.theme === "neon" && !hasPro ? "#c9ff58" : storedBackground.color,
+      theme: downgraded ? "lime" : data.theme,
+      backgroundColor: downgraded ? "#c9ff58" : storedBackground.color,
       backgroundPreset: allowedPreset,
-      accentColor: data.theme === "neon" && !hasPro ? "#8566ff" : data.accent_color,
+      backgroundImage: allowedImage,
+      accentColor: downgraded ? "#8566ff" : data.accent_color,
       buttonStyle: data.button_style,
       links: (links ?? []).map((link) => ({ ...link, icon: link.icon ?? undefined, sectionTitle: link.section_title ?? undefined })),
     };
-    const premiumDark = profile.theme === "neon" || Boolean(getPremiumBackground(profile.backgroundPreset)?.dark);
+    const premiumDark = Boolean(profile.backgroundImage) || profile.theme === "neon" || Boolean(getPremiumBackground(profile.backgroundPreset)?.dark);
     const showWebViewSignIn = !authData.user && inSocialWebView;
     return (
       <main

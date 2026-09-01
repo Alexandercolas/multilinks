@@ -1,4 +1,6 @@
 export const PREMIUM_BACKGROUND_PREFIX = "preset:";
+export const BACKGROUND_IMAGE_PREFIX = "image:";
+export const BACKGROUND_IMAGE_BUCKET = "backgrounds";
 
 export const premiumBackgrounds = [
   { id: "neon-cut", name: "Neon Cut", position: "0% 0%", dark: true },
@@ -90,15 +92,36 @@ export function isFreeBackground(id?: string) {
 }
 
 export function decodeStoredBackground(value?: string) {
+  if (value?.startsWith(BACKGROUND_IMAGE_PREFIX)) {
+    const imagePath = value.slice(BACKGROUND_IMAGE_PREFIX.length);
+    if (imagePath) return { color: "#0f1115", preset: undefined, imagePath };
+  }
   if (value?.startsWith(PREMIUM_BACKGROUND_PREFIX)) {
     const preset = value.slice(PREMIUM_BACKGROUND_PREFIX.length);
-    if (getPremiumBackground(preset)) return { color: "#0f1115", preset };
+    if (getPremiumBackground(preset)) return { color: "#0f1115", preset, imagePath: undefined };
   }
-  return { color: value || "#c9ff58", preset: undefined };
+  return { color: value || "#c9ff58", preset: undefined, imagePath: undefined };
 }
 
-export function encodeStoredBackground(color?: string, preset?: string) {
+export function encodeStoredBackground(color?: string, preset?: string, imagePath?: string) {
+  if (imagePath) return `${BACKGROUND_IMAGE_PREFIX}${imagePath}`;
   return preset ? `${PREMIUM_BACKGROUND_PREFIX}${preset}` : color || "#c9ff58";
+}
+
+// Accepts only "<uid>/<file>" segments so a decoded value cannot smuggle a URL,
+// a path traversal, or another user's folder into a background style.
+export function isValidBackgroundImagePath(path?: string): path is string {
+  return typeof path === "string" && /^[0-9a-f-]{36}\/[A-Za-z0-9._-]{1,120}$/i.test(path);
+}
+
+export function backgroundImageStyle(url?: string) {
+  if (!url) return undefined;
+  return {
+    backgroundImage: `url('${encodeURI(url)}')`,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+  } as const;
 }
 
 export function premiumBackgroundStyle(id?: string) {

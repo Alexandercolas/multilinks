@@ -43,11 +43,13 @@ import { demoProfile } from "@/lib/demo-profile";
 import { isSafeLink } from "@/lib/profile-storage";
 import { getLinkMedia } from "@/lib/link-media";
 import {
+  BACKGROUND_IMAGE_BUCKET,
   decodeStoredBackground,
   encodeStoredBackground,
   premiumBackgrounds,
   premiumBackgroundStyle,
   isFreeBackground,
+  isValidBackgroundImagePath,
 } from "@/lib/profile-backgrounds";
 import { createClient } from "@/lib/supabase/client";
 import type { LinkItem, Profile } from "@/types/profile";
@@ -210,6 +212,8 @@ export default function Dashboard() {
   const [profile, setProfile] = useState<Profile>(demoProfile);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoError, setPhotoError] = useState("");
+  const [backgroundFile, setBackgroundFile] = useState<File | null>(null);
+  const [backgroundError, setBackgroundError] = useState("");
   const [ready, setReady] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -273,6 +277,11 @@ export default function Dashboard() {
         const storedBackground = decodeStoredBackground(
           dbProfile.background_color,
         );
+        const backgroundImagePath = isValidBackgroundImagePath(
+          storedBackground.imagePath,
+        )
+          ? storedBackground.imagePath
+          : undefined;
         setProfile({
           username: dbProfile.username,
           displayName: dbProfile.display_name,
@@ -282,6 +291,12 @@ export default function Dashboard() {
           theme: dbProfile.theme,
           backgroundColor: storedBackground.color,
           backgroundPreset: storedBackground.preset,
+          backgroundImagePath,
+          backgroundImage: backgroundImagePath
+            ? supabase.storage
+                .from(BACKGROUND_IMAGE_BUCKET)
+                .getPublicUrl(backgroundImagePath).data.publicUrl
+            : undefined,
           accentColor: dbProfile.accent_color,
           buttonStyle: dbProfile.button_style,
           links: (dbLinks ?? []).map((link: DbLink) => ({
@@ -392,6 +407,57 @@ export default function Dashboard() {
     reader.readAsDataURL(file);
   }
 
+  function uploadBackground(file?: File) {
+    setBackgroundError("");
+    if (!file) return;
+    if (!isPro) {
+      setBackgroundError("La imagen de fondo propia es una función de MultiLinks Pro.");
+      return;
+    }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setBackgroundError("Usa una imagen JPG, PNG o WebP.");
+      return;
+    }
+    if (file.size > 3_000_000) {
+      setBackgroundError("La imagen debe pesar menos de 3 MB.");
+      return;
+    }
+    setBackgroundFile(file);
+    const reader = new FileReader();
+    reader.onload = () =>
+      setProfile((p) => ({
+        ...p,
+        backgroundImage: String(reader.result),
+        backgroundPreset: undefined,
+        theme: "neon",
+      }));
+    reader.onerror = () => setBackgroundError("No pudimos leer la imagen.");
+    reader.readAsDataURL(file);
+  }
+
+  function clearBackgroundImage() {
+    setBackgroundFile(null);
+    setBackgroundError("");
+    setProfile((p) => ({
+      ...p,
+      backgroundImage: undefined,
+      backgroundImagePath: undefined,
+    }));
+  }
+
+  // Picking any color / preset background also drops a custom image so the two
+  // never end up stored at the same time.
+  function chooseColorBackground(changes: Partial<Profile>) {
+    setBackgroundFile(null);
+    setBackgroundError("");
+    setProfile((p) => ({
+      ...p,
+      backgroundImage: undefined,
+      backgroundImagePath: undefined,
+      ...changes,
+    }));
+  }
+
   async function save() {
     if (profile.username.length < 3) {
       setMessage("El usuario debe tener al menos 3 caracteres.");
@@ -417,6 +483,7 @@ export default function Dashboard() {
     if (
       !isPro &&
       (profile.theme === "neon" ||
+        profile.backgroundImage ||
         (profile.backgroundPreset && !isFreeBackground(profile.backgroundPreset)))
     ) {
       setMessage(
@@ -451,6 +518,36 @@ export default function Dashboard() {
         .data.publicUrl;
     }
 
+    let backgroundImagePath = profile.backgroundImagePath;
+    if (backgroundFile) {
+      const extension =
+        backgroundFile.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") ||
+        "jpg";
+      const path = `${user.id}/background-${Date.now()}.${extension}`;
+      const { error: backgroundUploadError } = await supabase.storage
+        .from(BACKGROUND_IMAGE_BUCKET)
+        .upload(path, backgroundFile, {
+          upsert: true,
+          contentType: backgroundFile.type,
+        });
+      if (backgroundUploadError) {
+        setMessage("No pudimos subir la imagen de fondo.");
+        setSaving(false);
+        return;
+      }
+      if (profile.backgroundImagePath && profile.backgroundImagePath !== path) {
+        await supabase.storage
+          .from(BACKGROUND_IMAGE_BUCKET)
+          .remove([profile.backgroundImagePath]);
+      }
+      backgroundImagePath = path;
+    } else if (!profile.backgroundImage && profile.backgroundImagePath) {
+      await supabase.storage
+        .from(BACKGROUND_IMAGE_BUCKET)
+        .remove([profile.backgroundImagePath]);
+      backgroundImagePath = undefined;
+    }
+
     const { error: profileError } = await supabase.from("profiles").upsert({
       id: user.id,
       username: profile.username,
@@ -461,6 +558,7 @@ export default function Dashboard() {
       background_color: encodeStoredBackground(
         profile.backgroundColor,
         profile.backgroundPreset,
+        backgroundImagePath,
       ),
       accent_color: profile.accentColor ?? "#8566ff",
       button_style: profile.buttonStyle ?? "rounded",
@@ -470,7 +568,9 @@ export default function Dashboard() {
       setMessage(
         profileError.code === "23505"
           ? "Ese nombre de usuario ya está ocupado."
-          : "No pudimos guardar el perfil.",
+          : profileError.code === "P0001"
+            ? profileError.message
+            : "No pudimos guardar el perfil.",
       );
       setSaving(false);
       return;
@@ -503,8 +603,15 @@ export default function Dashboard() {
     setProfile({
       ...profile,
       avatarImage: avatarUrl?.startsWith("data:") ? undefined : avatarUrl,
+      backgroundImagePath,
+      backgroundImage: backgroundImagePath
+        ? supabase.storage
+            .from(BACKGROUND_IMAGE_BUCKET)
+            .getPublicUrl(backgroundImagePath).data.publicUrl
+        : undefined,
     });
     setPhotoFile(null);
+    setBackgroundFile(null);
     setMessage("¡Cambios publicados!");
     setSaving(false);
   }
@@ -769,8 +876,7 @@ export default function Dashboard() {
                             ? setMessage(
                                 "Neon Dark es un tema exclusivo de MultiLinks Pro.",
                               )
-                            : setProfile({
-                                ...profile,
+                            : chooseColorBackground({
                                 theme,
                                 backgroundPreset: undefined,
                                 backgroundColor: color,
@@ -835,8 +941,7 @@ export default function Dashboard() {
                             );
                             return;
                           }
-                          setProfile({
-                            ...profile,
+                          chooseColorBackground({
                             theme: background.dark ? "neon" : "violet",
                             backgroundPreset: background.id,
                             backgroundColor: background.dark
@@ -872,6 +977,66 @@ export default function Dashboard() {
               ) : null}
             </div>
             <div className="mt-6 border-t border-white/10 pt-6">
+              <div className="flex items-center justify-between gap-4">
+                <span>
+                  <span className="flex items-center gap-2 font-display text-sm font-black">
+                    {isPro ? (
+                      <ImagePlus size={16} className="text-lime" />
+                    ) : (
+                      <Crown size={16} className="text-lime" />
+                    )}
+                    Imagen de fondo
+                  </span>
+                  <span className="mt-1 block text-xs text-white/35">
+                    {isPro
+                      ? "JPG, PNG o WebP · máximo 3 MB"
+                      : "Sube tu propia imagen con MultiLinks Pro"}
+                  </span>
+                </span>
+                {isPro ? (
+                  <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-xl border border-white/15 bg-white/[.045] px-4 py-2 text-sm font-bold text-white/70 transition hover:border-lime/45 hover:text-lime motion-reduce:transition-none">
+                    <ImagePlus size={16} />{" "}
+                    {profile.backgroundImage ? "Cambiar" : "Subir"}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="sr-only"
+                      onChange={(e) => uploadBackground(e.target.files?.[0])}
+                    />
+                  </label>
+                ) : (
+                  <Link
+                    href="/planes"
+                    className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-lime px-4 py-2 text-sm font-black text-ink transition hover:shadow-[0_10px_26px_rgba(201,255,88,.16)] motion-reduce:transition-none"
+                  >
+                    <Crown size={14} /> Pro
+                  </Link>
+                )}
+              </div>
+              {profile.backgroundImage ? (
+                <div className="mt-4 flex items-center gap-4">
+                  <span
+                    role="img"
+                    aria-label="Imagen de fondo seleccionada"
+                    className="h-20 w-16 shrink-0 overflow-hidden rounded-xl border border-white/15 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${profile.backgroundImage})` }}
+                  />
+                  <button
+                    type="button"
+                    onClick={clearBackgroundImage}
+                    className="text-sm font-semibold text-red-300"
+                  >
+                    Quitar imagen
+                  </button>
+                </div>
+              ) : null}
+              {backgroundError ? (
+                <p className="mt-2 text-xs font-semibold text-red-300">
+                  {backgroundError}
+                </p>
+              ) : null}
+            </div>
+            <div className="mt-6 border-t border-white/10 pt-6">
               <p className="text-sm font-bold text-white/75">Paletas curadas</p>
               <p className="mt-1 text-xs text-white/35">
                 Combinaciones equilibradas para mantener una presencia visual limpia.
@@ -891,8 +1056,7 @@ export default function Dashboard() {
                       aria-label={`Usar paleta ${palette.name}`}
                       aria-pressed={selected}
                       onClick={() =>
-                        setProfile({
-                          ...profile,
+                        chooseColorBackground({
                           theme: "violet",
                           backgroundPreset: undefined,
                           backgroundColor: palette.background,
@@ -935,8 +1099,7 @@ export default function Dashboard() {
                   label="Color de fondo"
                   value={profile.backgroundColor ?? "#c9ff58"}
                   onChange={(backgroundColor) =>
-                    setProfile({
-                      ...profile,
+                    chooseColorBackground({
                       backgroundColor,
                       backgroundPreset: undefined,
                     })

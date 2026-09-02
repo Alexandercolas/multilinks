@@ -40,14 +40,14 @@ export function DashboardSkeleton() {
         </div>
       </header>
 
-      <div className="relative mx-auto grid max-w-7xl gap-8 px-5 py-8 pb-28 lg:grid-cols-[1fr_410px] lg:pb-8 xl:pl-24">
-        <section className="space-y-6">
-          <div className="flex min-h-16 items-end justify-between gap-5">
-            <div className="space-y-3">
+      <div className="relative mx-auto grid max-w-7xl gap-8 overflow-x-clip px-5 py-8 pb-28 lg:grid-cols-[1fr_400px] lg:pb-8 lg:pl-24">
+        <section className="min-w-0 space-y-6">
+          <div className="flex min-h-16 items-end justify-between gap-4">
+            <div className="min-w-0 space-y-3">
               <Placeholder className="h-4 w-24 rounded-md" />
-              <Placeholder className="h-8 w-56 rounded-lg" />
+              <Placeholder className="h-8 w-40 max-w-full rounded-lg sm:w-56" />
             </div>
-            <Placeholder className="h-11 w-36 rounded-xl" />
+            <Placeholder className="h-11 w-28 shrink-0 rounded-xl sm:w-36" />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -67,11 +67,11 @@ export function DashboardSkeleton() {
 
           <div className="flex min-h-24 items-center gap-4 rounded-2xl border border-white/15 bg-card/95 p-5">
             <Placeholder className="h-12 w-12 shrink-0 rounded-xl" />
-            <div className="flex-1 space-y-3">
-              <Placeholder className="h-4 w-48 rounded-md" />
+            <div className="min-w-0 flex-1 space-y-3">
+              <Placeholder className="h-4 w-48 max-w-full rounded-md" />
               <Placeholder className="h-3 w-3/4 rounded" />
             </div>
-            <Placeholder className="hidden h-10 w-28 rounded-xl sm:block" />
+            <Placeholder className="hidden h-10 w-28 shrink-0 rounded-xl sm:block" />
           </div>
 
           <SkeletonCard lines={["w-full", "w-full", "w-4/5"]} />

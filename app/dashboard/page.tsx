@@ -205,8 +205,9 @@ function SortableLinkRow({
         transform: CSS.Transform.toString(transform),
         transition: reducedMotion ? undefined : transition,
       }}
-      className={`flex items-start gap-3 rounded-2xl border bg-white/[.025] p-3 ${isDragging ? "opacity-35" : "opacity-100"} ${isSafeLink(link.url) ? "border-white/10" : "border-red-400/60"}`}
+      className={`flex flex-col gap-2 rounded-2xl border bg-white/[.025] p-3 sm:flex-row sm:items-start sm:gap-3 ${isDragging ? "opacity-35" : "opacity-100"} ${isSafeLink(link.url) ? "border-white/10" : "border-red-400/60"}`}
     >
+      <div className="flex min-w-0 items-start gap-2 sm:flex-1 sm:gap-3">
       <button
         ref={setActivatorNodeRef}
         type="button"
@@ -279,27 +280,29 @@ function SortableLinkRow({
             </div>
 
             {(previewState === "done" && preview) || link.thumbnail ? (
-              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[.03] p-2">
-                {link.thumbnail ? (
-                  <span
-                    role="img"
-                    aria-label="Miniatura del enlace"
-                    className="h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-cover bg-center"
-                    style={{ backgroundImage: `url(${link.thumbnail})` }}
-                  />
-                ) : null}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-semibold text-white/80">
+              <div className="rounded-xl border border-white/10 bg-white/[.03] p-2">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  {link.thumbnail ? (
+                    <span
+                      role="img"
+                      aria-label="Miniatura del enlace"
+                      className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-cover bg-center"
+                      style={{ backgroundImage: `url(${link.thumbnail})` }}
+                    />
+                  ) : null}
+                  <p className="min-w-0 flex-1 truncate text-xs font-semibold text-white/80">
                     {link.title || preview?.title || "Sin título"}
                   </p>
-                  <label className="mt-1 flex items-center gap-2 text-[11px] text-white/40">
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-white/40">
+                  <label className="flex items-center gap-1.5">
                     Estilo
                     <select
                       value={link.linkType ?? "standard"}
                       onChange={(event) =>
                         onUpdate(link.id, { linkType: event.target.value as SmartCardType })
                       }
-                      className="rounded-md border border-white/10 bg-white/[.05] px-2 py-1 text-[11px] font-semibold text-white/80 outline-none focus:border-lime/60"
+                      className="max-w-[8rem] rounded-md border border-white/10 bg-white/[.05] px-2 py-1 text-[11px] font-semibold text-white/80 outline-none focus:border-lime/60"
                     >
                       {CARD_TYPE_OPTIONS.map((option) => (
                         <option key={option} value={option} className="bg-card text-white">
@@ -308,16 +311,16 @@ function SortableLinkRow({
                       ))}
                     </select>
                   </label>
+                  {link.thumbnail ? (
+                    <button
+                      type="button"
+                      onClick={() => onUpdate(link.id, { thumbnail: "" })}
+                      className="font-semibold text-white/40 transition hover:text-red-300"
+                    >
+                      Quitar imagen
+                    </button>
+                  ) : null}
                 </div>
-                {link.thumbnail ? (
-                  <button
-                    type="button"
-                    onClick={() => onUpdate(link.id, { thumbnail: "" })}
-                    className="shrink-0 rounded-md px-2 py-1 text-[11px] font-semibold text-white/40 transition hover:text-red-300"
-                  >
-                    Quitar imagen
-                  </button>
-                ) : null}
               </div>
             ) : null}
 
@@ -332,7 +335,7 @@ function SortableLinkRow({
           value={link.description ?? ""}
           maxLength={80}
           aria-label="Descripción del enlace"
-          placeholder="Descripción opcional (una línea)"
+          placeholder="Descripción (opcional)"
           onChange={(event) =>
             onUpdate(link.id, { description: event.target.value })
           }
@@ -349,13 +352,15 @@ function SortableLinkRow({
           className="min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70 sm:col-span-3"
         />
       </div>
+      </div>
+      <div className="flex shrink-0 items-center justify-end gap-1 sm:flex-col sm:items-center sm:gap-1.5">
       <button
         type="button"
         aria-label={link.featured ? "Quitar de destacados" : "Destacar enlace"}
         aria-pressed={Boolean(link.featured)}
         title={link.featured ? "Enlace destacado" : "Destacar (se muestra más grande)"}
         onClick={() => onUpdate(link.id, { featured: !link.featured })}
-        className={`mt-1 shrink-0 rounded-lg p-2 transition motion-reduce:transition-none ${link.featured ? "text-lime" : "text-white/25 hover:text-white/60"}`}
+        className={`shrink-0 rounded-lg p-2 transition motion-reduce:transition-none ${link.featured ? "text-lime" : "text-white/25 hover:text-white/60"}`}
       >
         <Star size={17} className={link.featured ? "fill-current" : ""} />
       </button>
@@ -363,7 +368,7 @@ function SortableLinkRow({
         type="button"
         aria-label="Activar enlace"
         onClick={() => onUpdate(link.id, { active: !link.active })}
-        className={`mt-2 h-6 w-11 shrink-0 rounded-full p-1 ${link.active ? "bg-lime" : "bg-white/15"}`}
+        className={`h-6 w-11 shrink-0 rounded-full p-1 ${link.active ? "bg-lime" : "bg-white/15"}`}
       >
         <span
           className={`block h-4 w-4 rounded-full bg-card transition motion-reduce:transition-none ${link.active ? "translate-x-5" : ""}`}
@@ -373,10 +378,11 @@ function SortableLinkRow({
         type="button"
         aria-label="Eliminar"
         onClick={() => onRemove(link.id)}
-        className="mt-1 p-2 text-white/30 transition hover:text-red-300 motion-reduce:transition-none"
+        className="shrink-0 p-2 text-white/30 transition hover:text-red-300 motion-reduce:transition-none"
       >
         <Trash2 size={18} />
       </button>
+      </div>
     </div>
   );
 }
@@ -413,7 +419,7 @@ export default function Dashboard() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) { setReady(true); return; }
       const { data: adminAccess } = await supabase.rpc("is_admin");
       setIsAdmin(Boolean(adminAccess));
       const [
@@ -813,10 +819,9 @@ export default function Dashboard() {
       return;
     }
 
-    const { error: deleteError } = await supabase
-      .from("links")
-      .delete()
-      .eq("profile_id", user.id);
+    // Upsert first (never delete before we know the write succeeds), then prune
+    // only the links the user removed in the editor. `clicks` is left out so the
+    // database keeps its running total.
     const rows = profile.links.map((link, position) => ({
       id: link.id,
       profile_id: user.id,
@@ -824,7 +829,6 @@ export default function Dashboard() {
       url: link.url,
       active: link.active,
       position,
-      clicks: link.clicks ?? 0,
       icon: link.icon?.trim() || null,
       section_title: link.sectionTitle?.trim() || null,
       description: link.description?.trim() || "",
@@ -836,13 +840,22 @@ export default function Dashboard() {
         return /^https:\/\/[^\s"']{1,585}$/i.test(value) ? value : "";
       })(),
     }));
+    const keepIds = rows.map((row) => row.id);
     const { error: linksError } = rows.length
-      ? await supabase.from("links").insert(rows)
+      ? await supabase.from("links").upsert(rows, { onConflict: "id" })
       : { error: null };
-    if (deleteError || linksError) {
-      setMessage("El perfil se guardó, pero algunos enlaces no.");
+    if (linksError) {
+      setMessage("No pudimos guardar algunos enlaces. Tus enlaces anteriores siguen intactos.");
       setSaving(false);
       return;
+    }
+    let pruneQuery = supabase.from("links").delete().eq("profile_id", user.id);
+    if (keepIds.length) {
+      pruneQuery = pruneQuery.not("id", "in", `(${keepIds.map((id) => `"${id}"`).join(",")})`);
+    }
+    const { error: pruneError } = await pruneQuery;
+    if (pruneError) {
+      console.error("No se pudieron limpiar los enlaces eliminados", pruneError);
     }
 
     setProfile({
@@ -932,8 +945,8 @@ export default function Dashboard() {
         </div>
       </header>
       <DashboardNavigation isAdmin={isAdmin} />
-      <div className="relative mx-auto grid max-w-7xl gap-8 px-5 py-8 pb-28 lg:grid-cols-[1fr_400px] lg:gap-6 lg:pb-8 lg:pl-24">
-        <section>
+      <div className="relative mx-auto grid max-w-7xl gap-8 overflow-x-clip px-5 py-8 pb-28 lg:grid-cols-[1fr_400px] lg:gap-6 lg:pb-8 lg:pl-24">
+        <section className="min-w-0">
           <div
             id="resumen"
             className="mb-7 scroll-mt-24 flex flex-wrap items-end justify-between gap-4"

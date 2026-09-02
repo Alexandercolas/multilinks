@@ -128,7 +128,7 @@ export function ProActivationStatus({
             Bienvenido a MultiLinks Pro
           </p>
           <p className="mt-1 text-sm font-semibold text-white/55">
-            Ya tienes hasta 100 enlaces activos y temas premium disponibles.
+            Ya tienes hasta 50 enlaces activos y todo el diseño premium disponible.
           </p>
         </div>
       </div>

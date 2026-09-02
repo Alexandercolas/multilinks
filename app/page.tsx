@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, BarChart3, Check, Layers3, Palette, Sparkles, UserPlus, Link2, Share2, Zap } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { premiumBackgrounds, premiumBackgroundStyle } from "@/lib/profile-backgrounds";
 import { LandingProfileDemo } from "@/components/landing-profile-demo";
 import { Reveal } from "@/components/reveal";
 import { MarqueeRibbon } from "@/components/marquee-ribbon";
@@ -123,7 +124,28 @@ export default function Home() {
         </div>
       </div></section>
 
-      <section className="bg-[#090b0d] px-6 py-20 text-white sm:py-24"><div className="relative mx-auto grid max-w-6xl overflow-hidden rounded-[2rem] border border-white/15 bg-[#101318] p-7 shadow-[0_30px_90px_rgba(0,0,0,.42)] sm:p-10 lg:grid-cols-[1fr_auto] lg:items-center lg:gap-12"><span aria-hidden="true" className="absolute -right-24 -top-28 h-72 w-72 rounded-full bg-lime/15 blur-3xl"/><span aria-hidden="true" className="absolute -bottom-36 left-1/3 h-72 w-72 rounded-full bg-grape/20 blur-3xl"/><div className="relative"><span className="inline-flex items-center gap-2 font-display text-[10px] font-black uppercase tracking-[.15em] text-lime"><span className="h-2 w-2 rounded-full bg-lime shadow-[0_0_14px_#c9ff58]"/> Diseño premium</span><h2 className="mt-5 max-w-3xl font-display text-3xl font-black tracking-[-.04em] sm:text-5xl">Claro cuando quieres.<br/><span className="text-lime">Neon cuando destacas.</span></h2><p className="mt-5 max-w-2xl leading-7 text-white/55">Empieza gratis y activa más temas, estadísticas y personalización cuando tu presencia lo necesite.</p><div className="mt-7 flex flex-wrap gap-x-5 gap-y-3 text-sm font-bold text-white/70"><span className="flex items-center gap-2"><Check className="text-lime" size={17}/> Sin tarjeta</span><span className="flex items-center gap-2"><Check className="text-lime" size={17}/> Tu página en minutos</span><span className="flex items-center gap-2"><Layers3 className="text-lime" size={17}/> Crece a tu ritmo</span></div></div><Link href="/sign-in?mode=signup" className="relative mt-8 inline-flex items-center justify-center gap-2 rounded-xl bg-lime px-6 py-4 font-black text-ink transition hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(201,255,88,.18)] motion-reduce:transform-none motion-reduce:transition-none lg:mt-0">Crear mi MultiLinks <ArrowUpRight size={19}/></Link></div></section>
+      <section className="bg-[#090b0d] px-6 py-20 text-white sm:py-24">
+        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] border border-white/15 bg-[#101318] p-7 shadow-[0_30px_90px_rgba(0,0,0,.42)] sm:p-10">
+          <span aria-hidden="true" className="absolute -right-24 -top-28 h-72 w-72 rounded-full bg-lime/15 blur-3xl"/>
+          <span aria-hidden="true" className="absolute -bottom-36 left-1/3 h-72 w-72 rounded-full bg-grape/20 blur-3xl"/>
+          <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center lg:gap-12">
+            <div>
+              <span className="inline-flex items-center gap-2 font-display text-[10px] font-black uppercase tracking-[.15em] text-lime"><span className="h-2 w-2 rounded-full bg-lime shadow-[0_0_14px_#c9ff58]"/> Diseño premium</span>
+              <h2 className="mt-5 max-w-3xl font-display text-3xl font-black tracking-[-.04em] sm:text-5xl">Claro cuando quieres.<br/><span className="text-lime">Neon cuando destacas.</span></h2>
+              <p className="mt-5 max-w-2xl leading-7 text-white/55">Con Pro desbloqueas todos los temas, fondos con tu propia imagen y miniaturas de YouTube en tus enlaces.</p>
+              <div className="mt-7 flex flex-wrap gap-x-5 gap-y-3 text-sm font-bold text-white/70"><span className="flex items-center gap-2"><Check className="text-lime" size={17}/> Sin tarjeta</span><span className="flex items-center gap-2"><Check className="text-lime" size={17}/> Tu página en minutos</span><span className="flex items-center gap-2"><Layers3 className="text-lime" size={17}/> Crece a tu ritmo</span></div>
+            </div>
+            <Link href="/sign-in?mode=signup" className="relative inline-flex items-center justify-center gap-2 self-start rounded-xl bg-lime px-6 py-4 font-black text-ink transition hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(201,255,88,.18)] motion-reduce:transform-none motion-reduce:transition-none lg:self-center">Crear mi MultiLinks <ArrowUpRight size={19}/></Link>
+          </div>
+          <div className="relative mt-9 flex gap-3 overflow-x-auto pb-2" aria-label="Fondos premium disponibles con Pro">
+            {premiumBackgrounds.slice(0, 10).map((background) => (
+              <span key={background.id} className="relative aspect-[9/16] w-24 shrink-0 overflow-hidden rounded-xl border border-white/12 bg-cover" style={premiumBackgroundStyle(background.id)}>
+                <span className="absolute inset-x-0 bottom-0 bg-black/60 px-1.5 py-1 text-[8px] font-black uppercase tracking-wide text-white/80">{background.name}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <footer className="border-t border-white/10 bg-[#090b0d] px-6 py-10 text-white">
         <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">

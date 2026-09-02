@@ -75,8 +75,31 @@ type DbLink = {
   section_title: string | null;
 };
 
-const FREE_ACTIVE_LINK_LIMIT = 5;
-const PRO_ACTIVE_LINK_LIMIT = 100;
+const PRO_ACTIVE_LINK_LIMIT = 50;
+const FREE_TRIAL_DAYS = 30;
+const FREE_TRIAL_LINK_LIMIT = 3;
+const FREE_BASE_LINK_LIMIT = 1;
+
+function freeTrialInfo(createdAt?: string) {
+  const created = createdAt ? new Date(createdAt).getTime() : Date.now();
+  const daysSince = (Date.now() - created) / 86_400_000;
+  const withinTrial = daysSince < FREE_TRIAL_DAYS;
+  return {
+    limit: withinTrial ? FREE_TRIAL_LINK_LIMIT : FREE_BASE_LINK_LIMIT,
+    daysLeft: withinTrial ? Math.max(1, Math.ceil(FREE_TRIAL_DAYS - daysSince)) : 0,
+  };
+}
+
+function linkLimitMessage(limit: number) {
+  if (limit === PRO_ACTIVE_LINK_LIMIT) {
+    return `El plan Pro permite hasta ${PRO_ACTIVE_LINK_LIMIT} enlaces activos.`;
+  }
+  if (limit === FREE_TRIAL_LINK_LIMIT) {
+    return `El plan Gratis permite ${FREE_TRIAL_LINK_LIMIT} enlaces activos el primer mes. Activa Pro para hasta ${PRO_ACTIVE_LINK_LIMIT}.`;
+  }
+  return `El plan Gratis permite ${FREE_BASE_LINK_LIMIT} enlace activo. Activa Pro para hasta ${PRO_ACTIVE_LINK_LIMIT}.`;
+}
+
 const CURATED_PALETTES = [
   { name: "Nocturno lima", background: "#111510", accent: "#c9ff58" },
   { name: "Grafito grape", background: "#14131a", accent: "#9b83ff" },
@@ -221,6 +244,8 @@ export default function Dashboard() {
   const [totalViews, setTotalViews] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isPro, setIsPro] = useState(false);
+  const [freeLinkLimit, setFreeLinkLimit] = useState(FREE_TRIAL_LINK_LIMIT);
+  const [trialDaysLeft, setTrialDaysLeft] = useState(0);
   const [activeLinkId, setActiveLinkId] = useState<string | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
   const sensors = useSensors(
@@ -270,6 +295,9 @@ export default function Dashboard() {
           (subscription?.plan_id === "pro" &&
             ["active", "trialing"].includes(subscription.status)),
       );
+      const trial = freeTrialInfo(user.created_at);
+      setFreeLinkLimit(trial.limit);
+      setTrialDaysLeft(trial.daysLeft);
       setTotalViews(
         (viewRows ?? []).reduce((total, row) => total + row.views, 0),
       );
@@ -360,18 +388,12 @@ export default function Dashboard() {
       return { ...current, links: arrayMove(current.links, oldIndex, newIndex) };
     });
   };
+  const activeLinkLimit = isPro ? PRO_ACTIVE_LINK_LIMIT : freeLinkLimit;
   const addLink = () => {
-    const activeLinkLimit = isPro
-      ? PRO_ACTIVE_LINK_LIMIT
-      : FREE_ACTIVE_LINK_LIMIT;
     if (
       profile.links.filter((link) => link.active).length >= activeLinkLimit
     ) {
-      setMessage(
-        isPro
-          ? "El plan Pro permite hasta 100 enlaces activos."
-          : "El plan Gratis permite hasta 5 enlaces activos. Mejora a Pro para añadir hasta 100.",
-      );
+      setMessage(linkLimitMessage(activeLinkLimit));
       return;
     }
     setProfile((p) => ({
@@ -467,17 +489,10 @@ export default function Dashboard() {
       setMessage("Corrige las direcciones marcadas en rojo.");
       return;
     }
-    const activeLinkLimit = isPro
-      ? PRO_ACTIVE_LINK_LIMIT
-      : FREE_ACTIVE_LINK_LIMIT;
     if (
       profile.links.filter((link) => link.active).length > activeLinkLimit
     ) {
-      setMessage(
-        isPro
-          ? "El plan Pro permite hasta 100 enlaces activos."
-          : "El plan Gratis permite hasta 5 enlaces activos.",
-      );
+      setMessage(linkLimitMessage(activeLinkLimit));
       return;
     }
     if (
@@ -738,7 +753,10 @@ export default function Dashboard() {
                     Desbloquea MultiLinks Pro
                   </p>
                   <p className="mt-1 text-sm text-white/50">
-                    Hasta 100 enlaces, estadísticas completas y más personalización.
+                    {trialDaysLeft > 0
+                      ? `Te quedan ${trialDaysLeft} ${trialDaysLeft === 1 ? "día" : "días"} con ${FREE_TRIAL_LINK_LIMIT} enlaces. Después, el plan Gratis permite ${FREE_BASE_LINK_LIMIT}.`
+                      : `El plan Gratis permite ${FREE_BASE_LINK_LIMIT} enlace activo.`}
+                    {" "}Pro llega a {PRO_ACTIVE_LINK_LIMIT}, con miniaturas de YouTube e imagen de fondo.
                   </p>
                 </div>
               </div>

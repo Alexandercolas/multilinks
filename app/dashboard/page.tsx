@@ -815,7 +815,7 @@ export default function Dashboard() {
         </div>
       </header>
       <DashboardNavigation isAdmin={isAdmin} />
-      <div className="relative mx-auto grid max-w-7xl gap-8 px-5 py-8 pb-28 lg:grid-cols-[1fr_410px] lg:pb-8 xl:pl-24">
+      <div className="relative mx-auto grid max-w-7xl gap-8 px-5 py-8 pb-28 lg:grid-cols-[1fr_400px] lg:gap-6 lg:pb-8 lg:pl-24">
         <section>
           <div
             id="resumen"

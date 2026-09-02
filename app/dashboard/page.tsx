@@ -42,6 +42,7 @@ import { DashboardSkeleton } from "@/components/dashboard-skeleton";
 import { demoProfile } from "@/lib/demo-profile";
 import { isSafeLink } from "@/lib/profile-storage";
 import { getLinkMedia } from "@/lib/link-media";
+import { detectPlatform } from "@/lib/platforms";
 import {
   BACKGROUND_IMAGE_BUCKET,
   decodeStoredBackground,
@@ -125,6 +126,7 @@ function SortableLinkRow({
   onRemove,
 }: SortableLinkRowProps) {
   const media = getLinkMedia(link.url);
+  const platform = detectPlatform(link.url);
   const {
     attributes,
     isDragging,
@@ -182,20 +184,37 @@ function SortableLinkRow({
           onChange={(event) => onUpdate(link.id, { icon: event.target.value })}
           className="min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70"
         />
-        {media?.kind === "youtube" ? (
-          <p
-            className={`sm:col-span-3 flex items-center gap-1.5 text-xs font-semibold ${isPro ? "text-lime" : "text-white/40"}`}
-          >
-            {isPro ? (
-              <>
-                <Check size={13} /> Miniatura de YouTube activada
-              </>
-            ) : (
-              <>
-                <Crown size={13} className="text-lime" /> Con Pro este enlace muestra la miniatura del video
-              </>
-            )}
-          </p>
+        {platform || media?.kind === "youtube" ? (
+          <div className="sm:col-span-3 flex flex-wrap items-center gap-2 text-xs font-semibold">
+            {platform ? (
+              <span
+                className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-white/70"
+                style={{ backgroundColor: `${platform.color}1f`, borderColor: `${platform.color}55` }}
+              >
+                <img
+                  src={`https://cdn.simpleicons.org/${platform.slug}`}
+                  alt=""
+                  width="12"
+                  height="12"
+                  className="h-3 w-3 object-contain"
+                />
+                {platform.label}
+              </span>
+            ) : null}
+            {media?.kind === "youtube" ? (
+              <span className={`inline-flex items-center gap-1.5 ${isPro ? "text-lime" : "text-white/40"}`}>
+                {isPro ? (
+                  <>
+                    <Check size={13} /> Miniatura activada
+                  </>
+                ) : (
+                  <>
+                    <Crown size={13} className="text-lime" /> Miniatura del video con Pro
+                  </>
+                )}
+              </span>
+            ) : null}
+          </div>
         ) : null}
         <input
           value={link.sectionTitle ?? ""}

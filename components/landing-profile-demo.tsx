@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ArrowUpRight } from "lucide-react";
+import { detectPlatform } from "@/lib/platforms";
 import { LinkFavicon } from "@/components/link-favicon";
 
 const themes = {
@@ -51,12 +52,17 @@ export function LandingProfileDemo() {
             <h2 className="mt-5 font-display text-2xl font-black tracking-[-.02em]">Mi MultiLinks</h2>
             <p className={`mt-1.5 text-sm ${theme.dark ? "text-white/55" : "opacity-55"}`}>Contenido, proyectos y comunidad</p>
             <div className="mt-7 space-y-2.5 text-left">
-              {demoLinks.map((item) => (
+              {demoLinks.map((item) => {
+                const platform = detectPlatform(item.url);
+                return (
                 <div
                   key={item.title}
                   className={`flex items-center gap-3 rounded-2xl px-3.5 py-3 transition hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none ${theme.dark ? "border border-white/12 bg-white/[.06] text-white hover:border-white/25" : "border border-ink/[.07] bg-white text-ink shadow-[0_1px_2px_rgba(21,21,21,.04),0_10px_26px_-16px_rgba(21,21,21,.18)]"}`}
                 >
-                  <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${theme.dark ? "border border-white/10 bg-white/[.06]" : "border border-ink/[.06] bg-ink/[.03]"}`}>
+                  <span
+                    className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border ${platform ? "" : theme.dark ? "border-white/10 bg-white/[.06]" : "border-ink/[.06] bg-ink/[.03]"}`}
+                    style={platform ? { backgroundColor: `${platform.color}14`, borderColor: `${platform.color}40` } : undefined}
+                  >
                     <LinkFavicon url={item.url} title={item.title} />
                   </span>
                   <span className="min-w-0 flex-1">
@@ -65,7 +71,8 @@ export function LandingProfileDemo() {
                   </span>
                   <ArrowUpRight size={16} className={theme.dark ? "text-white/40" : "text-ink/35"} />
                 </div>
-              ))}
+                );
+              })}
             </div>
             <div className={`mx-auto mt-7 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-display text-[9px] font-black uppercase tracking-[.12em] ${theme.dark ? "border border-white/12 text-white/60" : "border border-ink/12 text-ink/50"}`}>
               <span aria-hidden="true" style={{ color: theme.dark ? "#c6ff3d" : "#7055e8" }}>⚡</span> Hecho con MultiLinks

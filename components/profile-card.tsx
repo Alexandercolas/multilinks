@@ -4,6 +4,7 @@ import type { Profile } from "@/types/profile";
 import { themeClasses } from "@/lib/demo-profile";
 import { isSafeLink } from "@/lib/profile-storage";
 import { getLinkMedia } from "@/lib/link-media";
+import { detectPlatform } from "@/lib/platforms";
 import { LinkFavicon } from "@/components/link-favicon";
 import { accessibleProfileTextColor, backgroundImageStyle, getPremiumBackground, premiumBackgroundStyle } from "@/lib/profile-backgrounds";
 
@@ -84,20 +85,25 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
             const showSection = link.sectionTitle && (index === 0 || visibleLinks[index - 1]?.sectionTitle !== link.sectionTitle);
             const media = richMedia ? getLinkMedia(link.url) : null;
             const youtubeThumb = media?.kind === "youtube" ? media.thumbnail : null;
+            const customIcon = link.icon && !["🔗", "ðŸ”—"].includes(link.icon) ? link.icon : null;
+            const platform = customIcon ? null : detectPlatform(link.url);
 
-            const iconSlot = link.icon && !["🔗", "ðŸ”—"].includes(link.icon) ? (
+            const iconSlot = customIcon ? (
               <span className={`grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl text-lg ${iconTile}`}>
-                {/^https?:\/\//i.test(link.icon) ? (
+                {/^https?:\/\//i.test(customIcon) ? (
                   <span
                     role="img"
                     aria-label="Icono del enlace"
                     className="h-full w-full bg-cover bg-center"
-                    style={{ backgroundImage: `url(${link.icon})` }}
+                    style={{ backgroundImage: `url(${customIcon})` }}
                   />
-                ) : link.icon}
+                ) : customIcon}
               </span>
             ) : (
-              <span className={`grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl ${iconTile}`}>
+              <span
+                className={`grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl border ${platform ? "" : iconTile}`}
+                style={platform ? { backgroundColor: `${platform.color}14`, borderColor: `${platform.color}40` } : undefined}
+              >
                 <LinkFavicon url={link.url} title={link.title} />
               </span>
             );

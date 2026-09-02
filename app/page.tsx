@@ -45,13 +45,13 @@ export default function Home() {
           <div className="hidden items-center gap-5 text-sm font-bold lg:flex"><a href="#ejemplos" className="hover:text-grape-dark">Ejemplos</a><a href="#funciones" className="hover:text-grape-dark">Funciones</a><Link href="/planes" className="hover:text-grape-dark">Precios</Link><Link href="/ayuda" className="hover:text-grape-dark">Ayuda</Link></div>
           <Link
             href="/sign-in"
-            className="hidden rounded-full border-2 border-ink px-4 py-2 font-display text-[10px] font-black transition hover:-translate-y-0.5 hover:bg-white sm:inline-flex"
+            className="hidden rounded-full border border-ink/15 px-4 py-2 font-display text-[10px] font-black transition hover:-translate-y-0.5 hover:border-ink/30 sm:inline-flex"
           >
             Iniciar sesión
           </Link>
           <Link
             href="/dashboard"
-            className="rounded-full bg-ink px-4 py-2.5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:shadow-hard sm:px-5"
+            className="rounded-full bg-ink px-4 py-2.5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:opacity-90 sm:px-5"
           >
             Crear mi página
           </Link>
@@ -60,8 +60,8 @@ export default function Home() {
 
       <section className="mx-auto grid min-h-[78vh] max-w-6xl items-center gap-14 px-6 py-12 lg:grid-cols-[1.05fr_.95fr] lg:py-14">
         <div>
-          <div className="mb-6 inline-flex animate-fade-up rotate-[-2deg] items-center gap-2 border-2 border-ink bg-lime px-4 py-2 text-sm font-black shadow-hard">
-            <Sparkles size={16} /> HECHO PARA DESTACAR
+          <div className="mb-6 inline-flex animate-fade-up items-center gap-2 rounded-full border border-ink/10 bg-lime/15 px-3.5 py-1.5 font-display text-xs font-black tracking-wide text-grape-dark">
+            <Sparkles size={14} /> HECHO PARA DESTACAR
           </div>
           <h1 className="max-w-3xl animate-fade-up font-display text-6xl font-black leading-[.92] tracking-[-.03em] [animation-delay:80ms] sm:text-7xl lg:text-[88px]">
             Todo lo tuyo.
@@ -74,14 +74,14 @@ export default function Home() {
           <div className="mt-9 flex flex-wrap animate-fade-up items-center gap-4 [animation-delay:240ms]">
             <Link
               href="/dashboard"
-              className="group flex items-center gap-2 rounded-full bg-ink px-7 py-4 font-bold text-white transition hover:-translate-y-1 hover:shadow-hard-lg"
+              className="group flex items-center gap-2 rounded-full bg-ink px-7 py-4 font-bold text-white transition hover:-translate-y-0.5 hover:opacity-90"
             >
               Comenzar gratis
               <ArrowUpRight size={19} className="transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </Link>
             <Link
               href="/sign-in"
-              className="inline-flex items-center justify-center rounded-full border-2 border-ink px-6 py-3.5 font-display text-xs font-black transition hover:-translate-y-0.5 hover:bg-white hover:shadow-hard"
+              className="inline-flex items-center justify-center rounded-full border border-ink/15 px-6 py-3.5 font-display text-xs font-black transition hover:-translate-y-0.5 hover:border-ink/30"
             >
               Iniciar sesión
             </Link>
@@ -98,10 +98,10 @@ export default function Home() {
 
       <section id="funciones" className="mx-auto max-w-6xl px-6 py-20 sm:py-24">
         <Reveal><div className="mx-auto max-w-2xl text-center"><span className="font-display text-xs font-black uppercase tracking-[.16em] text-grape-dark">Todo bajo control</span><h2 className="mt-3 font-display text-4xl font-black tracking-[-.03em] sm:text-5xl">Tu presencia digital,<br/><span className="text-grape-dark">sin el desorden.</span></h2><p className="mx-auto mt-5 max-w-xl text-black/60">Redes, proyectos, música, tienda y contacto bajo una URL que sí se siente tuya.</p></div></Reveal>
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{features.map((feature, index) => <Reveal key={feature.title} delay={index * 80}><article className="h-full border-t-2 border-ink pt-5"><span className="grid h-12 w-12 place-items-center rounded-full border-2 border-ink bg-lime"><feature.icon size={21}/></span><h3 className="mt-5 font-display text-base font-black">{feature.title}</h3><p className="mt-2 text-sm leading-6 text-black/60">{feature.text}</p></article></Reveal>)}</div>
+        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{features.map((feature, index) => <Reveal key={feature.title} delay={index * 80}><article className="h-full border-t border-ink/10 pt-5"><span className="grid h-11 w-11 place-items-center rounded-xl border border-ink/10 bg-lime/20 text-grape-dark"><feature.icon size={19}/></span><h3 className="mt-5 font-display text-base font-black">{feature.title}</h3><p className="mt-2 text-sm leading-6 text-black/55">{feature.text}</p></article></Reveal>)}</div>
       </section>
 
-      <section className="border-y-2 border-ink bg-white/55"><div className="mx-auto max-w-6xl px-6 py-20 sm:py-24">
+      <section className="border-y border-ink/[.08] bg-white/60"><div className="mx-auto max-w-6xl px-6 py-20 sm:py-24">
         <Reveal>
           <span className="font-display text-sm font-bold uppercase tracking-widest text-grape-dark">
             Cómo funciona
@@ -113,11 +113,11 @@ export default function Home() {
         <div className="mt-12 grid gap-6 sm:grid-cols-3">
           {steps.map((step, i) => (
             <Reveal key={step.n} delay={i * 120}>
-              <div className="h-full rounded-3xl border-2 border-ink bg-white p-7 shadow-hard transition hover:-translate-y-1">
-                <span className="font-display text-sm font-black text-black/30">{step.n}</span>
-                <step.icon className="mt-4" size={26} />
+              <div className="h-full rounded-2xl border border-ink/[.07] bg-white p-7 shadow-[0_1px_2px_rgba(21,21,21,.04),0_18px_44px_-22px_rgba(21,21,21,.2)] transition hover:-translate-y-0.5">
+                <span className="font-display text-sm font-black text-grape-dark">{step.n}</span>
+                <step.icon className="mt-4 text-ink/70" size={24} />
                 <h3 className="mt-4 font-display text-xl font-black">{step.title}</h3>
-                <p className="mt-2 text-black/65">{step.text}</p>
+                <p className="mt-2 text-black/60">{step.text}</p>
               </div>
             </Reveal>
           ))}

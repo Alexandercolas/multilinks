@@ -241,6 +241,7 @@ export default function Dashboard() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [backgroundsOpen, setBackgroundsOpen] = useState(false);
+  const [appearanceTab, setAppearanceTab] = useState<"fondo" | "botones">("fondo");
   const [totalViews, setTotalViews] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isPro, setIsPro] = useState(false);
@@ -770,7 +771,7 @@ export default function Dashboard() {
           ) : null}
           <div
             id="perfil"
-            className="scroll-mt-24 rounded-[2rem] border border-white/15 bg-card/95 p-6 shadow-[0_24px_75px_rgba(0,0,0,.30)]"
+            className="scroll-mt-24 rounded-[2rem] border border-white/12 bg-card/95 p-6"
           >
             <h2 className="font-display text-lg font-black">Perfil</h2>
             <div className="mt-5 flex flex-wrap items-center gap-4">
@@ -853,7 +854,7 @@ export default function Dashboard() {
           </div>
           <div
             id="apariencia"
-            className="mt-6 scroll-mt-24 rounded-[2rem] border border-white/15 bg-card/95 p-6 shadow-[0_24px_75px_rgba(0,0,0,.30)]"
+            className="mt-6 scroll-mt-24 rounded-[2rem] border border-white/12 bg-card/95 p-6"
           >
             <div className="flex items-center justify-between gap-4">
               <h2 className="font-display text-lg font-black">Apariencia</h2>
@@ -862,11 +863,17 @@ export default function Dashboard() {
                   href="/planes"
                   className="inline-flex items-center gap-1 text-xs font-black text-lime"
                 >
-                  <Crown size={14} /> Temas Pro
+                  <Crown size={14} /> Desbloquear Pro
                 </Link>
               ) : null}
             </div>
-            <div className="mt-5">
+            <div className="mt-5 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[.03] p-1">
+              <button type="button" onClick={() => setAppearanceTab("fondo")} className={`rounded-lg px-3 py-2 text-sm font-black transition motion-reduce:transition-none ${appearanceTab === "fondo" ? "bg-white/[.08] text-white" : "text-white/45 hover:text-white/80"}`}>Fondo y color</button>
+              <button type="button" onClick={() => setAppearanceTab("botones")} className={`rounded-lg px-3 py-2 text-sm font-black transition motion-reduce:transition-none ${appearanceTab === "botones" ? "bg-white/[.08] text-white" : "text-white/45 hover:text-white/80"}`}>Botones</button>
+            </div>
+            {appearanceTab === "fondo" ? (
+            <>
+            <div className="mt-6">
               <p className="text-sm font-bold text-white/75">Temas rápidos</p>
               <div className="mt-3 flex flex-wrap gap-3">
                 {(["lime", "violet", "sunset", "neon"] as const).map(
@@ -1132,19 +1139,28 @@ export default function Dashboard() {
                 />
               </div>
             </div>
+            </>
+            ) : null}
+            {appearanceTab === "botones" ? (
             <div className="mt-6">
               <p className="text-sm font-bold text-white/75">
                 Forma de botones
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <p className="mt-1 text-xs text-white/35">
+                Aplica a todos los enlaces de tu página.
+              </p>
+              <div className="mt-4 grid grid-cols-3 gap-2">
                 {(["rounded", "pill", "square"] as const).map((style) => (
                   <button
                     key={style}
                     onClick={() =>
                       setProfile({ ...profile, buttonStyle: style })
                     }
-                    className={`border px-4 py-2 text-sm font-bold transition motion-reduce:transition-none ${style === "pill" ? "rounded-full" : style === "square" ? "rounded-md" : "rounded-2xl"} ${profile.buttonStyle === style ? "border-lime bg-lime text-ink" : "border-white/15 bg-white/[.035] text-white/60 hover:border-white/30 hover:text-white"}`}
+                    className={`flex flex-col items-center gap-2 rounded-xl border px-3 py-4 text-xs font-bold transition motion-reduce:transition-none ${profile.buttonStyle === style ? "border-lime/60 bg-lime/10 text-white" : "border-white/12 bg-white/[.03] text-white/55 hover:border-white/25 hover:text-white"}`}
                   >
+                    <span
+                      className={`h-7 w-full border ${style === "pill" ? "rounded-full" : style === "square" ? "rounded-md" : "rounded-xl"} ${profile.buttonStyle === style ? "border-lime/50 bg-lime/15" : "border-white/20 bg-white/[.05]"}`}
+                    />
                     {style === "rounded"
                       ? "Redondeado"
                       : style === "pill"
@@ -1154,10 +1170,11 @@ export default function Dashboard() {
                 ))}
               </div>
             </div>
+            ) : null}
           </div>
           <div
             id="enlaces"
-            className="mt-6 scroll-mt-24 rounded-[2rem] border border-white/15 bg-card/95 p-6 shadow-[0_24px_75px_rgba(0,0,0,.30)]"
+            className="mt-6 scroll-mt-24 rounded-[2rem] border border-white/12 bg-card/95 p-6"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -1288,7 +1305,7 @@ function StatCard({
   value: number;
 }) {
   return (
-    <div className="flex items-center gap-4 rounded-2xl border border-white/15 bg-card/95 p-5 shadow-[0_20px_60px_rgba(0,0,0,.28)]">
+    <div className="flex items-center gap-4 rounded-2xl border border-white/12 bg-card/95 p-5">
       <span className="grid h-11 w-11 place-items-center rounded-xl border border-lime/25 bg-lime/10 text-lime">
         {icon}
       </span>

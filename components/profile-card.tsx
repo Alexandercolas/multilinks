@@ -8,7 +8,7 @@ import { LinkFavicon } from "@/components/link-favicon";
 import { accessibleProfileTextColor, backgroundImageStyle, getPremiumBackground, premiumBackgroundStyle } from "@/lib/profile-backgrounds";
 
 export function ProfileCard({ profile, preview = false, showBranding = true, richMedia = false }: { profile: Profile; preview?: boolean; showBranding?: boolean; richMedia?: boolean }) {
-  const buttonRadius = profile.buttonStyle === "pill" ? "rounded-full" : profile.buttonStyle === "square" ? "rounded-md" : "rounded-2xl";
+  const buttonRadius = profile.buttonStyle === "pill" ? "rounded-full" : profile.buttonStyle === "square" ? "rounded-lg" : "rounded-2xl";
   const visibleLinks = profile.links.filter((link) => link.active && isSafeLink(link.url));
   const customImage = profile.backgroundImage;
   const selectedBackground = getPremiumBackground(profile.backgroundPreset);
@@ -24,18 +24,32 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
       ? selectedBackground.dark ? "#0f1115" : "#f7f4ed"
       : profile.backgroundColor;
 
+  // One premium surface language, tuned for light vs dark backgrounds.
+  const cardSurface = darkSurface
+    ? "border border-white/12 bg-white/[.06] text-white backdrop-blur-md hover:border-white/25 hover:bg-white/[.09]"
+    : "border border-black/[.07] bg-white text-ink shadow-[0_1px_2px_rgba(21,21,21,.04),0_12px_32px_-16px_rgba(21,21,21,.16)] hover:border-black/[.14]";
+  const iconTile = darkSurface
+    ? "border border-white/10 bg-white/[.06]"
+    : "border border-black/[.06] bg-black/[.03]";
+
   return (
     <section
-      className={`relative min-h-full overflow-hidden ${themeClasses[profile.theme]} px-5 py-10 text-center sm:px-7 sm:py-12`}
+      className={`relative min-h-full overflow-hidden ${themeClasses[profile.theme]} px-5 py-11 text-center sm:px-8 sm:py-14`}
       style={{ backgroundColor, color: profileTextColor, ...premiumBackgroundStyle(profile.backgroundPreset), ...backgroundImageStyle(customImage) }}
     >
-      {customImage ? <span className="absolute inset-0 bg-black/45" aria-hidden="true"/> : profile.backgroundPreset ? <span className={`absolute inset-0 ${darkSurface ? "bg-black/30" : "bg-white/15"}`} aria-hidden="true"/> : darkSurface ? <><span className="absolute -left-24 top-8 h-64 w-64 rounded-full bg-lime/20 blur-3xl" aria-hidden="true"/><span className="absolute -right-24 top-72 h-72 w-72 rounded-full bg-lime/10 blur-3xl" aria-hidden="true"/><span className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,.06),transparent_42%)]" aria-hidden="true"/></> : <><span className="absolute left-3 top-28 h-16 w-16 rotate-12 border-[3px] border-ink bg-white/20 sm:left-5 sm:h-20 sm:w-20" aria-hidden="true"/><span className="absolute right-3 top-10 h-20 w-20 rounded-full border-[3px] border-ink opacity-30 sm:right-5 sm:h-24 sm:w-24" style={{ backgroundColor: profile.accentColor }} aria-hidden="true"/></>}
+      {customImage ? (
+        <span className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/45 to-black/60" aria-hidden="true" />
+      ) : profile.backgroundPreset ? (
+        <span className={`absolute inset-0 ${darkSurface ? "bg-black/25" : "bg-white/10"}`} aria-hidden="true" />
+      ) : darkSurface ? (
+        <span className="absolute inset-0 bg-[radial-gradient(120%_60%_at_50%_0%,rgba(255,255,255,.07),transparent_60%)]" aria-hidden="true" />
+      ) : null}
 
       <div className="relative mx-auto max-w-md">
         <div className="animate-fade-up">
           <div
-            className={`mx-auto flex h-28 w-28 items-center justify-center overflow-hidden font-display text-2xl font-black transition ${darkSurface ? "rounded-full border border-lime/60 text-ink shadow-[0_0_0_7px_rgba(198,255,61,.08),0_0_35px_rgba(198,255,61,.28)]" : "rotate-[-3deg] rounded-[2rem] border-[3px] border-ink bg-white text-ink shadow-hard-lg hover:rotate-0"}`}
-            style={{ backgroundColor: darkSurface ? "#c6ff3d" : profile.accentColor }}
+            className={`mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-[1.75rem] font-display text-2xl font-black ${darkSurface ? "ring-1 ring-white/20 shadow-[0_10px_40px_-8px_rgba(0,0,0,.5)]" : "ring-1 ring-black/[.06] shadow-[0_12px_40px_-12px_rgba(21,21,21,.28)]"}`}
+            style={{ backgroundColor: darkSurface ? "#c6ff3d" : profile.accentColor, color: "#151515" }}
           >
             {profile.avatarImage ? (
               <div
@@ -49,19 +63,21 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
         </div>
 
         <div className="animate-fade-up [animation-delay:80ms]">
-          <h1 className="mt-7 font-display text-3xl font-black leading-tight tracking-[-.03em] sm:text-4xl">
+          <h1 className="mt-6 font-display text-[1.75rem] font-black leading-tight tracking-[-.02em] sm:text-3xl">
             {profile.displayName}
           </h1>
-          <p className={`mt-3 inline-flex items-center px-3 py-1 font-display text-xs font-bold ${darkSurface ? "" : "rotate-[-1deg] border-2 border-ink bg-white text-ink shadow-[3px_3px_0_#151515]"}`}>
+          <p className={`mt-2 font-display text-sm font-bold ${darkSurface ? "text-white/55" : "text-ink/45"}`}>
             @{profile.username}
           </p>
         </div>
 
-        <p className="mx-auto mt-6 max-w-sm animate-fade-up text-base font-semibold leading-7 [animation-delay:160ms]">
-          {profile.bio}
-        </p>
+        {profile.bio ? (
+          <p className={`mx-auto mt-5 max-w-sm animate-fade-up text-[15px] leading-7 [animation-delay:160ms] ${darkSurface ? "text-white/75" : "text-ink/70"}`}>
+            {profile.bio}
+          </p>
+        ) : null}
 
-        <div className="mx-auto mt-9 max-w-md space-y-4">
+        <div className="mx-auto mt-8 max-w-md space-y-3">
           {visibleLinks.map((link, index) => {
             const trackable = /^[0-9a-f-]{36}$/i.test(link.id);
             const href = preview ? undefined : trackable ? `/api/click/${link.id}` : link.url;
@@ -70,7 +86,7 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
             const youtubeThumb = media?.kind === "youtube" ? media.thumbnail : null;
 
             const iconSlot = link.icon && !["🔗", "ðŸ”—"].includes(link.icon) ? (
-              <span className={`ml-1 grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl text-xl ${darkSurface ? "border border-white/10 bg-white/[.05]" : "border-2 border-ink bg-cream"}`}>
+              <span className={`grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl text-lg ${iconTile}`}>
                 {/^https?:\/\//i.test(link.icon) ? (
                   <span
                     role="img"
@@ -80,31 +96,29 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                   />
                 ) : link.icon}
               </span>
-            ) : <span className={`ml-1 grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl ${darkSurface ? "border border-white/10 bg-white/[.05]" : "border-2 border-ink bg-cream"}`}><LinkFavicon url={link.url} title={link.title}/></span>;
+            ) : (
+              <span className={`grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl ${iconTile}`}>
+                <LinkFavicon url={link.url} title={link.title} />
+              </span>
+            );
 
             const rowInner = (
               <>
                 {iconSlot}
-                <span className="min-w-0 flex-1">{link.title}</span>
-                <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${darkSurface ? "border border-white/15 text-lime" : ""}`}><ArrowUpRight size={19}/></span>
+                <span className="min-w-0 flex-1 text-[15px] font-semibold">{link.title}</span>
+                <ArrowUpRight size={17} className={`shrink-0 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${darkSurface ? "text-white/40" : "text-ink/35"}`} />
               </>
             );
-
-            const surfaceClass = darkSurface
-              ? "border border-white/15 bg-black/20 text-white shadow-[0_12px_32px_rgba(0,0,0,.32)] hover:border-lime/60 hover:bg-black/10"
-              : "border-[3px] border-ink bg-white text-ink shadow-hard hover:shadow-hard-lg";
 
             return (
               <div
                 key={link.id}
                 className="animate-fade-up"
-                style={{ animationDelay: `${240 + index * 80}ms` }}
+                style={{ animationDelay: `${220 + index * 70}ms` }}
               >
                 {showSection ? (
-                  <h2 className="mb-3 mt-8 flex items-center justify-center gap-2 font-display text-xs font-black uppercase tracking-[.16em]">
-                    <span className="h-2 w-2 rotate-45 bg-current" aria-hidden="true" />
+                  <h2 className={`mb-2.5 mt-7 text-center font-display text-[11px] font-black uppercase tracking-[.18em] ${darkSurface ? "text-white/45" : "text-ink/40"}`}>
                     {link.sectionTitle}
-                    <span className="h-2 w-2 rotate-45 bg-current" aria-hidden="true" />
                   </h2>
                 ) : null}
                 {youtubeThumb ? (
@@ -112,7 +126,7 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                     href={href}
                     target={!preview ? "_blank" : undefined}
                     rel="noreferrer"
-                    className={`group relative flex w-full flex-col overflow-hidden ${buttonRadius} text-left font-bold transition hover:-translate-y-1 ${surfaceClass}`}
+                    className={`group relative flex w-full flex-col overflow-hidden ${buttonRadius} text-left transition hover:-translate-y-0.5 motion-reduce:transform-none ${cardSurface}`}
                   >
                     <span className="relative block w-full">
                       <span
@@ -121,22 +135,22 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                         className="block aspect-video w-full bg-cover bg-center"
                         style={{ backgroundImage: `url(${youtubeThumb})` }}
                       />
-                      <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent" />
-                      <span aria-hidden="true" className="absolute left-1/2 top-1/2 grid h-14 w-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-black/55 text-white backdrop-blur-sm transition group-hover:scale-105 motion-reduce:transition-none">
-                        <Play size={22} className="translate-x-0.5 fill-current" />
+                      <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+                      <span aria-hidden="true" className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/95 text-ink shadow-lg transition group-hover:scale-105 motion-reduce:transition-none">
+                        <Play size={18} className="translate-x-0.5 fill-current" />
                       </span>
                     </span>
-                    <span className="relative flex items-center gap-3 px-4 py-3.5">{rowInner}</span>
+                    <span className="flex items-center gap-3 px-3.5 py-3">{rowInner}</span>
                   </a>
                 ) : (
                   <a
                     href={href}
                     target={!preview ? "_blank" : undefined}
                     rel="noreferrer"
-                    className={`group relative flex w-full items-center gap-3 overflow-hidden ${buttonRadius} px-4 py-3.5 text-left font-bold transition hover:-translate-y-1 ${surfaceClass}`}
+                    className={`group relative flex w-full items-center gap-3 overflow-hidden ${buttonRadius} px-3.5 py-3 text-left transition hover:-translate-y-0.5 motion-reduce:transform-none ${cardSurface}`}
                   >
                     <span
-                      className={`absolute inset-y-0 left-0 ${darkSurface ? "w-0.5" : "w-2 border-r-2 border-ink"}`}
+                      className="absolute inset-y-2 left-0 w-[3px] rounded-full"
                       style={{ backgroundColor: profile.accentColor }}
                       aria-hidden="true"
                     />
@@ -149,13 +163,18 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
         </div>
 
         {showBranding ? (() => {
-          const brandingClass = `mx-auto mt-12 inline-flex animate-fade-up items-center gap-1.5 rounded-full px-3 py-1.5 font-display text-[10px] font-black uppercase tracking-[.1em] opacity-70 transition [animation-delay:520ms] motion-reduce:transform-none motion-reduce:transition-none ${darkSurface ? "border border-white/12 text-white/75" : "border border-ink/15 text-ink/60"}`;
+          const brandingClass = `mx-auto mt-10 inline-flex animate-fade-up items-center gap-1.5 rounded-full px-3 py-1.5 font-display text-[10px] font-black uppercase tracking-[.12em] transition [animation-delay:520ms] motion-reduce:transform-none motion-reduce:transition-none ${darkSurface ? "border border-white/12 text-white/60" : "border border-ink/12 text-ink/50"}`;
           const mark = <span className={darkSurface ? "text-lime" : "text-grape-dark"} aria-hidden="true">⚡</span>;
           return preview
             ? <span className={brandingClass}>{mark} Hecho con MultiLinks</span>
-            : <Link href="/sign-in?mode=signup" className={`${brandingClass} hover:-translate-y-0.5 hover:opacity-100 ${darkSurface ? "hover:border-lime/50 hover:text-lime" : "hover:border-ink/40 hover:text-grape-dark"}`}>{mark} Hecho con MultiLinks</Link>;
+            : <Link href="/sign-in?mode=signup" className={`${brandingClass} hover:-translate-y-0.5 ${darkSurface ? "hover:border-lime/40 hover:text-lime" : "hover:border-ink/30 hover:text-grape-dark"}`}>{mark} Hecho con MultiLinks</Link>;
         })() : null}
-        {!preview ? <div className="mt-5 flex items-center justify-center gap-4 text-xs font-bold"><Link href={`/report/${profile.username}`} className="inline-flex items-center gap-1.5 hover:underline"><Flag size={13}/> Reportar</Link><Link href="/ayuda" className="hover:underline">Ayuda</Link></div> : null}
+        {!preview ? (
+          <div className={`mt-5 flex items-center justify-center gap-4 text-xs font-semibold ${darkSurface ? "text-white/40" : "text-ink/40"}`}>
+            <Link href={`/report/${profile.username}`} className="inline-flex items-center gap-1.5 transition hover:opacity-100 hover:underline"><Flag size={12} /> Reportar</Link>
+            <Link href="/ayuda" className="transition hover:underline">Ayuda</Link>
+          </div>
+        ) : null}
       </div>
     </section>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   closestCenter,
@@ -28,6 +28,7 @@ import {
   Eye,
   GripVertical,
   ImagePlus,
+  Link2,
   LogOut,
   MousePointerClick,
   Plus,
@@ -44,6 +45,7 @@ import { demoProfile } from "@/lib/demo-profile";
 import { isSafeLink } from "@/lib/profile-storage";
 import { getLinkMedia } from "@/lib/link-media";
 import { detectPlatform } from "@/lib/platforms";
+import { CARD_TYPE_LABELS, CARD_TYPE_OPTIONS, type LinkPreview, type SmartCardType } from "@/lib/link-preview-types";
 import {
   BACKGROUND_IMAGE_BUCKET,
   decodeStoredBackground,
@@ -78,6 +80,9 @@ type DbLink = {
   section_title: string | null;
   description: string | null;
   featured: boolean | null;
+  provider: string | null;
+  link_type: LinkItem["linkType"] | null;
+  thumbnail: string | null;
 };
 
 const PRO_ACTIVE_LINK_LIMIT = 50;
@@ -122,6 +127,8 @@ type SortableLinkRowProps = {
   onRemove: (id: string) => void;
 };
 
+type PreviewState = "idle" | "loading" | "done" | "error" | "blocked";
+
 function SortableLinkRow({
   link,
   reducedMotion,
@@ -131,6 +138,51 @@ function SortableLinkRow({
 }: SortableLinkRowProps) {
   const media = getLinkMedia(link.url);
   const platform = detectPlatform(link.url);
+
+  const [preview, setPreview] = useState<LinkPreview | null>(null);
+  const [previewState, setPreviewState] = useState<PreviewState>("idle");
+  const analyzedUrl = useRef("");
+  const onUpdateRef = useRef(onUpdate);
+  useEffect(() => {
+    onUpdateRef.current = onUpdate;
+  });
+
+  useEffect(() => {
+    const url = link.url.trim();
+    const looksComplete = /^https?:\/\/[^\s.]+\.[^\s]{2,}/i.test(url);
+    if (!looksComplete || !isSafeLink(url) || url === analyzedUrl.current) return;
+
+    const timer = window.setTimeout(() => {
+      analyzedUrl.current = url;
+      setPreviewState("loading");
+      fetch("/api/link-preview", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ url }),
+      })
+        .then(async (response) => {
+          const data = await response.json().catch(() => null);
+          if (!response.ok || !data?.preview) {
+            setPreviewState(response.status === 422 ? "blocked" : "error");
+            return;
+          }
+          const result = data.preview as LinkPreview;
+          setPreview(result);
+          setPreviewState("done");
+          const patch: Partial<LinkItem> = { provider: result.provider };
+          const currentTitle = link.title.trim();
+          if ((!currentTitle || currentTitle === "Nuevo enlace") && result.title) patch.title = result.title;
+          if (!link.description?.trim() && result.description) patch.description = result.description;
+          if (!link.thumbnail && result.image) patch.thumbnail = result.image;
+          if (!link.linkType) patch.linkType = link.featured ? "featured" : result.cardType;
+          onUpdateRef.current(link.id, patch);
+        })
+        .catch(() => setPreviewState("error"));
+    }, 700);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [link.url]);
+
   const {
     attributes,
     isDragging,
@@ -188,35 +240,91 @@ function SortableLinkRow({
           onChange={(event) => onUpdate(link.id, { icon: event.target.value })}
           className="min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70"
         />
-        {platform || media?.kind === "youtube" ? (
-          <div className="sm:col-span-3 flex flex-wrap items-center gap-2 text-xs font-semibold">
-            {platform ? (
-              <span
-                className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-white/70"
-                style={{ backgroundColor: `${platform.color}1f`, borderColor: `${platform.color}55` }}
-              >
-                <img
-                  src={`https://cdn.simpleicons.org/${platform.slug}`}
-                  alt=""
-                  width="12"
-                  height="12"
-                  className="h-3 w-3 object-contain"
-                />
-                {platform.label}
-              </span>
+        {previewState !== "idle" || platform || link.thumbnail ? (
+          <div className="sm:col-span-3 space-y-2">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+              {previewState === "loading" ? (
+                <span className="inline-flex items-center gap-1.5 text-white/45">
+                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-white/70" />
+                  Detectando enlace…
+                </span>
+              ) : platform || preview?.siteName ? (
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-white/75"
+                  style={
+                    platform
+                      ? { backgroundColor: `${platform.color}1f`, borderColor: `${platform.color}55` }
+                      : { borderColor: "rgba(255,255,255,.14)" }
+                  }
+                >
+                  {platform ? (
+                    <img
+                      src={`https://cdn.simpleicons.org/${platform.slug}`}
+                      alt=""
+                      width="12"
+                      height="12"
+                      className="h-3 w-3 object-contain"
+                    />
+                  ) : (
+                    <Link2 size={12} />
+                  )}
+                  Detectado: {platform?.label ?? preview?.siteName}
+                </span>
+              ) : null}
+              {previewState === "blocked" ? (
+                <span className="text-white/35">No se pudo analizar esa dirección</span>
+              ) : previewState === "error" ? (
+                <span className="text-white/35">Sin vista previa disponible</span>
+              ) : null}
+            </div>
+
+            {(previewState === "done" && preview) || link.thumbnail ? (
+              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[.03] p-2">
+                {link.thumbnail ? (
+                  <span
+                    role="img"
+                    aria-label="Miniatura del enlace"
+                    className="h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${link.thumbnail})` }}
+                  />
+                ) : null}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-semibold text-white/80">
+                    {link.title || preview?.title || "Sin título"}
+                  </p>
+                  <label className="mt-1 flex items-center gap-2 text-[11px] text-white/40">
+                    Estilo
+                    <select
+                      value={link.linkType ?? "standard"}
+                      onChange={(event) =>
+                        onUpdate(link.id, { linkType: event.target.value as SmartCardType })
+                      }
+                      className="rounded-md border border-white/10 bg-white/[.05] px-2 py-1 text-[11px] font-semibold text-white/80 outline-none focus:border-lime/60"
+                    >
+                      {CARD_TYPE_OPTIONS.map((option) => (
+                        <option key={option} value={option} className="bg-card text-white">
+                          {CARD_TYPE_LABELS[option]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                {link.thumbnail ? (
+                  <button
+                    type="button"
+                    onClick={() => onUpdate(link.id, { thumbnail: "" })}
+                    className="shrink-0 rounded-md px-2 py-1 text-[11px] font-semibold text-white/40 transition hover:text-red-300"
+                  >
+                    Quitar imagen
+                  </button>
+                ) : null}
+              </div>
             ) : null}
-            {media?.kind === "youtube" ? (
-              <span className={`inline-flex items-center gap-1.5 ${isPro ? "text-lime" : "text-white/40"}`}>
-                {isPro ? (
-                  <>
-                    <Check size={13} /> Miniatura activada
-                  </>
-                ) : (
-                  <>
-                    <Crown size={13} className="text-lime" /> Miniatura del video con Pro
-                  </>
-                )}
-              </span>
+
+            {(media?.kind === "youtube" || link.linkType === "media") && !isPro ? (
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-white/40">
+                <Crown size={13} className="text-lime" /> Las tarjetas multimedia se muestran con MultiLinks Pro
+              </p>
             ) : null}
           </div>
         ) : null}
@@ -323,7 +431,7 @@ export default function Dashboard() {
           .maybeSingle<DbProfile>(),
         supabase
           .from("links")
-          .select("id,title,url,active,clicks,icon,section_title,description,featured")
+          .select("id,title,url,active,clicks,icon,section_title,description,featured,provider,link_type,thumbnail")
           .eq("profile_id", user.id)
           .order("position"),
         supabase
@@ -392,6 +500,9 @@ export default function Dashboard() {
             sectionTitle: link.section_title ?? undefined,
             description: link.description ?? undefined,
             featured: Boolean(link.featured),
+            provider: link.provider ?? undefined,
+            linkType: link.link_type ?? undefined,
+            thumbnail: link.thumbnail ?? undefined,
           })),
         });
       } else {
@@ -718,6 +829,12 @@ export default function Dashboard() {
       section_title: link.sectionTitle?.trim() || null,
       description: link.description?.trim() || "",
       featured: link.featured ?? false,
+      provider: (link.provider || "generic").slice(0, 40),
+      link_type: link.linkType ?? "standard",
+      thumbnail: (() => {
+        const value = (link.thumbnail ?? "").trim();
+        return /^https:\/\/[^\s"']{1,585}$/i.test(value) ? value : "";
+      })(),
     }));
     const { error: linksError } = rows.length
       ? await supabase.from("links").insert(rows)

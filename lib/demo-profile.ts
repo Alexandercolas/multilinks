@@ -13,7 +13,17 @@ export const demoProfile: Profile = {
     { id: "1", title: "Crear mi página", url: "/dashboard", active: true, icon: "✨", sectionTitle: "Empieza aquí", description: "Gratis y lista en minutos", featured: true },
     { id: "2", title: "Ver cómo funciona", url: "/", active: true, icon: "👀", sectionTitle: "Descubre MultiLinks" },
     { id: "3", title: "Mi comunidad", url: "/demo", active: true, icon: "🔗", sectionTitle: "Descubre MultiLinks" },
-    { id: "4", title: "Mi playlist", url: "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M", active: true, description: "Lo que estoy escuchando", sectionTitle: "Escucha" },
+    {
+      id: "4",
+      title: "Mi playlist",
+      url: "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M",
+      active: true,
+      description: "Lo que estoy escuchando",
+      sectionTitle: "Escucha",
+      provider: "spotify",
+      linkType: "media",
+      thumbnail: "https://i.scdn.co/image/ab67706f0000000274dd48e99e097e3ee37133be",
+    },
   ],
 };
 

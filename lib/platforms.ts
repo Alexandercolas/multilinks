@@ -22,6 +22,8 @@ export type PlatformId =
   | "soundcloud"
   | "threads";
 
+export type ProviderKind = "video" | "music" | "social" | "code" | "design" | "action" | "generic";
+
 export type Platform = {
   id: PlatformId;
   label: string;
@@ -29,27 +31,31 @@ export type Platform = {
   slug: string;
   /** brand colour, used for subtle tints */
   color: string;
+  /** what kind of content this platform hosts — drives the default card type */
+  kind: ProviderKind;
+  /** public oEmbed endpoint (no key), when the platform offers one */
+  oembed?: string;
 };
 
 const PLATFORMS: Record<PlatformId, Platform> = {
-  youtube: { id: "youtube", label: "YouTube", slug: "youtube", color: "#FF0000" },
-  spotify: { id: "spotify", label: "Spotify", slug: "spotify", color: "#1DB954" },
-  tiktok: { id: "tiktok", label: "TikTok", slug: "tiktok", color: "#EE1D52" },
-  instagram: { id: "instagram", label: "Instagram", slug: "instagram", color: "#E4405F" },
-  facebook: { id: "facebook", label: "Facebook", slug: "facebook", color: "#1877F2" },
-  twitter: { id: "twitter", label: "X", slug: "x", color: "#111111" },
-  linkedin: { id: "linkedin", label: "LinkedIn", slug: "linkedin", color: "#0A66C2" },
-  github: { id: "github", label: "GitHub", slug: "github", color: "#111111" },
-  twitch: { id: "twitch", label: "Twitch", slug: "twitch", color: "#9146FF" },
-  discord: { id: "discord", label: "Discord", slug: "discord", color: "#5865F2" },
-  telegram: { id: "telegram", label: "Telegram", slug: "telegram", color: "#26A5E4" },
-  whatsapp: { id: "whatsapp", label: "WhatsApp", slug: "whatsapp", color: "#25D366" },
-  pinterest: { id: "pinterest", label: "Pinterest", slug: "pinterest", color: "#BD081C" },
-  behance: { id: "behance", label: "Behance", slug: "behance", color: "#1769FF" },
-  dribbble: { id: "dribbble", label: "Dribbble", slug: "dribbble", color: "#EA4C89" },
-  applemusic: { id: "applemusic", label: "Apple Music", slug: "applemusic", color: "#FA243C" },
-  soundcloud: { id: "soundcloud", label: "SoundCloud", slug: "soundcloud", color: "#FF5500" },
-  threads: { id: "threads", label: "Threads", slug: "threads", color: "#111111" },
+  youtube: { id: "youtube", label: "YouTube", slug: "youtube", color: "#FF0000", kind: "video", oembed: "https://www.youtube.com/oembed" },
+  spotify: { id: "spotify", label: "Spotify", slug: "spotify", color: "#1DB954", kind: "music", oembed: "https://open.spotify.com/oembed" },
+  tiktok: { id: "tiktok", label: "TikTok", slug: "tiktok", color: "#EE1D52", kind: "video", oembed: "https://www.tiktok.com/oembed" },
+  instagram: { id: "instagram", label: "Instagram", slug: "instagram", color: "#E4405F", kind: "social" },
+  facebook: { id: "facebook", label: "Facebook", slug: "facebook", color: "#1877F2", kind: "social" },
+  twitter: { id: "twitter", label: "X", slug: "x", color: "#111111", kind: "social" },
+  linkedin: { id: "linkedin", label: "LinkedIn", slug: "linkedin", color: "#0A66C2", kind: "social" },
+  github: { id: "github", label: "GitHub", slug: "github", color: "#111111", kind: "code" },
+  twitch: { id: "twitch", label: "Twitch", slug: "twitch", color: "#9146FF", kind: "video" },
+  discord: { id: "discord", label: "Discord", slug: "discord", color: "#5865F2", kind: "action" },
+  telegram: { id: "telegram", label: "Telegram", slug: "telegram", color: "#26A5E4", kind: "action" },
+  whatsapp: { id: "whatsapp", label: "WhatsApp", slug: "whatsapp", color: "#25D366", kind: "action" },
+  pinterest: { id: "pinterest", label: "Pinterest", slug: "pinterest", color: "#BD081C", kind: "design" },
+  behance: { id: "behance", label: "Behance", slug: "behance", color: "#1769FF", kind: "design" },
+  dribbble: { id: "dribbble", label: "Dribbble", slug: "dribbble", color: "#EA4C89", kind: "design" },
+  applemusic: { id: "applemusic", label: "Apple Music", slug: "applemusic", color: "#FA243C", kind: "music" },
+  soundcloud: { id: "soundcloud", label: "SoundCloud", slug: "soundcloud", color: "#FF5500", kind: "music", oembed: "https://soundcloud.com/oembed" },
+  threads: { id: "threads", label: "Threads", slug: "threads", color: "#111111", kind: "social" },
 };
 
 const HOST_MATCHERS: [RegExp, PlatformId][] = [

@@ -95,12 +95,36 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
             const href = preview ? undefined : trackable ? `/api/click/${link.id}` : link.url;
             const showSection = link.sectionTitle && (index === 0 || visibleLinks[index - 1]?.sectionTitle !== link.sectionTitle);
             const media = richMedia ? getLinkMedia(link.url) : null;
-            const youtubeThumb = media?.kind === "youtube" ? media.thumbnail : null;
+            const persistedThumb = link.thumbnail && /^https:\/\//i.test(link.thumbnail) ? link.thumbnail : null;
+            const urlThumb = media?.kind === "youtube" ? media.thumbnail : null;
+            const mediaThumb = richMedia ? persistedThumb ?? urlThumb : null;
             const brandedMedia = media?.kind === "branded" ? media : null;
             const customIcon = link.icon && !["🔗", "ðŸ”—"].includes(link.icon) ? link.icon : null;
-            const platform = customIcon ? null : detectPlatform(link.url);
+            const detectedPlatform = detectPlatform(link.url);
+            const platform = customIcon ? null : detectedPlatform;
+            const platformKind = detectedPlatform?.kind;
             const featured = Boolean(link.featured);
             const iconSizeClass = featured ? "h-12 w-12 text-xl" : "h-10 w-10 text-lg";
+
+            // Decide the card shape from the persisted type, falling back to detection.
+            const linkType = link.linkType ?? (brandedMedia ? "action" : "standard");
+            const showMediaCard =
+              Boolean(mediaThumb) && linkType !== "simple" && linkType !== "social" && linkType !== "action";
+            const actionPlatform = brandedMedia?.platform ?? detectedPlatform;
+            const actionLabel =
+              brandedMedia?.action ??
+              (actionPlatform?.id === "whatsapp"
+                ? "Contactar"
+                : actionPlatform?.id === "telegram"
+                  ? "Abrir en Telegram"
+                  : actionPlatform?.id === "discord"
+                    ? "Unirse al servidor"
+                    : actionPlatform?.id === "twitch"
+                      ? "Ver canal"
+                      : "Abrir enlace");
+            const showActionCard =
+              !showMediaCard && Boolean(actionPlatform) && (linkType === "action" || Boolean(brandedMedia));
+            const showPlayButton = platformKind === "video" || platformKind === "music";
 
             const iconSlot = customIcon ? (
               <span className={`grid shrink-0 place-items-center overflow-hidden rounded-xl ${iconSizeClass} ${iconTile}`}>
@@ -146,7 +170,7 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                     {link.sectionTitle}
                   </h2>
                 ) : null}
-                {youtubeThumb ? (
+                {showMediaCard && mediaThumb ? (
                   <a
                     href={href}
                     target={!preview ? "_blank" : undefined}
@@ -158,16 +182,20 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                         role="img"
                         aria-label={`Miniatura de ${link.title}`}
                         className="block aspect-video w-full bg-cover bg-center"
-                        style={{ backgroundImage: `url(${youtubeThumb})` }}
+                        style={{ backgroundImage: `url(${mediaThumb})` }}
                       />
-                      <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
-                      <span aria-hidden="true" className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/95 text-ink shadow-lg transition group-hover:scale-105 motion-reduce:transition-none">
-                        <Play size={18} className="translate-x-0.5 fill-current" />
-                      </span>
+                      {showPlayButton ? (
+                        <>
+                          <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+                          <span aria-hidden="true" className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/95 text-ink shadow-lg transition group-hover:scale-105 motion-reduce:transition-none">
+                            <Play size={18} className="translate-x-0.5 fill-current" />
+                          </span>
+                        </>
+                      ) : null}
                     </span>
                     <span className={`flex items-center gap-3 px-3.5 ${featured ? "py-4" : "py-3"}`}>{rowInner}</span>
                   </a>
-                ) : brandedMedia ? (
+                ) : showActionCard && actionPlatform ? (
                   <a
                     href={href}
                     target={!preview ? "_blank" : undefined}
@@ -176,12 +204,12 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                   >
                     <span
                       className={`flex w-14 shrink-0 items-center justify-center ${darkSurface ? "bg-white/[.05]" : ""}`}
-                      style={darkSurface ? undefined : { backgroundColor: `${brandedMedia.platform.color}18` }}
+                      style={darkSurface ? undefined : { backgroundColor: `${actionPlatform.color}18` }}
                       aria-hidden="true"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={platformIconUrl(brandedMedia.platform, darkSurface ? "ffffff" : brandedMedia.platform.color.replace(/^#/, ""))}
+                        src={platformIconUrl(actionPlatform, darkSurface ? "ffffff" : actionPlatform.color.replace(/^#/, ""))}
                         alt=""
                         width="22"
                         height="22"
@@ -195,9 +223,9 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                         <span className="block truncate text-[15px] font-semibold">{link.title}</span>
                         <span
                           className={`mt-0.5 block truncate text-xs font-semibold ${darkSurface ? "text-white/45" : ""}`}
-                          style={darkSurface ? undefined : { color: brandedMedia.platform.color }}
+                          style={darkSurface ? undefined : { color: actionPlatform.color }}
                         >
-                          {link.description || brandedMedia.action}
+                          {link.description || actionLabel}
                         </span>
                       </span>
                       <ArrowUpRight size={17} className={`shrink-0 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${darkSurface ? "text-white/40" : "text-ink/35"}`} />

@@ -8,6 +8,9 @@ export type LinkItem = {
   sectionTitle?: string;
   description?: string;
   featured?: boolean;
+  provider?: string;
+  linkType?: "standard" | "simple" | "media" | "featured" | "social" | "action";
+  thumbnail?: string;
 };
 
 export type Profile = {

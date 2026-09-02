@@ -10,13 +10,23 @@ const CONTROL_CHARS = new RegExp("[\\u0000-\\u001F\\u007F]+", "g");
 
 function decodeEntities(value: string): string {
   return value
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => safeCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => safeCodePoint(parseInt(dec, 10)))
+    .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
     .replace(/&quot;/g, '"')
-    .replace(/&#0*39;|&apos;/g, "'")
+    .replace(/&apos;/g, "'")
     .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&#x2f;/gi, "/")
-    .replace(/&nbsp;/g, " ");
+    .replace(/&gt;/g, ">");
+}
+
+function safeCodePoint(code: number): string {
+  if (!Number.isFinite(code) || code < 32 || code > 0x10ffff) return "";
+  try {
+    return String.fromCodePoint(code);
+  } catch {
+    return "";
+  }
 }
 
 function clean(value: unknown, limit = MAX_TEXT): string {

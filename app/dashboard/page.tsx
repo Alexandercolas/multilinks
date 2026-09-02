@@ -86,6 +86,7 @@ type DbLink = {
 };
 
 const PRO_ACTIVE_LINK_LIMIT = 50;
+const LINK_TYPE_VALUES: SmartCardType[] = ["standard", "simple", "media", "featured", "social", "action"];
 const FREE_TRIAL_DAYS = 30;
 const FREE_TRIAL_LINK_LIMIT = 3;
 const FREE_BASE_LINK_LIMIT = 1;
@@ -833,34 +834,44 @@ export default function Dashboard() {
       icon: link.icon?.trim().slice(0, 500) || null,
       section_title: link.sectionTitle?.trim().slice(0, 60) || null,
       description: (link.description?.trim() || "").slice(0, 200),
-      featured: link.featured ?? false,
-      provider: (link.provider || "generic").slice(0, 40),
-      link_type: link.linkType ?? "standard",
+      featured: Boolean(link.featured),
+      provider: (link.provider || "generic").replace(/[^a-z0-9_-]/gi, "").slice(0, 40) || "generic",
+      link_type:
+        link.linkType && LINK_TYPE_VALUES.includes(link.linkType) ? link.linkType : "standard",
       thumbnail: (() => {
         const value = (link.thumbnail ?? "").trim();
-        return /^https:\/\/[^\s"']{1,585}$/i.test(value) ? value : "";
+        return value.startsWith("https://") && value.length <= 590 && !/[\s"']/.test(value)
+          ? value
+          : "";
       })(),
     }));
-    const keepIds = rows.map((row) => row.id);
+    const keepIds = new Set(rows.map((row) => row.id));
     const { error: linksError } = rows.length
       ? await supabase.from("links").upsert(rows, { onConflict: "id" })
       : { error: null };
     if (linksError) {
       setMessage(
         linksError.code === "23514"
-          ? "Algún título o texto de un enlace es demasiado largo. Acórtalo e intenta de nuevo."
-          : "No pudimos guardar algunos enlaces. Tus enlaces anteriores siguen intactos.",
+          ? "Algún título o texto de un enlace excede el límite. Acórtalo e intenta de nuevo."
+          : "No pudimos guardar los enlaces. Tus enlaces anteriores siguen intactos.",
       );
+      console.error("Links upsert failed", linksError);
       setSaving(false);
       return;
     }
-    let pruneQuery = supabase.from("links").delete().eq("profile_id", user.id);
-    if (keepIds.length) {
-      pruneQuery = pruneQuery.not("id", "in", `(${keepIds.map((id) => `"${id}"`).join(",")})`);
-    }
-    const { error: pruneError } = await pruneQuery;
-    if (pruneError) {
-      console.error("No se pudieron limpiar los enlaces eliminados", pruneError);
+    // Remove only the links the user explicitly deleted in the editor.
+    const { data: currentLinks } = await supabase
+      .from("links")
+      .select("id")
+      .eq("profile_id", user.id);
+    const removedIds = (currentLinks ?? [])
+      .map((row) => row.id as string)
+      .filter((id) => !keepIds.has(id));
+    if (removedIds.length) {
+      const { error: pruneError } = await supabase.from("links").delete().in("id", removedIds);
+      if (pruneError) {
+        console.error("No se pudieron limpiar los enlaces eliminados", pruneError);
+      }
     }
 
     setProfile({

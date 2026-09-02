@@ -218,20 +218,21 @@ function SortableLinkRow({
       >
         <GripVertical size={20} />
       </button>
-      <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-[1fr_1fr_90px]">
+      <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_90px]">
         <input
           value={link.title}
+          maxLength={100}
           aria-label="Título del enlace"
           placeholder="Título"
           onChange={(event) => onUpdate(link.id, { title: event.target.value })}
-          className="min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm font-semibold text-white outline-none placeholder:text-white/25 focus:border-lime/70"
+          className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm font-semibold text-white outline-none placeholder:text-white/25 focus:border-lime/70"
         />
         <input
           value={link.url}
           aria-label="Dirección del enlace"
           placeholder="https://..."
           onChange={(event) => onUpdate(link.id, { url: event.target.value })}
-          className="min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70"
+          className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70"
         />
         <input
           value={link.icon ?? ""}
@@ -239,7 +240,7 @@ function SortableLinkRow({
           aria-label="Ícono del enlace"
           placeholder="Emoji o URL"
           onChange={(event) => onUpdate(link.id, { icon: event.target.value })}
-          className="min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70"
+          className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70"
         />
         {previewState !== "idle" || platform || link.thumbnail ? (
           <div className="sm:col-span-3 space-y-2">
@@ -333,13 +334,13 @@ function SortableLinkRow({
         ) : null}
         <input
           value={link.description ?? ""}
-          maxLength={80}
+          maxLength={200}
           aria-label="Descripción del enlace"
           placeholder="Descripción (opcional)"
           onChange={(event) =>
             onUpdate(link.id, { description: event.target.value })
           }
-          className="min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70 sm:col-span-3"
+          className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70 sm:col-span-3"
         />
         <input
           value={link.sectionTitle ?? ""}
@@ -349,7 +350,7 @@ function SortableLinkRow({
           onChange={(event) =>
             onUpdate(link.id, { sectionTitle: event.target.value })
           }
-          className="min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70 sm:col-span-3"
+          className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70 sm:col-span-3"
         />
       </div>
       </div>
@@ -825,13 +826,13 @@ export default function Dashboard() {
     const rows = profile.links.map((link, position) => ({
       id: link.id,
       profile_id: user.id,
-      title: link.title,
-      url: link.url,
+      title: (link.title?.trim() || "Enlace").slice(0, 100),
+      url: link.url.slice(0, 2048),
       active: link.active,
       position,
-      icon: link.icon?.trim() || null,
-      section_title: link.sectionTitle?.trim() || null,
-      description: link.description?.trim() || "",
+      icon: link.icon?.trim().slice(0, 500) || null,
+      section_title: link.sectionTitle?.trim().slice(0, 60) || null,
+      description: (link.description?.trim() || "").slice(0, 200),
       featured: link.featured ?? false,
       provider: (link.provider || "generic").slice(0, 40),
       link_type: link.linkType ?? "standard",
@@ -845,7 +846,11 @@ export default function Dashboard() {
       ? await supabase.from("links").upsert(rows, { onConflict: "id" })
       : { error: null };
     if (linksError) {
-      setMessage("No pudimos guardar algunos enlaces. Tus enlaces anteriores siguen intactos.");
+      setMessage(
+        linksError.code === "23514"
+          ? "Algún título o texto de un enlace es demasiado largo. Acórtalo e intenta de nuevo."
+          : "No pudimos guardar algunos enlaces. Tus enlaces anteriores siguen intactos.",
+      );
       setSaving(false);
       return;
     }

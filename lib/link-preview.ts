@@ -4,7 +4,8 @@ import { detectPlatform, type Platform, type ProviderKind } from "@/lib/platform
 import { fetchPublicUrl } from "@/lib/security/ssrf";
 import type { LinkPreview, SmartCardType } from "@/lib/link-preview-types";
 
-const MAX_TEXT = 280;
+const MAX_TEXT = 240;
+const MAX_TITLE = 90; // stays under the links.title DB limit (100)
 const CONTROL_CHARS = new RegExp("[\\u0000-\\u001F\\u007F]+", "g");
 
 function decodeEntities(value: string): string {
@@ -18,13 +19,13 @@ function decodeEntities(value: string): string {
     .replace(/&nbsp;/g, " ");
 }
 
-function clean(value: unknown): string {
+function clean(value: unknown, limit = MAX_TEXT): string {
   if (typeof value !== "string") return "";
   return decodeEntities(value)
     .replace(CONTROL_CHARS, " ")
     .replace(/\s+/g, " ")
     .trim()
-    .slice(0, MAX_TEXT);
+    .slice(0, limit);
 }
 
 function httpsUrl(value: unknown, base?: string): string {
@@ -89,7 +90,7 @@ async function fromOembed(platform: Platform, url: string): Promise<Partial<Link
     if (!contentType.toLowerCase().includes("json")) return null;
     const data = JSON.parse(body) as Record<string, unknown>;
     return {
-      title: clean(data.title),
+      title: clean(data.title, MAX_TITLE),
       description: clean(data.author_name),
       image: httpsUrl(data.thumbnail_url),
     };
@@ -108,7 +109,7 @@ async function fromOpenGraph(url: string): Promise<Partial<LinkPreview> | null> 
     if (!contentType.toLowerCase().includes("html") && body.trim()[0] !== "<") return null;
     const head = body.slice(0, 200_000);
     const titleTag = head.match(/<title[^>]*>([^<]*)<\/title>/i);
-    const title = readMeta(head, ["og:title", "twitter:title"]) || clean(titleTag ? titleTag[1] : "");
+    const title = (readMeta(head, ["og:title", "twitter:title"]) || clean(titleTag ? titleTag[1] : "")).slice(0, MAX_TITLE);
     const description = readMeta(head, ["og:description", "twitter:description", "description"]);
     const image = httpsUrl(readMeta(head, ["og:image:secure_url", "og:image", "twitter:image"]), finalUrl);
     const siteName = readMeta(head, ["og:site_name", "application-name"]);

@@ -10,6 +10,8 @@ import { accessibleProfileTextColor, backgroundImageStyle, getPremiumBackground,
 
 export function ProfileCard({ profile, preview = false, showBranding = true, richMedia = false }: { profile: Profile; preview?: boolean; showBranding?: boolean; richMedia?: boolean }) {
   const buttonRadius = profile.buttonStyle === "pill" ? "rounded-full" : profile.buttonStyle === "square" ? "rounded-lg" : "rounded-2xl";
+  // Cards with an image / stacked content can't be pill-shaped or they turn into ellipses.
+  const cardRadius = profile.buttonStyle === "square" ? "rounded-xl" : "rounded-2xl";
   const visibleLinks = profile.links.filter((link) => link.active && isSafeLink(link.url));
   const customImage = profile.backgroundImage;
   const selectedBackground = getPremiumBackground(profile.backgroundPreset);
@@ -108,8 +110,10 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
 
             // Decide the card shape from the persisted type, falling back to detection.
             const linkType = link.linkType ?? (brandedMedia ? "action" : "standard");
+            // The big image card is only for video/music, or when the user picks it.
             const showMediaCard =
-              Boolean(mediaThumb) && linkType !== "simple" && linkType !== "social" && linkType !== "action";
+              Boolean(mediaThumb) &&
+              (linkType === "media" || platformKind === "video" || platformKind === "music");
             const actionPlatform = brandedMedia?.platform ?? detectedPlatform;
             const actionLabel =
               brandedMedia?.action ??
@@ -126,6 +130,7 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
               !showMediaCard && Boolean(actionPlatform) && (linkType === "action" || Boolean(brandedMedia));
             const showPlayButton = platformKind === "video" || platformKind === "music";
 
+            const rowThumb = !customIcon && !showMediaCard && persistedThumb ? persistedThumb : null;
             const iconSlot = customIcon ? (
               <span className={`grid shrink-0 place-items-center overflow-hidden rounded-xl ${iconSizeClass} ${iconTile}`}>
                 {/^https?:\/\//i.test(customIcon) ? (
@@ -137,6 +142,13 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                   />
                 ) : customIcon}
               </span>
+            ) : rowThumb ? (
+              <span
+                role="img"
+                aria-label={`Imagen de ${link.title}`}
+                className={`shrink-0 overflow-hidden rounded-xl border border-black/[.06] bg-cover bg-center ${iconSizeClass}`}
+                style={{ backgroundImage: `url(${rowThumb})` }}
+              />
             ) : (
               <span
                 className={`grid shrink-0 place-items-center overflow-hidden rounded-xl border ${iconSizeClass} ${platform ? "" : iconTile}`}
@@ -175,7 +187,7 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                     href={href}
                     target={!preview ? "_blank" : undefined}
                     rel="noreferrer"
-                    className={`group relative flex w-full flex-col overflow-hidden ${buttonRadius} text-left transition hover:-translate-y-0.5 motion-reduce:transform-none ${cardSurface}`}
+                    className={`group relative flex w-full flex-col overflow-hidden ${cardRadius} text-left transition hover:-translate-y-0.5 motion-reduce:transform-none ${cardSurface}`}
                   >
                     <span className="relative block w-full">
                       <span
@@ -200,7 +212,7 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                     href={href}
                     target={!preview ? "_blank" : undefined}
                     rel="noreferrer"
-                    className={`group relative flex w-full items-stretch overflow-hidden ${buttonRadius} text-left transition hover:-translate-y-0.5 motion-reduce:transform-none ${cardSurface}`}
+                    className={`group relative flex w-full items-stretch overflow-hidden ${cardRadius} text-left transition hover:-translate-y-0.5 motion-reduce:transform-none ${cardSurface}`}
                   >
                     <span
                       className={`flex w-14 shrink-0 items-center justify-center ${darkSurface ? "bg-white/[.05]" : ""}`}
@@ -236,7 +248,7 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                     href={href}
                     target={!preview ? "_blank" : undefined}
                     rel="noreferrer"
-                    className={`group relative flex w-full items-center gap-3 overflow-hidden ${buttonRadius} text-left transition hover:-translate-y-0.5 motion-reduce:transform-none ${featured ? "px-4 py-5" : "px-3.5 py-3"} ${cardSurface}`}
+                    className={`group relative flex w-full items-center gap-3 overflow-hidden ${featured ? cardRadius : buttonRadius} text-left transition hover:-translate-y-0.5 motion-reduce:transform-none ${featured ? "px-4 py-5" : "px-3.5 py-3"} ${cardSurface}`}
                     style={featured ? { boxShadow: `inset 0 0 0 1px ${profile.accentColor}40` } : undefined}
                   >
                     <span

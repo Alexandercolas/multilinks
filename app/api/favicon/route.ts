@@ -15,7 +15,11 @@ const MAX_BYTES = 300_000;
 
 function miss() {
   // 404 so the <img onError> chain in <LinkFavicon> falls back to its glyph.
-  return new NextResponse(null, { status: 404 });
+  // Short cache: a miss is often a cold-start timeout, worth retrying soon.
+  return new NextResponse(null, {
+    status: 404,
+    headers: { "Cache-Control": "public, max-age=600" },
+  });
 }
 
 function serve(bytes: Uint8Array, type: string) {
@@ -54,7 +58,7 @@ async function iconFromHomepage(host: string): Promise<string | null> {
     const { body, url } = await fetchPublicUrl(`https://${host}/`, {
       accept: "text/html",
       maxBytes: 96_000,
-      timeoutMs: 5_000,
+      timeoutMs: 8_000,
     });
     const head = body.slice(0, 96_000);
     const match =

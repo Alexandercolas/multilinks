@@ -124,7 +124,12 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
             const rowInner = (
               <>
                 {iconSlot}
-                <span className={`min-w-0 flex-1 ${featured ? "text-base font-black" : "text-[15px] font-semibold"}`}>{link.title}</span>
+                <span className="min-w-0 flex-1">
+                  <span className={`block truncate ${featured ? "text-base font-black" : "text-[15px] font-semibold"}`}>{link.title}</span>
+                  {link.description ? (
+                    <span className={`mt-0.5 block truncate text-xs font-medium ${darkSurface ? "text-white/50" : "text-ink/45"}`}>{link.description}</span>
+                  ) : null}
+                </span>
                 <ArrowUpRight size={featured ? 19 : 17} className={`shrink-0 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${darkSurface ? "text-white/40" : "text-ink/35"}`} />
               </>
             );

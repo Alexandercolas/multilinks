@@ -6,6 +6,7 @@ export type LinkItem = {
   clicks?: number;
   icon?: string;
   sectionTitle?: string;
+  description?: string;
   featured?: boolean;
 };
 

@@ -45,7 +45,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
 
   if (data) {
     const [{ data: links }, { data: hasPro }, { data: linkLimit }, { data: authData }] = await Promise.all([
-      supabase.from("links").select("id,title,url,active,icon,section_title,featured").eq("profile_id", data.id).eq("active", true).order("position"),
+      supabase.from("links").select("id,title,url,active,icon,section_title,description,featured").eq("profile_id", data.id).eq("active", true).order("position"),
       supabase.rpc("profile_has_pro", { target_profile: data.id }),
       supabase.rpc("profile_effective_link_limit", { target_profile: data.id }),
       supabase.auth.getUser(),
@@ -76,7 +76,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
       buttonStyle: data.button_style,
       links: (links ?? [])
         .slice(0, effectiveLinkLimit)
-        .map((link) => ({ ...link, icon: link.icon ?? undefined, sectionTitle: link.section_title ?? undefined, featured: Boolean(link.featured) })),
+        .map((link) => ({ ...link, icon: link.icon ?? undefined, sectionTitle: link.section_title ?? undefined, description: link.description ?? undefined, featured: Boolean(link.featured) })),
     };
     const premiumDark = Boolean(profile.backgroundImage) || profile.theme === "neon" || Boolean(getPremiumBackground(profile.backgroundPreset)?.dark);
     const showWebViewSignIn = !authData.user && inSocialWebView;

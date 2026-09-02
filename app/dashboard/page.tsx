@@ -76,6 +76,7 @@ type DbLink = {
   clicks: number;
   icon: string | null;
   section_title: string | null;
+  description: string | null;
   featured: boolean | null;
 };
 
@@ -220,6 +221,16 @@ function SortableLinkRow({
           </div>
         ) : null}
         <input
+          value={link.description ?? ""}
+          maxLength={80}
+          aria-label="Descripción del enlace"
+          placeholder="Descripción opcional (una línea)"
+          onChange={(event) =>
+            onUpdate(link.id, { description: event.target.value })
+          }
+          className="min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70 sm:col-span-3"
+        />
+        <input
           value={link.sectionTitle ?? ""}
           maxLength={60}
           aria-label="Título de sección"
@@ -312,7 +323,7 @@ export default function Dashboard() {
           .maybeSingle<DbProfile>(),
         supabase
           .from("links")
-          .select("id,title,url,active,clicks,icon,section_title,featured")
+          .select("id,title,url,active,clicks,icon,section_title,description,featured")
           .eq("profile_id", user.id)
           .order("position"),
         supabase
@@ -379,6 +390,7 @@ export default function Dashboard() {
             clicks: link.clicks,
             icon: link.icon ?? undefined,
             sectionTitle: link.section_title ?? undefined,
+            description: link.description ?? undefined,
             featured: Boolean(link.featured),
           })),
         });
@@ -704,6 +716,7 @@ export default function Dashboard() {
       clicks: link.clicks ?? 0,
       icon: link.icon?.trim() || null,
       section_title: link.sectionTitle?.trim() || null,
+      description: link.description?.trim() || "",
       featured: link.featured ?? false,
     }));
     const { error: linksError } = rows.length

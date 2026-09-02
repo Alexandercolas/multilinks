@@ -10,7 +10,7 @@ export const demoProfile: Profile = {
   accentColor: "#c6ff3d",
   buttonStyle: "rounded",
   links: [
-    { id: "1", title: "Crear mi página", url: "/dashboard", active: true, icon: "✨", sectionTitle: "Empieza aquí" },
+    { id: "1", title: "Crear mi página", url: "/dashboard", active: true, icon: "✨", sectionTitle: "Empieza aquí", description: "Gratis y lista en minutos", featured: true },
     { id: "2", title: "Ver cómo funciona", url: "/", active: true, icon: "👀", sectionTitle: "Descubre MultiLinks" },
     { id: "3", title: "Mi comunidad", url: "/demo", active: true, icon: "🔗", sectionTitle: "Descubre MultiLinks" },
   ],

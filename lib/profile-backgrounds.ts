@@ -19,6 +19,17 @@ export const premiumBackgrounds = [
   { id: "ivory-gold-flow", name: "Ivory Gold Flow", asset: "/backgrounds/ivory-gold-flow.png", dark: false },
   { id: "lavender-silk", name: "Lavender Silk", asset: "/backgrounds/lavender-silk.png", dark: false },
   { id: "blush-veil", name: "Blush Veil", asset: "/backgrounds/blush-veil.png", dark: false, free: true },
+
+  // Elegant line — pure CSS gradients, no image assets. Fashion / beauty /
+  // lifestyle feel: refined, not "girly".
+  { id: "rose-noir", name: "Rose Noir", gradient: "linear-gradient(160deg,#2b1721 0%,#4a2333 52%,#180d13 100%)", dark: true },
+  { id: "burgundy-velvet", name: "Burgundy Velvet", gradient: "linear-gradient(155deg,#2a0f18 0%,#5c1f2e 50%,#1b0a11 100%)", dark: true },
+  { id: "wine-dusk", name: "Wine Dusk", gradient: "linear-gradient(150deg,#33141d 0%,#7a2438 48%,#221019 100%)", dark: true },
+  { id: "mauve-smoke", name: "Mauve Smoke", gradient: "linear-gradient(165deg,#342634 0%,#6b5570 58%,#241b28 100%)", dark: true },
+  { id: "champagne", name: "Champagne", gradient: "linear-gradient(165deg,#f7efe1 0%,#e9d5bd 55%,#f4e8d6 100%)", dark: false, free: true },
+  { id: "pearl-rose", name: "Pearl Rose", gradient: "linear-gradient(160deg,#f8eef1 0%,#ecdae1 55%,#f5eaef 100%)", dark: false },
+  { id: "nude-silk", name: "Nude Silk", gradient: "linear-gradient(165deg,#efe3d9 0%,#ddc6b6 55%,#ece1d7 100%)", dark: false },
+  { id: "soft-violet", name: "Soft Violet", gradient: "linear-gradient(160deg,#efe9f6 0%,#d9cdec 55%,#ece5f5 100%)", dark: false, free: true },
 ] as const;
 
 export type PremiumBackgroundId = (typeof premiumBackgrounds)[number]["id"];
@@ -128,6 +139,9 @@ export function backgroundImageStyle(url?: string) {
 export function premiumBackgroundStyle(id?: string) {
   const background = getPremiumBackground(id);
   if (!background) return undefined;
+  if ("gradient" in background) {
+    return { backgroundImage: background.gradient } as const;
+  }
   if ("asset" in background) {
     return {
       backgroundImage: `url('${background.asset}')`,

@@ -1048,7 +1048,7 @@ export default function Dashboard() {
                     Fondos Premium
                   </span>
                   <span className="mt-1 block text-xs text-white/35">
-                    16 diseños · 1 gratis · toca para desplegar
+                    24 diseños · 3 gratis · toca para desplegar
                   </span>
                 </span>
                 <ChevronDown

@@ -141,6 +141,7 @@ function SortableLinkRow({
   const platform = detectPlatform(link.url);
 
   const [preview, setPreview] = useState<LinkPreview | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewState, setPreviewState] = useState<PreviewState>("idle");
   const analyzedUrl = useRef("");
   const onUpdateRef = useRef(onUpdate);
@@ -169,6 +170,7 @@ function SortableLinkRow({
           }
           const result = data.preview as LinkPreview;
           setPreview(result);
+          setPreviewImage(typeof data.imageDisplay === "string" ? data.imageDisplay : null);
           setPreviewState("done");
           const patch: Partial<LinkItem> = { provider: result.provider };
           const currentTitle = link.title.trim();
@@ -289,7 +291,7 @@ function SortableLinkRow({
                       role="img"
                       aria-label="Miniatura del enlace"
                       className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-cover bg-center"
-                      style={{ backgroundImage: `url(${link.thumbnail})` }}
+                      style={{ backgroundImage: `url(${previewImage ?? link.thumbnail})` }}
                     />
                   ) : null}
                   <p className="min-w-0 flex-1 truncate text-xs font-semibold text-white/80">

@@ -8,6 +8,7 @@ import { allowRouteRequest } from "@/lib/security/rate-limit";
 import { isSameOriginRequest } from "@/lib/security/same-origin";
 import { SsrfError, assertPublicUrl } from "@/lib/security/ssrf";
 import { resolveLinkPreview } from "@/lib/link-preview";
+import { proxiedImageUrl } from "@/lib/security/image-proxy";
 
 const requestSchema = z.object({ url: z.string().trim().min(4).max(600) });
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -49,7 +50,12 @@ export async function POST(request: Request) {
     .eq("url_hash", urlHash)
     .maybeSingle();
   if (cached && Date.now() - new Date(cached.fetched_at).getTime() < CACHE_TTL_MS) {
-    return NextResponse.json({ preview: cached.payload, cached: true });
+    const payload = cached.payload as { image?: string };
+    return NextResponse.json({
+      preview: payload,
+      imageDisplay: proxiedImageUrl(payload.image) || null,
+      cached: true,
+    });
   }
 
   try {
@@ -57,7 +63,11 @@ export async function POST(request: Request) {
     await admin
       .from("link_preview_cache")
       .upsert({ url_hash: urlHash, url: normalized, payload: preview, fetched_at: new Date().toISOString() });
-    return NextResponse.json({ preview, cached: false });
+    return NextResponse.json({
+      preview,
+      imageDisplay: proxiedImageUrl(preview.image) || null,
+      cached: false,
+    });
   } catch (error) {
     Sentry.captureException(error instanceof Error ? error : new Error("Link preview failed"));
     return NextResponse.json({ error: "No pudimos analizar el enlace." }, { status: 502 });

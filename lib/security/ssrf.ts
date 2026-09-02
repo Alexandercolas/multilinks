@@ -79,6 +79,74 @@ type FetchOptions = {
 };
 
 /**
+ * Fetch a public URL and return the raw bytes (for images). Same SSRF
+ * re-validation on every redirect hop, capped body, and timeout as
+ * fetchPublicUrl, but it never decodes the payload as text.
+ */
+export async function fetchPublicBinary(
+  raw: string,
+  { accept, maxBytes, timeoutMs, maxRedirects = 3 }: FetchOptions,
+): Promise<{ url: string; contentType: string; bytes: Uint8Array }> {
+  let current = await assertPublicUrl(raw);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    for (let hop = 0; hop <= maxRedirects; hop += 1) {
+      const response = await fetch(current, {
+        method: "GET",
+        redirect: "manual",
+        signal: controller.signal,
+        headers: {
+          accept,
+          "user-agent": "MultiLinksBot/1.0 (+https://multilinksrd.vercel.app)",
+        },
+      });
+
+      if (response.status >= 300 && response.status < 400) {
+        const location = response.headers.get("location");
+        if (!location || hop === maxRedirects) throw new SsrfError("Demasiadas redirecciones");
+        current = await assertPublicUrl(new URL(location, current).toString());
+        continue;
+      }
+      if (!response.ok) throw new SsrfError(`Respuesta ${response.status}`);
+
+      const declared = Number(response.headers.get("content-length") ?? "0");
+      if (declared && declared > maxBytes) throw new SsrfError("Respuesta demasiado grande");
+
+      const reader = response.body?.getReader();
+      const chunks: Uint8Array[] = [];
+      let received = 0;
+      if (reader) {
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          received += value.byteLength;
+          if (received > maxBytes) {
+            await reader.cancel();
+            throw new SsrfError("Respuesta demasiado grande");
+          }
+          chunks.push(value);
+        }
+      }
+      const bytes = new Uint8Array(received);
+      let offset = 0;
+      for (const chunk of chunks) {
+        bytes.set(chunk, offset);
+        offset += chunk.byteLength;
+      }
+      return {
+        url: current.toString(),
+        contentType: response.headers.get("content-type") ?? "",
+        bytes,
+      };
+    }
+    throw new SsrfError("Demasiadas redirecciones");
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
  * Fetch a public URL for metadata scraping. Every redirect hop is re-validated
  * against the SSRF blocklist, the body is capped, and the request times out.
  */

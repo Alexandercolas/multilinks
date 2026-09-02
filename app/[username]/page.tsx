@@ -9,6 +9,7 @@ import { demoProfile } from "@/lib/demo-profile";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/types/profile";
 import { BACKGROUND_IMAGE_BUCKET, decodeStoredBackground, getPremiumBackground, isFreeBackground, isValidBackgroundImagePath } from "@/lib/profile-backgrounds";
+import { proxiedImageUrl } from "@/lib/security/image-proxy";
 
 type DbProfile = {
   id: string;
@@ -84,7 +85,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           featured: Boolean(link.featured),
           provider: link.provider ?? undefined,
           linkType: link.link_type ?? undefined,
-          thumbnail: link.thumbnail ?? undefined,
+          thumbnail: proxiedImageUrl(link.thumbnail) || undefined,
         })),
     };
     const premiumDark = Boolean(profile.backgroundImage) || profile.theme === "neon" || Boolean(getPremiumBackground(profile.backgroundPreset)?.dark);

@@ -97,7 +97,8 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
             const href = preview ? undefined : trackable ? `/api/click/${link.id}` : link.url;
             const showSection = link.sectionTitle && (index === 0 || visibleLinks[index - 1]?.sectionTitle !== link.sectionTitle);
             const media = richMedia ? getLinkMedia(link.url) : null;
-            const persistedThumb = link.thumbnail && /^https:\/\//i.test(link.thumbnail) ? link.thumbnail : null;
+            const persistedThumb =
+              link.thumbnail && /^(https:\/\/|\/api\/img\?)/i.test(link.thumbnail) ? link.thumbnail : null;
             const urlThumb = media?.kind === "youtube" ? media.thumbnail : null;
             const mediaThumb = richMedia ? persistedThumb ?? urlThumb : null;
             const brandedMedia = media?.kind === "branded" ? media : null;

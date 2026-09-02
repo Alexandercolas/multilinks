@@ -106,26 +106,31 @@ export default async function PlansPage({ searchParams }: { searchParams: Promis
           </article>
         </div>
 
-        <section className="mt-12 overflow-hidden rounded-[2rem] border border-white/15 bg-[#101318]/80">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[34rem] border-collapse text-left">
-              <thead>
-                <tr className="border-b border-white/10 text-xs font-black uppercase tracking-[.12em] text-white/45">
-                  <th className="px-6 py-4 font-black">Qué incluye</th>
-                  <th className="px-4 py-4 text-center font-black">Gratis</th>
-                  <th className="px-4 py-4 text-center font-black text-lime">Pro</th>
-                </tr>
-              </thead>
-              <tbody>
-                {COMPARISON.map((row) => (
-                  <tr key={row.feature} className="border-b border-white/[.06] last:border-0">
-                    <td className="px-6 py-4 text-sm font-semibold text-white/75">{row.feature}</td>
-                    <td className="px-4 py-4 text-center"><Cell value={row.free} /></td>
-                    <td className="px-4 py-4 text-center"><Cell value={row.pro} accent /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <section className="mt-12 overflow-hidden rounded-[2rem] border border-white/12 bg-[#101318]/80 p-2 sm:p-3">
+          <div className="hidden grid-cols-[1fr_7rem_7rem] gap-4 px-5 py-3 text-[11px] font-black uppercase tracking-[.12em] text-white/45 sm:grid">
+            <span>Qué incluye</span>
+            <span className="text-center">Gratis</span>
+            <span className="text-center text-lime">Pro</span>
+          </div>
+          <div className="divide-y divide-white/[.06]">
+            {COMPARISON.map((row) => (
+              <div
+                key={row.feature}
+                className="px-3 py-4 sm:grid sm:grid-cols-[1fr_7rem_7rem] sm:items-center sm:gap-4 sm:px-5 sm:py-3.5"
+              >
+                <p className="text-sm font-semibold text-white/80">{row.feature}</p>
+                <div className="mt-2.5 flex items-stretch gap-3 sm:mt-0 sm:contents">
+                  <span className="flex flex-1 items-center justify-between gap-2 rounded-lg bg-white/[.03] px-3 py-2 sm:block sm:flex-none sm:justify-center sm:rounded-none sm:bg-transparent sm:p-0 sm:text-center">
+                    <span className="text-[10px] font-black uppercase tracking-wide text-white/35 sm:hidden">Gratis</span>
+                    <Cell value={row.free} />
+                  </span>
+                  <span className="flex flex-1 items-center justify-between gap-2 rounded-lg bg-lime/[.06] px-3 py-2 sm:block sm:flex-none sm:justify-center sm:rounded-none sm:bg-transparent sm:p-0 sm:text-center">
+                    <span className="text-[10px] font-black uppercase tracking-wide text-lime/60 sm:hidden">Pro</span>
+                    <Cell value={row.pro} accent />
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 

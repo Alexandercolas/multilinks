@@ -63,7 +63,7 @@ export default function Home() {
           <div className="mb-6 inline-flex animate-fade-up items-center gap-2 rounded-full border border-ink/10 bg-lime/15 px-3.5 py-1.5 font-display text-xs font-black tracking-wide text-grape-dark">
             <Sparkles size={14} /> HECHO PARA DESTACAR
           </div>
-          <h1 className="max-w-3xl animate-fade-up font-display text-6xl font-black leading-[.92] tracking-[-.03em] [animation-delay:80ms] sm:text-7xl lg:text-[88px]">
+          <h1 className="max-w-3xl animate-fade-up font-display text-5xl font-black leading-[.95] tracking-[-.03em] [animation-delay:80ms] sm:text-7xl sm:leading-[.92] lg:text-[88px]">
             Todo lo tuyo.
             <br />
             <span className="text-grape-dark">Un solo link.</span>

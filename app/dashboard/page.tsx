@@ -83,6 +83,7 @@ type DbLink = {
   provider: string | null;
   link_type: LinkItem["linkType"] | null;
   thumbnail: string | null;
+  metadata: { favicon?: string } | null;
 };
 
 const PRO_ACTIVE_LINK_LIMIT = 50;
@@ -177,6 +178,7 @@ function SortableLinkRow({
           if ((!currentTitle || currentTitle === "Nuevo enlace") && result.title) patch.title = result.title;
           if (!link.description?.trim() && result.description) patch.description = result.description;
           if (!link.thumbnail && result.image) patch.thumbnail = result.image;
+          if (result.favicon) patch.faviconUrl = result.favicon;
           if (!link.linkType) patch.linkType = link.featured ? "featured" : result.cardType;
           onUpdateRef.current(link.id, patch);
         })
@@ -441,7 +443,7 @@ export default function Dashboard() {
           .maybeSingle<DbProfile>(),
         supabase
           .from("links")
-          .select("id,title,url,active,clicks,icon,section_title,description,featured,provider,link_type,thumbnail")
+          .select("id,title,url,active,clicks,icon,section_title,description,featured,provider,link_type,thumbnail,metadata")
           .eq("profile_id", user.id)
           .order("position"),
         supabase
@@ -513,6 +515,7 @@ export default function Dashboard() {
             provider: link.provider ?? undefined,
             linkType: link.link_type ?? undefined,
             thumbnail: link.thumbnail ?? undefined,
+            faviconUrl: link.metadata?.favicon ?? undefined,
           })),
         });
       } else {
@@ -845,6 +848,12 @@ export default function Dashboard() {
         return value.startsWith("https://") && value.length <= 590 && !/[\s"']/.test(value)
           ? value
           : "";
+      })(),
+      metadata: (() => {
+        const value = (link.faviconUrl ?? "").trim();
+        return value.startsWith("https://") && value.length <= 590 && !/[\s"']/.test(value)
+          ? { favicon: value }
+          : {};
       })(),
     }));
     const keepIds = new Set(rows.map((row) => row.id));

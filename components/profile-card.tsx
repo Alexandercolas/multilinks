@@ -131,7 +131,10 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
               !showMediaCard && Boolean(actionPlatform) && (linkType === "action" || Boolean(brandedMedia));
             const showPlayButton = platformKind === "video" || platformKind === "music";
 
-            const rowThumb = !customIcon && !showMediaCard && persistedThumb ? persistedThumb : null;
+            const faviconSrc =
+              !customIcon && link.faviconUrl && /^(https:\/\/|\/api\/img\?)/i.test(link.faviconUrl)
+                ? link.faviconUrl
+                : undefined;
             const iconSlot = customIcon ? (
               <span className={`grid shrink-0 place-items-center overflow-hidden rounded-xl ${iconSizeClass} ${iconTile}`}>
                 {/^https?:\/\//i.test(customIcon) ? (
@@ -143,19 +146,12 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                   />
                 ) : customIcon}
               </span>
-            ) : rowThumb ? (
-              <span
-                role="img"
-                aria-label={`Imagen de ${link.title}`}
-                className={`shrink-0 overflow-hidden rounded-xl border border-black/[.06] bg-cover bg-center ${iconSizeClass}`}
-                style={{ backgroundImage: `url(${rowThumb})` }}
-              />
             ) : (
               <span
                 className={`grid shrink-0 place-items-center overflow-hidden rounded-xl border ${iconSizeClass} ${platform ? "" : iconTile}`}
                 style={platform ? { backgroundColor: `${platform.color}14`, borderColor: `${platform.color}40` } : undefined}
               >
-                <LinkFavicon url={link.url} title={link.title} />
+                <LinkFavicon url={link.url} title={link.title} src={faviconSrc} />
               </span>
             );
 

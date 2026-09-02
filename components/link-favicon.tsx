@@ -4,24 +4,27 @@ import { useEffect, useMemo, useState } from "react";
 import { Link2 } from "lucide-react";
 import { detectPlatform, platformIconUrl } from "@/lib/platforms";
 
-export function LinkFavicon({ url, title }: { url: string; title: string }) {
+export function LinkFavicon({ url, title, src }: { url: string; title: string; src?: string }) {
   const sources = useMemo(() => {
     const platform = detectPlatform(url);
     try {
       const parsed = new URL(url);
       const hostname = parsed.hostname.toLowerCase().replace(/^www\./, "");
       return [
+        // The favicon the site itself declares (scraped at preview time and
+        // proxied through our origin) — the accurate one.
+        src && /^(https:\/\/|\/api\/img\?|\/api\/favicon\?)/i.test(src) ? src : null,
         platform ? platformIconUrl(platform) : null,
-        new URL("/favicon.ico", parsed.origin).toString(),
-        `https://icons.duckduckgo.com/ip3/${encodeURIComponent(hostname)}.ico`,
-        `https://www.google.com/s2/favicons?domain_url=${encodeURIComponent(parsed.origin)}&sz=64`,
+        // Served from our own origin — third-party favicon CDNs now send a
+        // restrictive Cross-Origin-Resource-Policy and get blocked.
+        `/api/favicon?host=${encodeURIComponent(hostname)}`,
       ].filter((source): source is string => Boolean(source));
     } catch {
-      return [];
+      return src ? [src] : [];
     }
-  }, [url]);
+  }, [url, src]);
   const [sourceIndex, setSourceIndex] = useState(0);
-  useEffect(() => setSourceIndex(0), [url]);
+  useEffect(() => setSourceIndex(0), [url, src]);
   const favicon = sources[sourceIndex];
   if (!favicon) return <Link2 size={18} aria-hidden="true" />;
   return (

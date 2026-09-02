@@ -11,6 +11,7 @@ export type LinkItem = {
   provider?: string;
   linkType?: "standard" | "simple" | "media" | "featured" | "social" | "action";
   thumbnail?: string;
+  faviconUrl?: string;
 };
 
 export type Profile = {

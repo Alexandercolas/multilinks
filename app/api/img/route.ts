@@ -10,6 +10,8 @@ const ALLOWED_TYPES = new Set([
   "image/webp",
   "image/gif",
   "image/avif",
+  "image/x-icon",
+  "image/vnd.microsoft.icon",
 ]);
 const MAX_BYTES = 5 * 1024 * 1024;
 

@@ -115,7 +115,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   }
 
   if (normalizedUsername === "demo") {
-    return <main className="min-h-screen bg-[#090b0d] px-4 py-7 sm:px-6"><div className="mx-auto max-w-md overflow-hidden rounded-[2.5rem] border border-white/15 shadow-[0_24px_80px_rgba(0,0,0,.55)]"><ProfileCard profile={demoProfile}/></div></main>;
+    return <main className="min-h-screen bg-[#090b0d] px-4 py-7 sm:px-6"><div className="mx-auto max-w-md overflow-hidden rounded-[2rem] border border-white/12 shadow-[0_30px_80px_-24px_rgba(0,0,0,.6)]"><ProfileCard profile={demoProfile} richMedia/></div></main>;
   }
 
   return (

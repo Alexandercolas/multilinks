@@ -2,12 +2,23 @@
 // Everything is derived from the URL the user already entered — no network calls,
 // so there is no SSRF surface and nothing to fetch on every profile view.
 
+import { detectPlatform, type Platform } from "@/lib/platforms";
+
 const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
-const SPOTIFY_TYPES = ["track", "album", "playlist", "artist", "episode", "show"] as const;
+
+// Music / short-video platforms that get a branded media card. We can't pull
+// artwork without an external oEmbed call, so the card leans on brand identity
+// instead. The architecture is ready to add real thumbnails later.
+const BRANDED_MEDIA: Record<string, string> = {
+  spotify: "Escuchar en Spotify",
+  tiktok: "Ver en TikTok",
+  soundcloud: "Escuchar en SoundCloud",
+  applemusic: "Escuchar en Apple Music",
+};
 
 export type LinkMedia =
   | { kind: "youtube"; videoId: string; thumbnail: string }
-  | { kind: "spotify"; embedType: (typeof SPOTIFY_TYPES)[number] };
+  | { kind: "branded"; platform: Platform; action: string };
 
 function youtube(id: string): LinkMedia | null {
   return YOUTUBE_ID.test(id)
@@ -33,10 +44,10 @@ export function getLinkMedia(url: string): LinkMedia | null {
     const fromPath = parsed.pathname.match(/^\/(?:shorts|embed|live|v)\/([^/?#]+)/)?.[1];
     return youtube(fromQuery ?? fromPath ?? "");
   }
-  if (host === "open.spotify.com") {
-    const type = parsed.pathname.match(/^\/(?:embed\/)?([a-z]+)\/[A-Za-z0-9]+/)?.[1];
-    const match = SPOTIFY_TYPES.find((value) => value === type);
-    return match ? { kind: "spotify", embedType: match } : null;
+
+  const platform = detectPlatform(url);
+  if (platform && BRANDED_MEDIA[platform.id]) {
+    return { kind: "branded", platform, action: BRANDED_MEDIA[platform.id] };
   }
   return null;
 }

@@ -4,7 +4,7 @@ import type { Profile } from "@/types/profile";
 import { themeClasses } from "@/lib/demo-profile";
 import { isSafeLink } from "@/lib/profile-storage";
 import { getLinkMedia } from "@/lib/link-media";
-import { detectPlatform } from "@/lib/platforms";
+import { detectPlatform, platformIconUrl } from "@/lib/platforms";
 import { LinkFavicon } from "@/components/link-favicon";
 import { accessibleProfileTextColor, backgroundImageStyle, getPremiumBackground, premiumBackgroundStyle } from "@/lib/profile-backgrounds";
 
@@ -96,6 +96,7 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
             const showSection = link.sectionTitle && (index === 0 || visibleLinks[index - 1]?.sectionTitle !== link.sectionTitle);
             const media = richMedia ? getLinkMedia(link.url) : null;
             const youtubeThumb = media?.kind === "youtube" ? media.thumbnail : null;
+            const brandedMedia = media?.kind === "branded" ? media : null;
             const customIcon = link.icon && !["🔗", "ðŸ”—"].includes(link.icon) ? link.icon : null;
             const platform = customIcon ? null : detectPlatform(link.url);
             const featured = Boolean(link.featured);
@@ -165,6 +166,42 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                       </span>
                     </span>
                     <span className={`flex items-center gap-3 px-3.5 ${featured ? "py-4" : "py-3"}`}>{rowInner}</span>
+                  </a>
+                ) : brandedMedia ? (
+                  <a
+                    href={href}
+                    target={!preview ? "_blank" : undefined}
+                    rel="noreferrer"
+                    className={`group relative flex w-full items-stretch overflow-hidden ${buttonRadius} text-left transition hover:-translate-y-0.5 motion-reduce:transform-none ${cardSurface}`}
+                  >
+                    <span
+                      className={`flex w-14 shrink-0 items-center justify-center ${darkSurface ? "bg-white/[.05]" : ""}`}
+                      style={darkSurface ? undefined : { backgroundColor: `${brandedMedia.platform.color}18` }}
+                      aria-hidden="true"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={platformIconUrl(brandedMedia.platform, darkSurface ? "ffffff" : brandedMedia.platform.color.replace(/^#/, ""))}
+                        alt=""
+                        width="22"
+                        height="22"
+                        className="h-[22px] w-[22px] object-contain"
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                      />
+                    </span>
+                    <span className="flex flex-1 items-center gap-3 px-3.5 py-3.5">
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[15px] font-semibold">{link.title}</span>
+                        <span
+                          className={`mt-0.5 block truncate text-xs font-semibold ${darkSurface ? "text-white/45" : ""}`}
+                          style={darkSurface ? undefined : { color: brandedMedia.platform.color }}
+                        >
+                          {link.description || brandedMedia.action}
+                        </span>
+                      </span>
+                      <ArrowUpRight size={17} className={`shrink-0 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${darkSurface ? "text-white/40" : "text-ink/35"}`} />
+                    </span>
                   </a>
                 ) : (
                   <a

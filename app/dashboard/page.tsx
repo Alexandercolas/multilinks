@@ -32,6 +32,7 @@ import {
   MousePointerClick,
   Plus,
   ShieldCheck,
+  Star,
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -62,6 +63,7 @@ type DbProfile = {
   avatar_url: string | null;
   theme: Profile["theme"];
   background_color: string;
+  cover_image: string | null;
   accent_color: string;
   button_style: Profile["buttonStyle"];
 };
@@ -74,6 +76,7 @@ type DbLink = {
   clicks: number;
   icon: string | null;
   section_title: string | null;
+  featured: boolean | null;
 };
 
 const PRO_ACTIVE_LINK_LIMIT = 50;
@@ -229,6 +232,16 @@ function SortableLinkRow({
       </div>
       <button
         type="button"
+        aria-label={link.featured ? "Quitar de destacados" : "Destacar enlace"}
+        aria-pressed={Boolean(link.featured)}
+        title={link.featured ? "Enlace destacado" : "Destacar (se muestra más grande)"}
+        onClick={() => onUpdate(link.id, { featured: !link.featured })}
+        className={`mt-1 shrink-0 rounded-lg p-2 transition motion-reduce:transition-none ${link.featured ? "text-lime" : "text-white/25 hover:text-white/60"}`}
+      >
+        <Star size={17} className={link.featured ? "fill-current" : ""} />
+      </button>
+      <button
+        type="button"
         aria-label="Activar enlace"
         onClick={() => onUpdate(link.id, { active: !link.active })}
         className={`mt-2 h-6 w-11 shrink-0 rounded-full p-1 ${link.active ? "bg-lime" : "bg-white/15"}`}
@@ -256,6 +269,8 @@ export default function Dashboard() {
   const [photoError, setPhotoError] = useState("");
   const [backgroundFile, setBackgroundFile] = useState<File | null>(null);
   const [backgroundError, setBackgroundError] = useState("");
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverError, setCoverError] = useState("");
   const [ready, setReady] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -291,13 +306,13 @@ export default function Dashboard() {
         supabase
           .from("profiles")
           .select(
-            "username,display_name,bio,avatar_url,theme,background_color,accent_color,button_style",
+            "username,display_name,bio,avatar_url,theme,background_color,cover_image,accent_color,button_style",
           )
           .eq("id", user.id)
           .maybeSingle<DbProfile>(),
         supabase
           .from("links")
-          .select("id,title,url,active,clicks,icon,section_title")
+          .select("id,title,url,active,clicks,icon,section_title,featured")
           .eq("profile_id", user.id)
           .order("position"),
         supabase
@@ -330,6 +345,9 @@ export default function Dashboard() {
         )
           ? storedBackground.imagePath
           : undefined;
+        const coverImagePath = isValidBackgroundImagePath(dbProfile.cover_image)
+          ? dbProfile.cover_image
+          : undefined;
         setProfile({
           username: dbProfile.username,
           displayName: dbProfile.display_name,
@@ -345,6 +363,12 @@ export default function Dashboard() {
                 .from(BACKGROUND_IMAGE_BUCKET)
                 .getPublicUrl(backgroundImagePath).data.publicUrl
             : undefined,
+          coverImagePath,
+          coverImage: coverImagePath
+            ? supabase.storage
+                .from(BACKGROUND_IMAGE_BUCKET)
+                .getPublicUrl(coverImagePath).data.publicUrl
+            : undefined,
           accentColor: dbProfile.accent_color,
           buttonStyle: dbProfile.button_style,
           links: (dbLinks ?? []).map((link: DbLink) => ({
@@ -355,6 +379,7 @@ export default function Dashboard() {
             clicks: link.clicks,
             icon: link.icon ?? undefined,
             sectionTitle: link.section_title ?? undefined,
+            featured: Boolean(link.featured),
           })),
         });
       } else {
@@ -487,6 +512,35 @@ export default function Dashboard() {
     }));
   }
 
+  function uploadCover(file?: File) {
+    setCoverError("");
+    if (!file) return;
+    if (!isPro) {
+      setCoverError("La portada es una función de MultiLinks Pro.");
+      return;
+    }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setCoverError("Usa una imagen JPG, PNG o WebP.");
+      return;
+    }
+    if (file.size > 3_000_000) {
+      setCoverError("La imagen debe pesar menos de 3 MB.");
+      return;
+    }
+    setCoverFile(file);
+    const reader = new FileReader();
+    reader.onload = () =>
+      setProfile((p) => ({ ...p, coverImage: String(reader.result) }));
+    reader.onerror = () => setCoverError("No pudimos leer la imagen.");
+    reader.readAsDataURL(file);
+  }
+
+  function clearCover() {
+    setCoverFile(null);
+    setCoverError("");
+    setProfile((p) => ({ ...p, coverImage: undefined, coverImagePath: undefined }));
+  }
+
   // Picking any color / preset background also drops a custom image so the two
   // never end up stored at the same time.
   function chooseColorBackground(changes: Partial<Profile>) {
@@ -519,6 +573,7 @@ export default function Dashboard() {
       !isPro &&
       (profile.theme === "neon" ||
         profile.backgroundImage ||
+        profile.coverImage ||
         (profile.backgroundPreset && !isFreeBackground(profile.backgroundPreset)))
     ) {
       setMessage(
@@ -583,6 +638,29 @@ export default function Dashboard() {
       backgroundImagePath = undefined;
     }
 
+    let coverImagePath = profile.coverImagePath;
+    if (coverFile) {
+      const extension =
+        coverFile.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") ||
+        "jpg";
+      const path = `${user.id}/cover-${Date.now()}.${extension}`;
+      const { error: coverUploadError } = await supabase.storage
+        .from(BACKGROUND_IMAGE_BUCKET)
+        .upload(path, coverFile, { upsert: true, contentType: coverFile.type });
+      if (coverUploadError) {
+        setMessage("No pudimos subir la portada.");
+        setSaving(false);
+        return;
+      }
+      if (profile.coverImagePath && profile.coverImagePath !== path) {
+        await supabase.storage.from(BACKGROUND_IMAGE_BUCKET).remove([profile.coverImagePath]);
+      }
+      coverImagePath = path;
+    } else if (!profile.coverImage && profile.coverImagePath) {
+      await supabase.storage.from(BACKGROUND_IMAGE_BUCKET).remove([profile.coverImagePath]);
+      coverImagePath = undefined;
+    }
+
     const { error: profileError } = await supabase.from("profiles").upsert({
       id: user.id,
       username: profile.username,
@@ -595,6 +673,7 @@ export default function Dashboard() {
         profile.backgroundPreset,
         backgroundImagePath,
       ),
+      cover_image: coverImagePath ?? null,
       accent_color: profile.accentColor ?? "#8566ff",
       button_style: profile.buttonStyle ?? "rounded",
       updated_at: new Date().toISOString(),
@@ -625,6 +704,7 @@ export default function Dashboard() {
       clicks: link.clicks ?? 0,
       icon: link.icon?.trim() || null,
       section_title: link.sectionTitle?.trim() || null,
+      featured: link.featured ?? false,
     }));
     const { error: linksError } = rows.length
       ? await supabase.from("links").insert(rows)
@@ -644,9 +724,16 @@ export default function Dashboard() {
             .from(BACKGROUND_IMAGE_BUCKET)
             .getPublicUrl(backgroundImagePath).data.publicUrl
         : undefined,
+      coverImagePath,
+      coverImage: coverImagePath
+        ? supabase.storage
+            .from(BACKGROUND_IMAGE_BUCKET)
+            .getPublicUrl(coverImagePath).data.publicUrl
+        : undefined,
     });
     setPhotoFile(null);
     setBackgroundFile(null);
+    setCoverFile(null);
     setMessage("¡Cambios publicados!");
     setSaving(false);
   }
@@ -1078,6 +1165,63 @@ export default function Dashboard() {
                 <p className="mt-2 text-xs font-semibold text-red-300">
                   {backgroundError}
                 </p>
+              ) : null}
+            </div>
+            <div className="mt-6 border-t border-white/10 pt-6">
+              <div className="flex items-center justify-between gap-4">
+                <span>
+                  <span className="flex items-center gap-2 font-display text-sm font-black">
+                    {isPro ? (
+                      <ImagePlus size={16} className="text-lime" />
+                    ) : (
+                      <Crown size={16} className="text-lime" />
+                    )}
+                    Portada
+                  </span>
+                  <span className="mt-1 block text-xs text-white/35">
+                    {isPro
+                      ? "Banner arriba de tu foto · relación 3:1 recomendada"
+                      : "Agrega un banner con MultiLinks Pro"}
+                  </span>
+                </span>
+                {isPro ? (
+                  <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-xl border border-white/15 bg-white/[.045] px-4 py-2 text-sm font-bold text-white/70 transition hover:border-lime/45 hover:text-lime motion-reduce:transition-none">
+                    <ImagePlus size={16} /> {profile.coverImage ? "Cambiar" : "Subir"}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="sr-only"
+                      onChange={(e) => uploadCover(e.target.files?.[0])}
+                    />
+                  </label>
+                ) : (
+                  <Link
+                    href="/planes"
+                    className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-lime px-4 py-2 text-sm font-black text-ink transition hover:shadow-[0_10px_26px_rgba(201,255,88,.16)] motion-reduce:transition-none"
+                  >
+                    <Crown size={14} /> Pro
+                  </Link>
+                )}
+              </div>
+              {profile.coverImage ? (
+                <div className="mt-4 space-y-2">
+                  <span
+                    role="img"
+                    aria-label="Portada seleccionada"
+                    className="block aspect-[3/1] w-full overflow-hidden rounded-xl border border-white/15 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${profile.coverImage})` }}
+                  />
+                  <button
+                    type="button"
+                    onClick={clearCover}
+                    className="text-sm font-semibold text-red-300"
+                  >
+                    Quitar portada
+                  </button>
+                </div>
+              ) : null}
+              {coverError ? (
+                <p className="mt-2 text-xs font-semibold text-red-300">{coverError}</p>
               ) : null}
             </div>
             <div className="mt-6 border-t border-white/10 pt-6">

@@ -6,6 +6,7 @@ export type LinkItem = {
   clicks?: number;
   icon?: string;
   sectionTitle?: string;
+  featured?: boolean;
 };
 
 export type Profile = {
@@ -19,6 +20,8 @@ export type Profile = {
   backgroundPreset?: string;
   backgroundImage?: string;
   backgroundImagePath?: string;
+  coverImage?: string;
+  coverImagePath?: string;
   accentColor?: string;
   buttonStyle?: "rounded" | "pill" | "square";
   links: LinkItem[];

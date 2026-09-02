@@ -108,9 +108,10 @@ export function encodeStoredBackground(color?: string, preset?: string, imagePat
   return preset ? `${PREMIUM_BACKGROUND_PREFIX}${preset}` : color || "#c9ff58";
 }
 
-// Accepts only "<uid>/<file>" segments so a decoded value cannot smuggle a URL,
-// a path traversal, or another user's folder into a background style.
-export function isValidBackgroundImagePath(path?: string): path is string {
+// Accepts only "<uid>/<file>" segments so a stored value cannot smuggle a URL,
+// a path traversal, or another user's folder into an image style. Used for both
+// the background image and the cover image (same 'backgrounds' bucket).
+export function isValidBackgroundImagePath(path?: string | null): path is string {
   return typeof path === "string" && /^[0-9a-f-]{36}\/[A-Za-z0-9._-]{1,120}$/i.test(path);
 }
 

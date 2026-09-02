@@ -8,3 +8,7 @@ prisma/dev.db
 .env*
 
 tsconfig.tsbuildinfo
+
+# Local notes
+Multilinks.docx
+*.docx

@@ -4,7 +4,11 @@ import { ArrowLeft, HelpCircle, MessageCircle } from "lucide-react";
 import { ContactForm } from "@/components/support/contact-form";
 import { Logo } from "@/components/logo";
 
-export const metadata: Metadata = { title: "Ayuda y soporte", description: "Respuestas y soporte para usar MultiLinks." };
+export const metadata: Metadata = {
+  title: "Ayuda y soporte",
+  description: "Respuestas y soporte para usar MultiLinks.",
+  alternates: { canonical: "/ayuda" },
+};
 
 const faqs = [
   ["¿Cómo publico mi página?", "Entra a tu dashboard, completa tu perfil y guarda los cambios. Tu enlace público utiliza el nombre de usuario que elegiste."],

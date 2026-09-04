@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, CircleCheck, LogIn, Pencil, Sparkles } from "lucide-react";
 import { headers } from "next/headers";
@@ -28,6 +29,55 @@ function isSocialWebView(userAgent: string) {
   return /Instagram|FBAN|FBAV|FB_IAB|FBIOS|TikTok|musical_ly|BytedanceWebview/i.test(
     userAgent,
   );
+}
+
+// SEO real, pagina por pagina (encontrado auditando Search Console:
+// 7 de 9 URLs sin indexar) -- antes esta pagina no tenia metadata
+// propia, asi que TODOS los perfiles publicos heredaban el mismo
+// title/description/canonical del layout raiz (apuntando al home).
+// Google las veia como duplicados entre si, nunca como paginas
+// propias que indexar. Consulta liviana y separada de la del
+// componente de pagina (aceptamos la query extra a proposito, en vez
+// de tocar el fetch mas grande que ya existe mas abajo).
+export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
+  const { username } = await params;
+  const normalizedUsername = decodeURIComponent(username).toLowerCase();
+
+  if (normalizedUsername === "demo") {
+    return {
+      title: demoProfile.displayName,
+      description: demoProfile.bio,
+      alternates: { canonical: "/demo" },
+      openGraph: { title: demoProfile.displayName, description: demoProfile.bio, url: "/demo" },
+    };
+  }
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("profiles")
+    .select("username,display_name,bio")
+    .eq("username", normalizedUsername)
+    .eq("published", true)
+    .maybeSingle<{ username: string; display_name: string | null; bio: string | null }>();
+
+  // Username sin perfil publicado: nunca hubo pagina real que
+  // indexar aca -- noindex explicito para que Google no la trate como
+  // contenido delgado/duplicado en vez de simplemente ignorarla.
+  if (!data) {
+    return { title: "Página no encontrada", robots: { index: false, follow: false } };
+  }
+
+  const title = data.display_name?.trim() || `@${data.username}`;
+  const description = data.bio?.trim() || `La página de enlaces de ${title} en MultiLinks.`;
+  const canonicalPath = `/${data.username}`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: canonicalPath },
+    openGraph: { title, description, url: canonicalPath, type: "profile" },
+    twitter: { card: "summary", title, description },
+  };
 }
 
 export default async function PublicProfilePage({ params }: { params: Promise<{ username: string }> }) {

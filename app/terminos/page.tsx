@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { LegalPage, type LegalSection } from "@/components/legal-page";
 
-export const metadata: Metadata = { title: "Términos de Servicio", description: "Condiciones para utilizar la plataforma MultiLinks." };
+export const metadata: Metadata = {
+  title: "Términos de Servicio",
+  description: "Condiciones para utilizar la plataforma MultiLinks.",
+  alternates: { canonical: "/terminos" },
+};
 
 const sections: LegalSection[] = [
   { title: "Aceptación de los términos", paragraphs: ["Al crear una cuenta o utilizar MultiLinks aceptas estas condiciones. Si no estás de acuerdo, no debes utilizar la plataforma. Estos términos se aplican a visitantes, usuarios registrados y administradores de páginas públicas."] },

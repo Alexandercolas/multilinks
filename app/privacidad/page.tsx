@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { LegalPage, type LegalSection } from "@/components/legal-page";
 
-export const metadata: Metadata = { title: "Política de Privacidad", description: "Cómo MultiLinks recopila, utiliza y protege los datos personales." };
+export const metadata: Metadata = {
+  title: "Política de Privacidad",
+  description: "Cómo MultiLinks recopila, utiliza y protege los datos personales.",
+  alternates: { canonical: "/privacidad" },
+};
 
 const sections: LegalSection[] = [
   { title: "Información que recopilamos", paragraphs: ["Recopilamos la información necesaria para crear cuentas, publicar perfiles, brindar soporte, proteger el servicio y medir su funcionamiento."], bullets: ["Correo electrónico, identificador de cuenta y datos básicos de autenticación.", "Nombre público, username, biografía, foto, preferencias visuales y enlaces que decidas publicar.", "Visitas y clics agregados, fecha y datos técnicos mínimos necesarios para seguridad.", "Reportes, solicitudes de soporte y acciones administrativas relacionadas."] },

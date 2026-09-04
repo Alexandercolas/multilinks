@@ -142,10 +142,30 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     };
     const premiumDark = Boolean(profile.backgroundImage) || profile.theme === "neon" || Boolean(getPremiumBackground(profile.backgroundPreset)?.dark);
     const showWebViewSignIn = !authData.user && inSocialWebView;
+    // JSON-LD por perfil (pedido explicito): un "Person" real con los
+    // mismos datos que ya se muestran en la pagina -- nada inventado.
+    // undefined se omite solo del JSON final (bio/avatar pueden faltar
+    // en perfiles nuevos), asi que es seguro no chequearlos antes.
+    const profileJsonLd = {
+      "@context": "https://schema.org",
+      "@type": "ProfilePage",
+      mainEntity: {
+        "@type": "Person",
+        name: profile.displayName,
+        alternateName: profile.username,
+        description: profile.bio || undefined,
+        image: profile.avatarImage || undefined,
+        url: `https://multilinksrd.vercel.app/${profile.username}`,
+      },
+    };
     return (
       <main
         className={`min-h-screen px-4 py-5 sm:px-6 sm:py-7 ${premiumDark ? "bg-[#090b0d]" : "bg-cream"}`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(profileJsonLd) }}
+        />
         {!isOwner ? <ProfileViewTracker profileId={data.id} /> : null}
         <div
           className={`mx-auto mb-5 flex max-w-md animate-fade-up items-center gap-2 ${isOwner || showWebViewSignIn ? "justify-between" : "justify-end"}`}

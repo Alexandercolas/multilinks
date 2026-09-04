@@ -36,9 +36,34 @@ const features = [
   { icon: BarChart3, title: "Hecho para crecer", text: "Mide visitas y clics desde tu propio panel." },
 ];
 
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "MultiLinks",
+  url: "https://multilinksrd.vercel.app",
+  description: "Crea una página personal, reúne todos tus enlaces y compártela con una sola URL. Personaliza colores, foto y botones gratis.",
+  inLanguage: "es-DO",
+  publisher: {
+    "@type": "Organization",
+    name: "MultiLinks",
+    url: "https://multilinksrd.vercel.app",
+  },
+};
+
 export default function Home() {
   return (
     <main className="min-h-screen overflow-hidden">
+      {/* JSON-LD (pedido explicito): ayuda a Google a entender de que
+          trata el sitio sin tener que inferirlo del texto, y habilita
+          resultados enriquecidos. Contenido 100% estatico (no hay
+          input de usuario aca), por eso dangerouslySetInnerHTML es
+          seguro -- es el patron recomendado por Next.js para JSON-LD,
+          ya que interpolar {JSON.stringify(...)} como children lo
+          escaparia como HTML y romperia el JSON. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+      />
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5 sm:px-6 sm:py-6">
         <Logo />
         <div className="flex items-center gap-2 sm:gap-3">

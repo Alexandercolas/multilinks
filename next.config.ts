@@ -12,6 +12,8 @@ const nextConfig: NextConfig = {
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+      // Official Smart Media Links embeds only — never a wildcard.
+      "frame-src https://open.spotify.com https://www.youtube-nocookie.com https://w.soundcloud.com https://embed.music.apple.com https://widget.deezer.com https://player.vimeo.com",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",

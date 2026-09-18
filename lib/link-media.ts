@@ -14,6 +14,9 @@ const BRANDED_MEDIA: Record<string, string> = {
   tiktok: "Ver en TikTok",
   soundcloud: "Escuchar en SoundCloud",
   applemusic: "Escuchar en Apple Music",
+  youtubemusic: "Escuchar en YouTube Music",
+  deezer: "Escuchar en Deezer",
+  vimeo: "Ver en Vimeo",
 };
 
 export type LinkMedia =

@@ -5,7 +5,9 @@ import { themeClasses } from "@/lib/demo-profile";
 import { isSafeLink } from "@/lib/profile-storage";
 import { getLinkMedia } from "@/lib/link-media";
 import { detectPlatform, platformIconUrl } from "@/lib/platforms";
+import { embedInfoFor } from "@/lib/media-embed";
 import { LinkFavicon } from "@/components/link-favicon";
+import { MediaEmbed } from "@/components/media-embed";
 import { accessibleProfileTextColor, backgroundImageStyle, getPremiumBackground, premiumBackgroundStyle } from "@/lib/profile-backgrounds";
 
 export function ProfileCard({ profile, preview = false, showBranding = true, richMedia = false }: { profile: Profile; preview?: boolean; showBranding?: boolean; richMedia?: boolean }) {
@@ -130,6 +132,9 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
             const showActionCard =
               !showMediaCard && Boolean(actionPlatform) && (linkType === "action" || Boolean(brandedMedia));
             const showPlayButton = platformKind === "video" || platformKind === "music";
+            // Official embed (Spotify/YouTube/SoundCloud/Apple Music/Deezer/Vimeo iframe),
+            // click-to-play. Anything without one keeps the plain thumbnail + external link.
+            const embed = richMedia && showMediaCard ? embedInfoFor(link.url, detectedPlatform?.id) : null;
 
             const faviconSrc =
               !customIcon && link.faviconUrl && /^(https:\/\/|\/api\/img\?)/i.test(link.faviconUrl)
@@ -180,30 +185,44 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                   </h2>
                 ) : null}
                 {showMediaCard && mediaThumb ? (
-                  <a
-                    href={href}
-                    target={!preview ? "_blank" : undefined}
-                    rel="noreferrer"
-                    className={`group relative flex w-full flex-col overflow-hidden ${cardRadius} text-left transition hover:-translate-y-0.5 motion-reduce:transform-none ${cardSurface}`}
-                  >
-                    <span className="relative block w-full">
-                      <span
-                        role="img"
-                        aria-label={`Miniatura de ${link.title}`}
-                        className="block aspect-video w-full bg-cover bg-center"
-                        style={{ backgroundImage: `url(${mediaThumb})` }}
+                  <div className={`group relative flex w-full flex-col overflow-hidden transition hover:-translate-y-0.5 motion-reduce:transform-none ${cardRadius} ${cardSurface}`}>
+                    {embed ? (
+                      <MediaEmbed
+                        embed={embed}
+                        thumbnail={mediaThumb}
+                        title={link.title}
+                        label={detectedPlatform?.label ?? "el enlace"}
+                        externalHref={link.url}
+                        rounded=""
+                        dark={darkSurface}
                       />
-                      {showPlayButton ? (
-                        <>
-                          <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
-                          <span aria-hidden="true" className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/95 text-ink shadow-lg transition group-hover:scale-105 motion-reduce:transition-none">
-                            <Play size={18} className="translate-x-0.5 fill-current" />
-                          </span>
-                        </>
-                      ) : null}
-                    </span>
-                    <span className={`flex items-center gap-3 px-3.5 ${featured ? "py-4" : "py-3"}`}>{rowInner}</span>
-                  </a>
+                    ) : (
+                      <a href={href} target={!preview ? "_blank" : undefined} rel="noreferrer" className="relative block w-full">
+                        <span
+                          role="img"
+                          aria-label={`Miniatura de ${link.title}`}
+                          className="block aspect-video w-full bg-cover bg-center"
+                          style={{ backgroundImage: `url(${mediaThumb})` }}
+                        />
+                        {showPlayButton ? (
+                          <>
+                            <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+                            <span aria-hidden="true" className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/95 text-ink shadow-lg transition group-hover:scale-105 motion-reduce:transition-none">
+                              <Play size={18} className="translate-x-0.5 fill-current" />
+                            </span>
+                          </>
+                        ) : null}
+                      </a>
+                    )}
+                    <a
+                      href={href}
+                      target={!preview ? "_blank" : undefined}
+                      rel="noreferrer"
+                      className={`flex items-center gap-3 px-3.5 ${featured ? "py-4" : "py-3"} text-left transition hover:bg-black/[.02] motion-reduce:transform-none`}
+                    >
+                      {rowInner}
+                    </a>
+                  </div>
                 ) : showActionCard && actionPlatform ? (
                   <a
                     href={href}

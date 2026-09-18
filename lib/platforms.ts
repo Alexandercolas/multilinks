@@ -20,7 +20,10 @@ export type PlatformId =
   | "dribbble"
   | "applemusic"
   | "soundcloud"
-  | "threads";
+  | "threads"
+  | "youtubemusic"
+  | "deezer"
+  | "vimeo";
 
 export type ProviderKind = "video" | "music" | "social" | "code" | "design" | "action" | "generic";
 
@@ -56,9 +59,14 @@ const PLATFORMS: Record<PlatformId, Platform> = {
   applemusic: { id: "applemusic", label: "Apple Music", slug: "applemusic", color: "#FA243C", kind: "music" },
   soundcloud: { id: "soundcloud", label: "SoundCloud", slug: "soundcloud", color: "#FF5500", kind: "music", oembed: "https://soundcloud.com/oembed" },
   threads: { id: "threads", label: "Threads", slug: "threads", color: "#111111", kind: "social" },
+  youtubemusic: { id: "youtubemusic", label: "YouTube Music", slug: "youtubemusic", color: "#FF0000", kind: "music" },
+  deezer: { id: "deezer", label: "Deezer", slug: "deezer", color: "#A238FF", kind: "music" },
+  vimeo: { id: "vimeo", label: "Vimeo", slug: "vimeo", color: "#1AB7EA", kind: "video", oembed: "https://vimeo.com/api/oembed.json" },
 };
 
 const HOST_MATCHERS: [RegExp, PlatformId][] = [
+  // Order matters: more specific hosts must be checked before their parent domain.
+  [/^music\.youtube\.com$/, "youtubemusic"],
   [/(^|\.)youtube(-nocookie)?\.com$/, "youtube"],
   [/(^|\.)youtu\.be$/, "youtube"],
   [/(^|\.)spotify\.com$/, "spotify"],
@@ -79,6 +87,8 @@ const HOST_MATCHERS: [RegExp, PlatformId][] = [
   [/(^|\.)music\.apple\.com$/, "applemusic"],
   [/(^|\.)soundcloud\.com$/, "soundcloud"],
   [/(^|\.)threads\.(net|com)$/, "threads"],
+  [/(^|\.)deezer\.(com|page\.link)$/, "deezer"],
+  [/(^|\.)vimeo\.com$/, "vimeo"],
 ];
 
 export function detectPlatform(url: string): Platform | null {

@@ -195,6 +195,7 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                         externalHref={link.url}
                         rounded=""
                         dark={darkSurface}
+                        linkId={!preview && trackable ? link.id : undefined}
                       />
                     ) : (
                       <a href={href} target={!preview ? "_blank" : undefined} rel="noreferrer" className="relative block w-full">

@@ -16,6 +16,7 @@ export function MediaEmbed({
   externalHref,
   rounded,
   dark = false,
+  linkId,
 }: {
   embed: EmbedInfo;
   thumbnail: string | null;
@@ -24,8 +25,17 @@ export function MediaEmbed({
   externalHref: string;
   rounded: string;
   dark?: boolean;
+  /** DB id of the link, for the play analytics ping. Omit in previews/demos. */
+  linkId?: string;
 }) {
   const [playing, setPlaying] = useState(false);
+
+  const handlePlay = () => {
+    setPlaying(true);
+    if (linkId) {
+      fetch(`/api/play/${linkId}`, { method: "POST", keepalive: true }).catch(() => {});
+    }
+  };
 
   if (playing) {
     return (
@@ -57,7 +67,7 @@ export function MediaEmbed({
   return (
     <button
       type="button"
-      onClick={() => setPlaying(true)}
+      onClick={handlePlay}
       aria-label={`Reproducir ${title} (${label})`}
       className="group relative block aspect-video w-full cursor-pointer bg-cover bg-center"
       style={thumbnail ? { backgroundImage: `url(${thumbnail})` } : { backgroundColor: "rgba(0,0,0,.4)" }}

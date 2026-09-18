@@ -16,9 +16,12 @@ alter table public.links add constraint links_link_type_values
   check (link_type in ('standard', 'simple', 'media', 'featured', 'social', 'action'));
 
 -- thumbnail must be empty or a plain https URL — no data:/javascript:/http:
+-- (kept in sync with migration 025, which replaces this: a {1,590} bounded
+-- repetition here exceeds this Postgres build's regex engine limit and
+-- fails to even compile on a fresh database replay)
 alter table public.links drop constraint if exists links_thumbnail_https;
 alter table public.links add constraint links_thumbnail_https
-  check (thumbnail = '' or thumbnail ~ '^https://[^\s"'']{1,590}$');
+  check (thumbnail = '' or (thumbnail ~ '^https://' and char_length(thumbnail) between 9 and 590));
 
 -- Server-side preview cache so pasting the same URL twice does not refetch.
 -- Written only by the API route (service_role); RLS on, no policies = clients

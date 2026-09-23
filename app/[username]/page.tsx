@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, CircleCheck, LogIn, Pencil, Sparkles } from "lucide-react";
-import { headers } from "next/headers";
+import { ArrowRight, CircleCheck, Pencil, Sparkles } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ProfileCard } from "@/components/profile-card";
 import { ProfileViewTracker } from "@/components/profile-view-tracker";
@@ -26,12 +25,6 @@ type DbProfile = {
   accent_color: string;
   button_style: Profile["buttonStyle"];
 };
-
-function isSocialWebView(userAgent: string) {
-  return /Instagram|FBAN|FBAV|FB_IAB|FBIOS|TikTok|musical_ly|BytedanceWebview/i.test(
-    userAgent,
-  );
-}
 
 // SEO real, pagina por pagina (encontrado auditando Search Console:
 // 7 de 9 URLs sin indexar) -- antes esta pagina no tenia metadata
@@ -83,11 +76,8 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
 }
 
 export default async function PublicProfilePage({ params }: { params: Promise<{ username: string }> }) {
-  const [{ username }, requestHeaders] = await Promise.all([params, headers()]);
+  const { username } = await params;
   const normalizedUsername = decodeURIComponent(username).toLowerCase();
-  const inSocialWebView = isSocialWebView(
-    requestHeaders.get("user-agent") ?? "",
-  );
   const supabase = await createClient();
   const { data } = await supabase
     .from("profiles")
@@ -143,7 +133,6 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
         })),
     };
     const premiumDark = Boolean(profile.backgroundImage) || profile.theme === "neon" || Boolean(getPremiumBackground(profile.backgroundPreset)?.dark);
-    const showWebViewSignIn = !authData.user && inSocialWebView;
     // JSON-LD por perfil (pedido explicito): un "Person" real con los
     // mismos datos que ya se muestran en la pagina -- nada inventado.
     // undefined se omite solo del JSON final (bio/avatar pueden faltar
@@ -174,7 +163,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
         <div className="mx-auto flex max-w-md flex-col lg:max-w-none lg:flex-row lg:items-start lg:justify-center lg:gap-10">
           <div className="w-full lg:max-w-md">
             <div
-              className={`mb-5 flex animate-fade-up items-center gap-2 ${isOwner || showWebViewSignIn ? "justify-between" : "justify-end"}`}
+              className={`mb-5 flex animate-fade-up items-center gap-2 ${isOwner || !hasPro ? "justify-between" : "justify-end"}`}
             >
               {isOwner ? (
                 <Link
@@ -183,12 +172,16 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
                 >
                   <Pencil size={15} /> Editar mi perfil
                 </Link>
-              ) : showWebViewSignIn ? (
+              ) : !hasPro ? (
+                // Growth loop, same corner Linktree puts its own mark in: any
+                // visitor of a free page can go make their own in one tap.
                 <Link
-                  href="/sign-in?next=/dashboard"
-                  className={`inline-flex items-center gap-1.5 text-[11px] font-semibold transition hover:underline motion-reduce:transition-none ${premiumDark ? "text-white/45 hover:text-lime" : "text-ink/50 hover:text-ink"}`}
+                  href="/sign-in?mode=signup"
+                  aria-label="Crear tu página gratis en MultiLinks"
+                  title="Crear tu página gratis en MultiLinks"
+                  className={`grid h-10 w-10 shrink-0 place-items-center rounded-full font-display text-base font-black transition hover:-translate-y-0.5 motion-reduce:transform-none ${premiumDark ? "border border-white/15 bg-white/[.06] text-lime hover:border-lime/50" : "border border-ink/10 bg-white text-grape-dark shadow-[0_1px_2px_rgba(21,21,21,.04),0_10px_28px_-14px_rgba(21,21,21,.2)] hover:border-ink/20"}`}
                 >
-                  <LogIn size={13} /> ¿Eres tú? Inicia sesión para editar →
+                  ⚡
                 </Link>
               ) : null}
               <ShareProfileButton title={profile.displayName} dark={premiumDark} />

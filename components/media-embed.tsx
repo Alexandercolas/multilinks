@@ -29,6 +29,7 @@ export function MediaEmbed({
   linkId?: string;
 }) {
   const [playing, setPlaying] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   const handlePlay = () => {
     setPlaying(true);
@@ -41,6 +42,9 @@ export function MediaEmbed({
     return (
       <div className={`w-full overflow-hidden ${rounded}`}>
         <div className={embed.aspect === "video" ? "relative aspect-video w-full" : "relative w-full"} style={embed.aspect === "audio" ? { height: embed.heightPx } : undefined}>
+          {!loaded ? (
+            <div aria-hidden="true" className={`absolute inset-0 animate-pulse ${dark ? "bg-white/[.06]" : "bg-black/[.05]"}`} />
+          ) : null}
           <iframe
             src={embed.src}
             title={title}
@@ -48,6 +52,7 @@ export function MediaEmbed({
             allow={embed.allow}
             allowFullScreen={embed.aspect === "video"}
             loading="lazy"
+            onLoad={() => setLoaded(true)}
             sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-presentation allow-forms"
           />
         </div>

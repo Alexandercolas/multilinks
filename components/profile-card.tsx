@@ -113,10 +113,13 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
 
             // Decide the card shape from the persisted type, falling back to detection.
             const linkType = link.linkType ?? (brandedMedia ? "action" : "standard");
-            // The big image card is only for video/music, or when the user picks it.
-            const showMediaCard =
-              Boolean(mediaThumb) &&
-              (linkType === "media" || platformKind === "video" || platformKind === "music");
+            const isMediaKind = linkType === "media" || platformKind === "video" || platformKind === "music";
+            // Official embed (Spotify/YouTube/SoundCloud/Apple Music/Deezer/Vimeo iframe),
+            // click-to-play. A platform can be embeddable even before it has a saved
+            // thumbnail (Deezer/Apple Music have no oEmbed), so this doesn't require mediaThumb.
+            const embed = richMedia && isMediaKind ? embedInfoFor(link.url, detectedPlatform?.id) : null;
+            // The big image card is for video/music with a thumbnail, or anything we can embed.
+            const showMediaCard = isMediaKind && (Boolean(mediaThumb) || Boolean(embed));
             const actionPlatform = brandedMedia?.platform ?? detectedPlatform;
             const actionLabel =
               brandedMedia?.action ??
@@ -132,9 +135,6 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
             const showActionCard =
               !showMediaCard && Boolean(actionPlatform) && (linkType === "action" || Boolean(brandedMedia));
             const showPlayButton = platformKind === "video" || platformKind === "music";
-            // Official embed (Spotify/YouTube/SoundCloud/Apple Music/Deezer/Vimeo iframe),
-            // click-to-play. Anything without one keeps the plain thumbnail + external link.
-            const embed = richMedia && showMediaCard ? embedInfoFor(link.url, detectedPlatform?.id) : null;
 
             const faviconSrc =
               !customIcon && link.faviconUrl && /^(https:\/\/|\/api\/img\?)/i.test(link.faviconUrl)
@@ -184,7 +184,7 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                     {link.sectionTitle}
                   </h2>
                 ) : null}
-                {showMediaCard && mediaThumb ? (
+                {showMediaCard ? (
                   <div className={`group relative flex w-full flex-col overflow-hidden transition hover:-translate-y-0.5 motion-reduce:transform-none ${cardRadius} ${cardSurface}`}>
                     {embed ? (
                       <MediaEmbed
@@ -197,7 +197,7 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                         dark={darkSurface}
                         linkId={!preview && trackable ? link.id : undefined}
                       />
-                    ) : (
+                    ) : mediaThumb ? (
                       <a href={href} target={!preview ? "_blank" : undefined} rel="noreferrer" className="relative block w-full">
                         <span
                           role="img"
@@ -214,7 +214,7 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                           </>
                         ) : null}
                       </a>
-                    )}
+                    ) : null}
                     <a
                       href={href}
                       target={!preview ? "_blank" : undefined}

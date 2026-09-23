@@ -11,6 +11,8 @@ import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/types/profile";
 import { BACKGROUND_IMAGE_BUCKET, decodeStoredBackground, getPremiumBackground, isFreeBackground, isValidBackgroundImagePath } from "@/lib/profile-backgrounds";
 import { proxiedImageUrl } from "@/lib/security/image-proxy";
+import { generateProfileQr } from "@/lib/qr";
+import { DesktopQrPanel } from "@/components/desktop-qr-panel";
 
 type DbProfile = {
   id: string;
@@ -146,6 +148,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     // mismos datos que ya se muestran en la pagina -- nada inventado.
     // undefined se omite solo del JSON final (bio/avatar pueden faltar
     // en perfiles nuevos), asi que es seguro no chequearlos antes.
+    const profileUrl = `https://multilinksrd.vercel.app/${profile.username}`;
     const profileJsonLd = {
       "@context": "https://schema.org",
       "@type": "ProfilePage",
@@ -155,9 +158,10 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
         alternateName: profile.username,
         description: profile.bio || undefined,
         image: profile.avatarImage || undefined,
-        url: `https://multilinksrd.vercel.app/${profile.username}`,
+        url: profileUrl,
       },
     };
+    const qrSvg = await generateProfileQr(profileUrl, premiumDark);
     return (
       <main
         className={`min-h-screen px-4 py-5 sm:px-6 sm:py-7 ${premiumDark ? "bg-[#090b0d]" : "bg-cream"}`}
@@ -167,30 +171,37 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(profileJsonLd) }}
         />
         {!isOwner ? <ProfileViewTracker profileId={data.id} /> : null}
-        <div
-          className={`mx-auto mb-5 flex max-w-md animate-fade-up items-center gap-2 ${isOwner || showWebViewSignIn ? "justify-between" : "justify-end"}`}
-        >
-          {isOwner ? (
-            <Link
-              href="/dashboard"
-              className={`inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold transition hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none ${premiumDark ? "border border-lime/30 bg-lime/10 text-lime hover:border-lime/60" : "border border-ink/10 bg-white text-ink shadow-[0_1px_2px_rgba(21,21,21,.04),0_10px_28px_-14px_rgba(21,21,21,.2)] hover:border-ink/20"}`}
+        <div className="mx-auto flex max-w-md flex-col lg:max-w-none lg:flex-row lg:items-start lg:justify-center lg:gap-10">
+          <div className="w-full lg:max-w-md">
+            <div
+              className={`mb-5 flex animate-fade-up items-center gap-2 ${isOwner || showWebViewSignIn ? "justify-between" : "justify-end"}`}
             >
-              <Pencil size={15} /> Editar mi perfil
-            </Link>
-          ) : showWebViewSignIn ? (
-            <Link
-              href="/sign-in?next=/dashboard"
-              className={`inline-flex items-center gap-1.5 text-[11px] font-semibold transition hover:underline motion-reduce:transition-none ${premiumDark ? "text-white/45 hover:text-lime" : "text-ink/50 hover:text-ink"}`}
+              {isOwner ? (
+                <Link
+                  href="/dashboard"
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold transition hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none ${premiumDark ? "border border-lime/30 bg-lime/10 text-lime hover:border-lime/60" : "border border-ink/10 bg-white text-ink shadow-[0_1px_2px_rgba(21,21,21,.04),0_10px_28px_-14px_rgba(21,21,21,.2)] hover:border-ink/20"}`}
+                >
+                  <Pencil size={15} /> Editar mi perfil
+                </Link>
+              ) : showWebViewSignIn ? (
+                <Link
+                  href="/sign-in?next=/dashboard"
+                  className={`inline-flex items-center gap-1.5 text-[11px] font-semibold transition hover:underline motion-reduce:transition-none ${premiumDark ? "text-white/45 hover:text-lime" : "text-ink/50 hover:text-ink"}`}
+                >
+                  <LogIn size={13} /> ¿Eres tú? Inicia sesión para editar →
+                </Link>
+              ) : null}
+              <ShareProfileButton title={profile.displayName} dark={premiumDark} />
+            </div>
+            <div
+              className={`overflow-hidden rounded-[2rem] ${premiumDark ? "border border-white/12 shadow-[0_30px_80px_-24px_rgba(0,0,0,.6)]" : "border border-black/[.06] shadow-[0_2px_8px_rgba(21,21,21,.04),0_36px_70px_-28px_rgba(21,21,21,.25)]"}`}
             >
-              <LogIn size={13} /> ¿Eres tú? Inicia sesión para editar →
-            </Link>
-          ) : null}
-          <ShareProfileButton title={profile.displayName} dark={premiumDark} />
-        </div>
-        <div
-          className={`mx-auto max-w-md overflow-hidden rounded-[2rem] ${premiumDark ? "border border-white/12 shadow-[0_30px_80px_-24px_rgba(0,0,0,.6)]" : "border border-black/[.06] shadow-[0_2px_8px_rgba(21,21,21,.04),0_36px_70px_-28px_rgba(21,21,21,.25)]"}`}
-        >
-          <ProfileCard profile={profile} showBranding={!hasPro} richMedia={Boolean(hasPro)} />
+              <ProfileCard profile={profile} showBranding={!hasPro} richMedia={Boolean(hasPro)} />
+            </div>
+          </div>
+          <div className="lg:mt-[52px]">
+            <DesktopQrPanel qrSvg={qrSvg} url={profileUrl} dark={premiumDark} />
+          </div>
         </div>
       </main>
     );

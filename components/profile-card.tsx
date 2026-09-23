@@ -282,11 +282,16 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
         </div>
 
         {showBranding ? (() => {
-          const brandingClass = `mx-auto mt-10 inline-flex animate-fade-up items-center gap-1.5 rounded-full px-3 py-1.5 font-display text-[10px] font-black uppercase tracking-[.12em] transition [animation-delay:520ms] motion-reduce:transform-none motion-reduce:transition-none ${darkSurface ? "border border-white/12 text-white/60" : "border border-ink/12 text-ink/50"}`;
-          const mark = <span className={darkSurface ? "text-lime" : "text-grape-dark"} aria-hidden="true">⚡</span>;
-          return preview
-            ? <span className={brandingClass}>{mark} Hecho con MultiLinks</span>
-            : <Link href="/sign-in?mode=signup" className={`${brandingClass} hover:-translate-y-0.5 ${darkSurface ? "hover:border-lime/40 hover:text-lime" : "hover:border-ink/30 hover:text-grape-dark"}`}>{mark} Hecho con MultiLinks</Link>;
+          // The growth loop: every free page invites its own visitors to make one too.
+          const ctaClass = `mx-auto mt-8 flex w-full animate-fade-up items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-bold transition [animation-delay:520ms] motion-reduce:transform-none motion-reduce:transition-none ${darkSurface ? "bg-white text-ink" : "bg-ink text-white"}`;
+          const label = `Únete a @${profile.username} en MultiLinks`;
+          return preview ? (
+            <span className={ctaClass}>{label}</span>
+          ) : (
+            <Link href="/sign-in?mode=signup" className={`${ctaClass} hover:-translate-y-0.5 hover:opacity-90`}>
+              {label}
+            </Link>
+          );
         })() : null}
         {!preview ? (
           <div className={`mt-5 flex items-center justify-center gap-4 text-xs font-semibold ${darkSurface ? "text-white/40" : "text-ink/40"}`}>

@@ -31,6 +31,7 @@ import {
   Link2,
   LogOut,
   MousePointerClick,
+  Play,
   Plus,
   ShieldCheck,
   Star,
@@ -76,6 +77,7 @@ type DbLink = {
   url: string;
   active: boolean;
   clicks: number;
+  plays: number;
   icon: string | null;
   section_title: string | null;
   description: string | null;
@@ -317,6 +319,20 @@ function SortableLinkRow({
                       ))}
                     </select>
                   </label>
+                  {(link.clicks ?? 0) > 0 || (link.plays ?? 0) > 0 ? (
+                    <span className="flex items-center gap-2.5">
+                      {(link.clicks ?? 0) > 0 ? (
+                        <span className="flex items-center gap-1">
+                          <MousePointerClick size={11} /> {(link.clicks ?? 0).toLocaleString("es-DO")}
+                        </span>
+                      ) : null}
+                      {(link.plays ?? 0) > 0 ? (
+                        <span className="flex items-center gap-1">
+                          <Play size={11} /> {(link.plays ?? 0).toLocaleString("es-DO")}
+                        </span>
+                      ) : null}
+                    </span>
+                  ) : null}
                   {link.thumbnail ? (
                     <button
                       type="button"
@@ -443,7 +459,7 @@ export default function Dashboard() {
           .maybeSingle<DbProfile>(),
         supabase
           .from("links")
-          .select("id,title,url,active,clicks,icon,section_title,description,featured,provider,link_type,thumbnail,metadata")
+          .select("id,title,url,active,clicks,plays,icon,section_title,description,featured,provider,link_type,thumbnail,metadata")
           .eq("profile_id", user.id)
           .order("position"),
         supabase
@@ -508,6 +524,7 @@ export default function Dashboard() {
             url: link.url,
             active: link.active,
             clicks: link.clicks,
+            plays: link.plays,
             icon: link.icon ?? undefined,
             sectionTitle: link.section_title ?? undefined,
             description: link.description ?? undefined,
@@ -1003,7 +1020,7 @@ export default function Dashboard() {
           </div>
           <div
             id="estadisticas"
-            className="mb-6 scroll-mt-24 grid gap-4 sm:grid-cols-2"
+            className="mb-6 scroll-mt-24 grid gap-4 sm:grid-cols-3"
           >
             <StatCard
               icon={<Eye size={20} />}
@@ -1015,6 +1032,14 @@ export default function Dashboard() {
               label="Clics en enlaces"
               value={profile.links.reduce(
                 (total, link) => total + (link.clicks ?? 0),
+                0,
+              )}
+            />
+            <StatCard
+              icon={<Play size={20} />}
+              label="Reproducciones"
+              value={profile.links.reduce(
+                (total, link) => total + (link.plays ?? 0),
                 0,
               )}
             />

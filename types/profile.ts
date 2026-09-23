@@ -4,6 +4,7 @@ export type LinkItem = {
   url: string;
   active: boolean;
   clicks?: number;
+  plays?: number;
   icon?: string;
   sectionTitle?: string;
   description?: string;

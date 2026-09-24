@@ -17,5 +17,14 @@ export function ShareProfileButton({ title, dark = false }: { title: string; dar
     window.setTimeout(() => setCopied(false), 1800);
   }
 
-  return <button onClick={share} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 font-display text-xs font-black transition hover:-translate-y-0.5 ${dark ? "border border-white/15 bg-white/[.06] text-white hover:border-lime/50 hover:text-lime" : "border border-ink/10 bg-white text-ink shadow-[0_1px_2px_rgba(21,21,21,.04),0_10px_28px_-14px_rgba(21,21,21,.2)] hover:border-ink/20"}`}>{copied ? <Check size={15}/> : <Share2 size={15}/>} {copied ? "Enlace copiado" : "Compartir"}</button>;
+  return (
+    <button
+      onClick={share}
+      aria-label={copied ? "Enlace copiado" : "Compartir perfil"}
+      title={copied ? "Enlace copiado" : "Compartir"}
+      className={`grid h-11 w-11 shrink-0 place-items-center rounded-full transition hover:-translate-y-0.5 motion-reduce:transform-none ${dark ? "border border-white/15 bg-white/[.08] text-white hover:border-lime/50 hover:text-lime" : "border border-ink/10 bg-white text-ink shadow-[0_1px_2px_rgba(21,21,21,.04),0_10px_28px_-14px_rgba(21,21,21,.2)] hover:border-ink/20"}`}
+    >
+      {copied ? <Check size={17} /> : <Share2 size={17} />}
+    </button>
+  );
 }

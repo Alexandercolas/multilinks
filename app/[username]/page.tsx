@@ -179,7 +179,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
                   href="/sign-in?mode=signup"
                   aria-label="Crear tu página gratis en MultiLinks"
                   title="Crear tu página gratis en MultiLinks"
-                  className={`grid h-10 w-10 shrink-0 place-items-center rounded-full font-display text-base font-black transition hover:-translate-y-0.5 motion-reduce:transform-none ${premiumDark ? "border border-white/15 bg-white/[.06] text-lime hover:border-lime/50" : "border border-ink/10 bg-white text-grape-dark shadow-[0_1px_2px_rgba(21,21,21,.04),0_10px_28px_-14px_rgba(21,21,21,.2)] hover:border-ink/20"}`}
+                  className={`grid h-11 w-11 shrink-0 place-items-center rounded-full font-display text-lg font-black transition hover:-translate-y-0.5 motion-reduce:transform-none ${premiumDark ? "border border-white/15 bg-white/[.08] text-lime hover:border-lime/50" : "border border-ink/10 bg-white text-grape-dark shadow-[0_1px_2px_rgba(21,21,21,.04),0_10px_28px_-14px_rgba(21,21,21,.2)] hover:border-ink/20"}`}
                 >
                   ⚡
                 </Link>

@@ -15,6 +15,11 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
   // Cards with an image / stacked content can't be pill-shaped or they turn into ellipses.
   const cardRadius = profile.buttonStyle === "square" ? "rounded-xl" : "rounded-2xl";
   const visibleLinks = profile.links.filter((link) => link.active && isSafeLink(link.url));
+  // "Social" links (Instagram/TikTok/Telegram/Facebook/...) get pulled out of the
+  // list into their own icon row, right under the bio -- the classic link-in-bio
+  // social bar, instead of taking up a full row each in the main list.
+  const socialLinks = visibleLinks.filter((link) => link.linkType === "social");
+  const listLinks = visibleLinks.filter((link) => link.linkType !== "social");
   const customImage = profile.backgroundImage;
   const selectedBackground = getPremiumBackground(profile.backgroundPreset);
   const profileTextColor = customImage
@@ -93,11 +98,53 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
           </p>
         ) : null}
 
+        {socialLinks.length ? (
+          <div className="mx-auto mt-6 flex max-w-sm animate-fade-up flex-wrap items-center justify-center gap-3 [animation-delay:200ms]">
+            {socialLinks.map((link) => {
+              const trackable = /^[0-9a-f-]{36}$/i.test(link.id);
+              const href = preview ? undefined : trackable ? `/api/click/${link.id}` : link.url;
+              const customIcon = link.icon && !["🔗", "ðŸ”—"].includes(link.icon) ? link.icon : null;
+              const faviconSrc =
+                !customIcon && link.faviconUrl && /^(https:\/\/|\/api\/img\?)/i.test(link.faviconUrl)
+                  ? link.faviconUrl
+                  : undefined;
+              const platform = customIcon ? null : detectPlatform(link.url);
+              return (
+                <a
+                  key={link.id}
+                  href={href}
+                  target={!preview ? "_blank" : undefined}
+                  rel="noreferrer"
+                  title={link.title}
+                  aria-label={link.title}
+                  className={`grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full border text-lg transition hover:-translate-y-0.5 motion-reduce:transform-none ${platform ? "" : iconTile}`}
+                  style={platform ? { backgroundColor: `${platform.color}14`, borderColor: `${platform.color}40` } : undefined}
+                >
+                  {customIcon ? (
+                    /^https?:\/\//i.test(customIcon) ? (
+                      <span
+                        role="img"
+                        aria-label="Icono del enlace"
+                        className="h-full w-full bg-cover bg-center"
+                        style={{ backgroundImage: `url(${customIcon})` }}
+                      />
+                    ) : (
+                      customIcon
+                    )
+                  ) : (
+                    <LinkFavicon url={link.url} title={link.title} src={faviconSrc} />
+                  )}
+                </a>
+              );
+            })}
+          </div>
+        ) : null}
+
         <div className="mx-auto mt-8 max-w-md space-y-3">
-          {visibleLinks.map((link, index) => {
+          {listLinks.map((link, index) => {
             const trackable = /^[0-9a-f-]{36}$/i.test(link.id);
             const href = preview ? undefined : trackable ? `/api/click/${link.id}` : link.url;
-            const showSection = link.sectionTitle && (index === 0 || visibleLinks[index - 1]?.sectionTitle !== link.sectionTitle);
+            const showSection = link.sectionTitle && (index === 0 || listLinks[index - 1]?.sectionTitle !== link.sectionTitle);
             const media = richMedia ? getLinkMedia(link.url) : null;
             const persistedThumb =
               link.thumbnail && /^(https:\/\/|\/api\/img\?)/i.test(link.thumbnail) ? link.thumbnail : null;

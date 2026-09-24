@@ -10,6 +10,14 @@ import { LinkFavicon } from "@/components/link-favicon";
 import { MediaEmbed } from "@/components/media-embed";
 import { accessibleProfileTextColor, backgroundImageStyle, getPremiumBackground, premiumBackgroundStyle } from "@/lib/profile-backgrounds";
 
+// The icon field is meant to hold an emoji or an image URL (the dashboard's
+// own placeholder says so), but some legacy links have a stray plain word in
+// there instead (e.g. "Instagram") -- render that as text and it overflows
+// the icon tile. Only trust it when it actually looks like one of the two.
+function isDisplayableIcon(value: string): boolean {
+  return /^https?:\/\//i.test(value) || Array.from(value).length <= 4;
+}
+
 export function ProfileCard({ profile, preview = false, showBranding = true, richMedia = false }: { profile: Profile; preview?: boolean; showBranding?: boolean; richMedia?: boolean }) {
   const buttonRadius = profile.buttonStyle === "pill" ? "rounded-full" : profile.buttonStyle === "square" ? "rounded-lg" : "rounded-2xl";
   // Cards with an image / stacked content can't be pill-shaped or they turn into ellipses.
@@ -103,7 +111,7 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
             {socialLinks.map((link) => {
               const trackable = /^[0-9a-f-]{36}$/i.test(link.id);
               const href = preview ? undefined : trackable ? `/api/click/${link.id}` : link.url;
-              const customIcon = link.icon && !["🔗", "ðŸ”—"].includes(link.icon) ? link.icon : null;
+              const customIcon = link.icon && !["🔗", "ðŸ”—"].includes(link.icon) && isDisplayableIcon(link.icon) ? link.icon : null;
               const faviconSrc =
                 !customIcon && link.faviconUrl && /^(https:\/\/|\/api\/img\?)/i.test(link.faviconUrl)
                   ? link.faviconUrl
@@ -151,7 +159,7 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
             const urlThumb = media?.kind === "youtube" ? media.thumbnail : null;
             const mediaThumb = richMedia ? persistedThumb ?? urlThumb : null;
             const brandedMedia = media?.kind === "branded" ? media : null;
-            const customIcon = link.icon && !["🔗", "ðŸ”—"].includes(link.icon) ? link.icon : null;
+            const customIcon = link.icon && !["🔗", "ðŸ”—"].includes(link.icon) && isDisplayableIcon(link.icon) ? link.icon : null;
             const detectedPlatform = detectPlatform(link.url);
             const platform = customIcon ? null : detectedPlatform;
             const platformKind = detectedPlatform?.kind;

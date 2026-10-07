@@ -362,6 +362,14 @@ try {
           }));
         });
         assert.deepEqual(violations, [], query + " accessibility");
+        assert.equal(
+          await page
+            .locator("footer")
+            .getByRole("link", { name: "Crear mi perfil", exact: true })
+            .getAttribute("href"),
+          "/sign-in?mode=signup",
+          query + " direct registration button",
+        );
         if (query === "free=true")
           assert.equal(
             await page.getByRole("button", { name: /Reproducir/ }).count(),

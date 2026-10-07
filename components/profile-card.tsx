@@ -496,29 +496,35 @@ export function ProfileCard({
           })}
         </div>
 
-        {showBranding ? (
+        {showBranding || !preview ? (
           <footer
             className={`mt-10 border-t border-current/[.15] pt-6 ${texturedBackground ? `rounded-xl p-4 backdrop-blur-md ${darkSurface ? "bg-black/[.65]" : "bg-white/[.85]"}` : ""}`}
           >
-            {preview ? (
-              <span className="text-xs font-semibold">
-                MultiLinks · Crea tu propia página
-              </span>
-            ) : (
-              <Link
-                href="/"
-                className="profile-focus inline-flex min-h-11 flex-col items-center justify-center gap-1 text-xs"
-              >
-                <span className="inline-flex items-center gap-1.5 font-semibold">
-                  <span aria-hidden="true" className="font-display">
-                    M
+            {showBranding &&
+              (preview ? (
+                <span className="text-xs font-semibold">
+                  MultiLinks · Crea tu propia página
+                </span>
+              ) : (
+                <Link
+                  href="/"
+                  className="profile-focus inline-flex min-h-11 flex-col items-center justify-center gap-1 text-xs"
+                >
+                  <span className="inline-flex items-center gap-1.5 font-semibold">
+                    <span aria-hidden="true" className="font-display">
+                      M
+                    </span>
+                    MultiLinks
                   </span>
-                  MultiLinks
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  Crea tu propia página
-                  <ArrowUpRight aria-hidden="true" size={12} />
-                </span>
+                </Link>
+              ))}
+            {!preview && (
+              <Link
+                href="/sign-in?mode=signup"
+                className={`profile-focus mx-auto mt-3 flex min-h-12 w-full max-w-xs items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition hover:opacity-90 ${darkSurface ? "bg-white text-ink" : "bg-ink text-white"}`}
+              >
+                Crear mi perfil
+                <ArrowUpRight aria-hidden="true" size={17} />
               </Link>
             )}
           </footer>

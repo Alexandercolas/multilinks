@@ -9,7 +9,7 @@ La ruta `app/[username]/page.tsx` conserva consultas, publicación, permisos, me
 - `ProfileCard`: avatar limpio, nombre principal, username discreto, biografía legible, destacados primero y títulos/descripciones que pueden ocupar varias líneas. Se respetan los estilos de botón del propietario.
 - Colores y fuentes de los tokens existentes; bordes finos, foco visible y estados suaves, sin sombras grandes ni animaciones escalonadas.
 - Fondos visibles: overlay general de 0–10 % y contraste localizado en identidad, contenido y footer cuando hay imagen o textura. Se mantienen los cuatro temas y presets.
-- Branding pequeño al final, enlace a inicio y entrada a registro. Se respeta el derecho Premium a ocultar la marca; el propietario conserva “Editar mi perfil”.
+- Branding pequeño al final y enlace a inicio, ocultables en Premium. Todos los perfiles públicos incluyen un botón visible “Crear mi perfil” al final que abre directamente `/sign-in?mode=signup`; el propietario conserva “Editar mi perfil”.
 
 ## QR y compartir
 

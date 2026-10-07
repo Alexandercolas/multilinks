@@ -157,12 +157,12 @@ export default function Home() {
             <div>
               <span className="inline-flex items-center gap-2 font-display text-[10px] font-black uppercase tracking-[.15em] text-lime"><span className="h-2 w-2 rounded-full bg-lime shadow-[0_0_14px_#c9ff58]"/> Diseño premium</span>
               <h2 className="mt-5 max-w-3xl font-display text-3xl font-black tracking-[-.04em] sm:text-5xl">Claro cuando quieres.<br/><span className="text-lime">Neon cuando destacas.</span></h2>
-              <p className="mt-5 max-w-2xl leading-7 text-white/55">Con Pro desbloqueas todos los temas, fondos con tu propia imagen y miniaturas de YouTube en tus enlaces.</p>
+              <p className="mt-5 max-w-2xl leading-7 text-white/55">Con Premium desbloqueas todos los temas, fondos con tu propia imagen y miniaturas de YouTube en tus enlaces.</p>
               <div className="mt-7 flex flex-wrap gap-x-5 gap-y-3 text-sm font-bold text-white/70"><span className="flex items-center gap-2"><Check className="text-lime" size={17}/> Sin tarjeta</span><span className="flex items-center gap-2"><Check className="text-lime" size={17}/> Tu página en minutos</span><span className="flex items-center gap-2"><Layers3 className="text-lime" size={17}/> Crece a tu ritmo</span></div>
             </div>
             <Link href="/sign-in?mode=signup" className="relative inline-flex items-center justify-center gap-2 self-start rounded-xl bg-lime px-6 py-4 font-black text-ink transition hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(201,255,88,.18)] motion-reduce:transform-none motion-reduce:transition-none lg:self-center">Crear mi MultiLinks <ArrowUpRight size={19}/></Link>
           </div>
-          <div className="relative mt-9 flex gap-3 overflow-x-auto pb-2" aria-label="Fondos premium disponibles con Pro">
+          <div className="relative mt-9 flex gap-3 overflow-x-auto pb-2" aria-label="Fondos premium disponibles con Premium">
             {premiumBackgrounds.slice(0, 10).map((background) => (
               <span key={background.id} className="relative aspect-[9/16] w-24 shrink-0 overflow-hidden rounded-xl border border-white/12 bg-cover" style={premiumBackgroundStyle(background.id)}>
                 <span className="absolute inset-x-0 bottom-0 bg-black/60 px-1.5 py-1 text-[8px] font-black uppercase tracking-wide text-white/80">{background.name}</span>

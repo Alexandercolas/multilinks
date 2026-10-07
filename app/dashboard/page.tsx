@@ -42,6 +42,10 @@ import { Logo } from "@/components/logo";
 import { ProfileCard } from "@/components/profile-card";
 import { DashboardNavigation } from "@/components/dashboard-navigation";
 import { DashboardSkeleton } from "@/components/dashboard-skeleton";
+import { useAccountAccess } from "@/components/premium/access-provider";
+import { PremiumBanner } from "@/components/premium/premium-banner";
+import { PremiumModal } from "@/components/premium/premium-modal";
+import { canUseFeature, hasPremiumAccess } from "@/lib/premium-access";
 import { demoProfile } from "@/lib/demo-profile";
 import { isSafeLink } from "@/lib/profile-storage";
 import { getLinkMedia } from "@/lib/link-media";
@@ -88,31 +92,7 @@ type DbLink = {
   metadata: { favicon?: string } | null;
 };
 
-const PRO_ACTIVE_LINK_LIMIT = 50;
 const LINK_TYPE_VALUES: SmartCardType[] = ["standard", "simple", "media", "featured", "social", "action"];
-const FREE_TRIAL_DAYS = 30;
-const FREE_TRIAL_LINK_LIMIT = 3;
-const FREE_BASE_LINK_LIMIT = 1;
-
-function freeTrialInfo(createdAt?: string) {
-  const created = createdAt ? new Date(createdAt).getTime() : Date.now();
-  const daysSince = (Date.now() - created) / 86_400_000;
-  const withinTrial = daysSince < FREE_TRIAL_DAYS;
-  return {
-    limit: withinTrial ? FREE_TRIAL_LINK_LIMIT : FREE_BASE_LINK_LIMIT,
-    daysLeft: withinTrial ? Math.max(1, Math.ceil(FREE_TRIAL_DAYS - daysSince)) : 0,
-  };
-}
-
-function linkLimitMessage(limit: number) {
-  if (limit === PRO_ACTIVE_LINK_LIMIT) {
-    return `El plan Pro permite hasta ${PRO_ACTIVE_LINK_LIMIT} enlaces activos.`;
-  }
-  if (limit === FREE_TRIAL_LINK_LIMIT) {
-    return `El plan Gratis permite ${FREE_TRIAL_LINK_LIMIT} enlaces activos el primer mes. Activa Pro para hasta ${PRO_ACTIVE_LINK_LIMIT}.`;
-  }
-  return `El plan Gratis permite ${FREE_BASE_LINK_LIMIT} enlace activo. Activa Pro para hasta ${PRO_ACTIVE_LINK_LIMIT}.`;
-}
 
 const CURATED_PALETTES = [
   { name: "Nocturno lima", background: "#111510", accent: "#c9ff58" },
@@ -348,7 +328,7 @@ function SortableLinkRow({
 
             {(media?.kind === "youtube" || link.linkType === "media") && !isPro ? (
               <p className="flex items-center gap-1.5 text-xs font-semibold text-white/40">
-                <Crown size={13} className="text-lime" /> Las tarjetas multimedia se muestran con MultiLinks Pro
+                <Crown size={13} className="text-lime" /> Las tarjetas multimedia se muestran con MultiLinks Premium
               </p>
             ) : null}
           </div>
@@ -425,9 +405,9 @@ export default function Dashboard() {
   const [appearanceTab, setAppearanceTab] = useState<"fondo" | "botones">("fondo");
   const [totalViews, setTotalViews] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isPro, setIsPro] = useState(false);
-  const [freeLinkLimit, setFreeLinkLimit] = useState(FREE_TRIAL_LINK_LIMIT);
-  const [trialDaysLeft, setTrialDaysLeft] = useState(0);
+  const { access, loading: accessLoading } = useAccountAccess();
+  const isPro = hasPremiumAccess(access);
+  const [premiumModal, setPremiumModal] = useState(false);
   const [activeLinkId, setActiveLinkId] = useState<string | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
   const sensors = useSensors(
@@ -448,7 +428,6 @@ export default function Dashboard() {
         { data: dbProfile },
         { data: dbLinks },
         { data: viewRows },
-        { data: subscription },
       ] = await Promise.all([
         supabase
           .from("profiles")
@@ -466,20 +445,8 @@ export default function Dashboard() {
           .from("profile_daily_views")
           .select("views")
           .eq("profile_id", user.id),
-        supabase
-          .from("subscriptions")
-          .select("plan_id,status")
-          .eq("user_id", user.id)
-          .maybeSingle(),
+
       ]);
-      setIsPro(
-        Boolean(adminAccess) ||
-          (subscription?.plan_id === "pro" &&
-            ["active", "trialing"].includes(subscription.status)),
-      );
-      const trial = freeTrialInfo(user.created_at);
-      setFreeLinkLimit(trial.limit);
-      setTrialDaysLeft(trial.daysLeft);
       setTotalViews(
         (viewRows ?? []).reduce((total, row) => total + row.views, 0),
       );
@@ -586,14 +553,16 @@ export default function Dashboard() {
       return { ...current, links: arrayMove(current.links, oldIndex, newIndex) };
     });
   };
-  const activeLinkLimit = isPro ? PRO_ACTIVE_LINK_LIMIT : freeLinkLimit;
+  const previewProfile: Profile = isPro ? profile : {
+    ...profile, links: profile.links.filter(link => link.active).slice(0, 1),
+    theme: profile.theme === "neon" || profile.backgroundImage ? "lime" : profile.theme,
+    backgroundImage: undefined, coverImage: undefined,
+    backgroundPreset: isFreeBackground(profile.backgroundPreset) ? profile.backgroundPreset : undefined,
+    backgroundColor: profile.theme === "neon" || profile.backgroundImage ? "#c9ff58" : profile.backgroundColor,
+    accentColor: profile.theme === "neon" || profile.backgroundImage ? "#8566ff" : profile.accentColor,
+  };
   const addLink = () => {
-    if (
-      profile.links.filter((link) => link.active).length >= activeLinkLimit
-    ) {
-      setMessage(linkLimitMessage(activeLinkLimit));
-      return;
-    }
+    if (!canUseFeature(access, "unlimited_links") && profile.links.some(link => link.active)) setPremiumModal(true);
     setProfile((p) => ({
       ...p,
       links: [
@@ -631,7 +600,7 @@ export default function Dashboard() {
     setBackgroundError("");
     if (!file) return;
     if (!isPro) {
-      setBackgroundError("La imagen de fondo propia es una función de MultiLinks Pro.");
+      setBackgroundError("La imagen de fondo propia es una función de MultiLinks Premium.");
       return;
     }
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
@@ -669,7 +638,7 @@ export default function Dashboard() {
     setCoverError("");
     if (!file) return;
     if (!isPro) {
-      setCoverError("La portada es una función de MultiLinks Pro.");
+      setCoverError("La portada es una función de MultiLinks Premium.");
       return;
     }
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
@@ -714,24 +683,6 @@ export default function Dashboard() {
     }
     if (profile.links.some((link) => !isSafeLink(link.url))) {
       setMessage("Corrige las direcciones marcadas en rojo.");
-      return;
-    }
-    if (
-      profile.links.filter((link) => link.active).length > activeLinkLimit
-    ) {
-      setMessage(linkLimitMessage(activeLinkLimit));
-      return;
-    }
-    if (
-      !isPro &&
-      (profile.theme === "neon" ||
-        profile.backgroundImage ||
-        profile.coverImage ||
-        (profile.backgroundPreset && !isFreeBackground(profile.backgroundPreset)))
-    ) {
-      setMessage(
-        "Los temas y fondos premium son exclusivos de MultiLinks Pro.",
-      );
       return;
     }
     setSaving(true);
@@ -931,10 +882,11 @@ export default function Dashboard() {
     router.refresh();
   }
 
-  if (!ready) return <DashboardSkeleton />;
+  if (!ready || accessLoading) return <DashboardSkeleton />;
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-surface text-white">
+      <PremiumModal open={premiumModal} onClose={() => setPremiumModal(false)} title="Publica todos tus enlaces" description="Free publica un enlace. Los demás permanecen guardados; Premium los desbloquea automáticamente." access={access} />
       <span
         aria-hidden="true"
         className="pointer-events-none fixed -left-48 -top-48 h-[34rem] w-[34rem] rounded-full bg-lime/10 blur-3xl"
@@ -952,7 +904,7 @@ export default function Dashboard() {
             {isPro ? (
               <span className="rounded-full bg-gradient-to-r from-lime/55 to-grape/55 p-px">
                 <span className="block rounded-full bg-surface-header px-2.5 py-1 font-display text-[9px] font-black tracking-[.18em] text-white">
-                  PRO
+                  {access?.source === "trial" ? "PREMIUM TRIAL" : "PREMIUM"}
                 </span>
               </span>
             ) : null}
@@ -1018,13 +970,14 @@ export default function Dashboard() {
               ) : null}
             </div>
           </div>
+          <Link href="/dashboard/analytics" className="mb-4 inline-flex items-center gap-2 rounded-xl border border-lime/25 bg-lime/10 px-5 py-3 font-bold text-lime">Analytics 2.0 →</Link>
           <div
             id="estadisticas"
             className="mb-6 scroll-mt-24 grid gap-4 sm:grid-cols-3"
           >
             <StatCard
               icon={<Eye size={20} />}
-              label="Visitas al perfil"
+              label="Vistas de página (histórico)"
               value={totalViews}
             />
             <StatCard
@@ -1044,32 +997,7 @@ export default function Dashboard() {
               )}
             />
           </div>
-          {!isPro ? (
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-lime/25 bg-lime/[.07] p-5 text-white shadow-[0_18px_55px_rgba(201,255,88,.07)]">
-              <div className="flex items-center gap-4">
-                <span className="grid h-11 w-11 place-items-center rounded-xl border border-lime/25 bg-lime/10 text-lime">
-                  <Crown size={21} />
-                </span>
-                <div>
-                  <p className="font-display font-black text-white">
-                    Desbloquea MultiLinks Pro
-                  </p>
-                  <p className="mt-1 text-sm text-white/50">
-                    {trialDaysLeft > 0
-                      ? `Te quedan ${trialDaysLeft} ${trialDaysLeft === 1 ? "día" : "días"} con ${FREE_TRIAL_LINK_LIMIT} enlaces. Después, el plan Gratis permite ${FREE_BASE_LINK_LIMIT}.`
-                      : `El plan Gratis permite ${FREE_BASE_LINK_LIMIT} enlace activo.`}
-                    {" "}Pro llega a {PRO_ACTIVE_LINK_LIMIT}, con miniaturas de YouTube e imagen de fondo.
-                  </p>
-                </div>
-              </div>
-              <Link
-                href="/planes"
-                className="rounded-xl bg-lime px-5 py-3 text-sm font-black text-ink transition hover:shadow-[0_10px_26px_rgba(201,255,88,.16)] motion-reduce:transition-none"
-              >
-                Ver planes
-              </Link>
-            </div>
-          ) : null}
+          <div className="mb-6"><PremiumBanner access={access} /></div>
           <div
             id="perfil"
             className="scroll-mt-24 rounded-[2rem] border border-white/12 bg-card/95 p-6"
@@ -1164,7 +1092,7 @@ export default function Dashboard() {
                   href="/planes"
                   className="inline-flex items-center gap-1 text-xs font-black text-lime"
                 >
-                  <Crown size={14} /> Desbloquear Pro
+                  <Crown size={14} /> Desbloquear Premium
                 </Link>
               ) : null}
             </div>
@@ -1194,13 +1122,13 @@ export default function Dashboard() {
                         type="button"
                         aria-label={
                           locked
-                            ? "Tema Neon Dark, disponible en Pro"
+                            ? "Tema Neon Dark, disponible en Premium"
                             : `Tema ${theme}`
                         }
                         onClick={() =>
                           locked
                             ? setMessage(
-                                "Neon Dark es un tema exclusivo de MultiLinks Pro.",
+                                "Neon Dark es un tema exclusivo de MultiLinks Premium.",
                               )
                             : chooseColorBackground({
                                 theme,
@@ -1263,7 +1191,7 @@ export default function Dashboard() {
                         onClick={() => {
                           if (!isPro && !availableForFree) {
                             setMessage(
-                              "Los fondos Premium están disponibles con MultiLinks Pro.",
+                              "Los fondos Premium están disponibles con MultiLinks Premium.",
                             );
                             return;
                           }
@@ -1316,7 +1244,7 @@ export default function Dashboard() {
                   <span className="mt-1 block text-xs text-white/35">
                     {isPro
                       ? "JPG, PNG o WebP · máximo 3 MB"
-                      : "Sube tu propia imagen con MultiLinks Pro"}
+                      : "Sube tu propia imagen con MultiLinks Premium"}
                   </span>
                 </span>
                 {isPro ? (
@@ -1335,7 +1263,7 @@ export default function Dashboard() {
                     href="/planes"
                     className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-lime px-4 py-2 text-sm font-black text-ink transition hover:shadow-[0_10px_26px_rgba(201,255,88,.16)] motion-reduce:transition-none"
                   >
-                    <Crown size={14} /> Pro
+                    <Crown size={14} /> Premium
                   </Link>
                 )}
               </div>
@@ -1376,7 +1304,7 @@ export default function Dashboard() {
                   <span className="mt-1 block text-xs text-white/35">
                     {isPro
                       ? "Banner arriba de tu foto · relación 3:1 recomendada"
-                      : "Agrega un banner con MultiLinks Pro"}
+                      : "Agrega un banner con MultiLinks Premium"}
                   </span>
                 </span>
                 {isPro ? (
@@ -1394,7 +1322,7 @@ export default function Dashboard() {
                     href="/planes"
                     className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-lime px-4 py-2 text-sm font-black text-ink transition hover:shadow-[0_10px_26px_rgba(201,255,88,.16)] motion-reduce:transition-none"
                   >
-                    <Crown size={14} /> Pro
+                    <Crown size={14} /> Premium
                   </Link>
                 )}
               </div>
@@ -1562,14 +1490,17 @@ export default function Dashboard() {
               >
                 <div className="mt-5 space-y-3">
                   {profile.links.map((link) => (
+                    <div key={link.id}>
+                      {!isPro && link.active && profile.links.filter(item => item.active).findIndex(item => item.id === link.id) > 0 && <p className="mb-2 rounded-xl border border-lime/20 bg-lime/5 p-3 text-xs text-white/60">🔒 Este enlace está guardado pero bloqueado por el límite de tu plan. <Link href="/planes" className="font-bold text-lime">Activar Premium</Link></p>}
                     <SortableLinkRow
                       key={link.id}
                       link={link}
                       reducedMotion={reducedMotion}
-                      isPro={isPro}
+                      isPro={canUseFeature(access, "smart_media")}
                       onUpdate={updateLink}
                       onRemove={removeLink}
                     />
+                    </div>
                   ))}
                 </div>
               </SortableContext>
@@ -1597,7 +1528,7 @@ export default function Dashboard() {
             </p>
             <div className="mx-auto h-[720px] max-w-[390px] overflow-hidden rounded-[42px] border-[10px] border-card-border bg-card-border shadow-[0_30px_90px_rgba(0,0,0,.45)]">
               <div className="h-full overflow-y-auto rounded-[30px]">
-                <ProfileCard profile={profile} preview showBranding={!isPro} richMedia={isPro} />
+                <ProfileCard profile={previewProfile} preview showBranding={!isPro} richMedia={isPro} />
               </div>
             </div>
           </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   BarChart3,
   LayoutDashboard,
@@ -17,7 +18,7 @@ const sections = [
   { id: "perfil", label: "Perfil", icon: UserRound },
   { id: "apariencia", label: "Apariencia", icon: Palette },
   { id: "enlaces", label: "Enlaces", icon: Link2 },
-  { id: "estadisticas", label: "Estadísticas", icon: BarChart3 },
+  { id: "estadisticas", label: "Analytics", icon: BarChart3 },
 ] as const;
 const mobileSections = sections.filter(({ id }) => id !== "perfil");
 
@@ -28,9 +29,11 @@ function findSection(id: SectionId) {
 }
 
 export function DashboardNavigation({ isAdmin }: { isAdmin: boolean }) {
+  const router = useRouter();
   const [activeSection, setActiveSection] = useState<SectionId>("resumen");
 
   function goTo(id: SectionId) {
+    if (id === "estadisticas") { router.push("/dashboard/analytics"); return; }
     setActiveSection(id);
     const section = findSection(id);
     const reducedMotion = window.matchMedia(

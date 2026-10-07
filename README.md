@@ -1,6 +1,6 @@
 # MultiLinks
 
-MVP tipo Linktree construido con Next.js, TypeScript y Tailwind CSS.
+Plataforma de enlaces construida con Next.js, TypeScript, Tailwind CSS y Supabase.
 
 ## Ejecutar
 
@@ -11,4 +11,6 @@ npm run dev
 
 Abre `http://localhost:3000`. Perfil demo: `http://localhost:3000/demo`.
 
-El dashboard guarda el perfil en el navegador y lo refleja en su ruta pública dentro del mismo dispositivo. El esquema Prisma deja preparada la persistencia multiusuario real para la siguiente fase.
+El dashboard persiste perfiles y enlaces en Supabase. Incluye Free con un enlace publicado, Premium por US$3.50/mes y 30 días de prueba completa al registrarse, con facturación mediante Lemon Squeezy.
+
+Consulta [PREMIUM.md](PREMIUM.md) para configurar pagos, migraciones y permisos, y [ANALYTICS.md](ANALYTICS.md) para estadísticas, privacidad y validación.

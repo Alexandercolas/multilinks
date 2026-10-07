@@ -1,0 +1,27 @@
+# Analytics 2.0
+
+## Activation
+Apply migrations 027 and 028 together using `node --env-file=.env.local scripts/deploy-analytics-premium.mjs`. The script applies only these two additive migrations in one transaction. No historic tables or counters are changed. The dashboard is `/dashboard/analytics`; the existing summary links to it. Until the migrations are applied, Analytics displays a retry state and public navigation keeps working. Do not replay unrelated migrations on a live database just to activate this feature.
+
+## Definitions
+- A visit is a session with a page_view. The HttpOnly random session cookie expires after 30 minutes of inactivity; visible-page heartbeats extend it. A session is scoped to the profile in the database.
+- A visitor is a random HttpOnly technical identifier, retained for 90 days, counted distinctly inside the selected period. Browsers that clear/block cookies and different devices affect this estimate. No fingerprint is used for visitor identity.
+- CTR is **link clicks / unique visitors × 100**. This measures click frequency; it is not the percentage of people who clicked and can exceed 100%. Plays are separate. Per-link CTR uses visible-link session impressions as its denominator and is labeled accordingly.
+- Link impressions require at least 50% intersection with the viewport; one per session and link. They measure visibility, not video playback.
+- Previous-period growth requires full coverage since activation, at least 10 visits in each period, and a nonzero prior metric. No historic unique visitors or geography are synthesized.
+- Live means a visitor with an event/heartbeat in the last two minutes. The display refreshes explicitly. Heartbeats run once per minute while the page is visible.
+
+## Time and attribution
+UTC timestamps are stored. Browser timezone is displayed and used for hour/day distributions and calendar-day chart buckets, including daylight-saving transitions. Ranges use explicit UTC hour boundaries to match hourly rollups; the last hour is partial. Presets are rolling windows; Today/Yesterday and custom dates originate at local midnight and round to hour boundaries. Fractional-hour timezone boundaries therefore have up to one hour of granularity. A profile timezone preference can replace the browser default later.
+First page-view attribution is retained for the session: sanitized/bounded UTM values, classified referrer source, device/browser/OS classes. Referrer paths and full URLs, User-Agent strings, names, email, addresses and raw IPs are not stored by Analytics 2.0. Existing transient abuse rate-limit hashes remain separate. Country is Unknown until a trusted hosting geo source is explicitly integrated; client-supplied country headers are not trusted. QR attribution works with utm_source=qr. Third-party iframe playback remains limited to the existing play signals; it is not inferred from impressions.
+
+## Authorization and growth
+The report RPC derives ownership from auth.uid(), uses the existing account_has_pro() function, and rejects overlong or inaccessible ranges. No profile id is accepted by the report API. RLS denies direct table access. Tracking RPC execution is restricted to service_role, verifies public profile/link availability and membership, and uses the existing rate limiter. Free receives seven days of useful overview/Top Links data; extended ranges, demographics, campaign data, plays/views, comparisons and CSV are gated in the database/API. There is one report RPC per dashboard request; link impressions are submitted in batches. Indexed hourly link/campaign counters avoid scanning individual click events. Unique visitors and audience dimensions still scan indexed, bounded session records; at very high volume these require partitioning and a distinct-count sketch strategy rather than summing daily unique totals.
+
+## Retention preparation
+Sessions/impressions are the limited-retention layer; hourly counts can remain longer. No automatic deletion is enabled and no historic data is removed. Before deploying a cleanup job, explicitly approve a retention period of at least 180 days for sessions/impressions (90-day reports plus previous-period comparison), export/aggregate anything required, and monitor volume. Removing visitor identifiers earlier would invalidate historical unique-visitor comparisons. Future event kinds can extend the server allowlist and rollup tables; unsupported events are ignored today.
+
+## Verification
+TypeScript, ESLint, production compilation and isolated PostgreSQL-compatible tests validate implementation. Migrations 027 and 028 were applied atomically to the configured Supabase database on 2026-10-07; the expiry job is active. Browser fixture QA covers mobile, tablet and desktop, plus real unauthenticated HTTP permission checks. Authenticated production login and real provider billing regression still require the deployment environment and provider credentials. Country geo integration and automatic retention scheduling remain deferred. The production build uses network access for existing Google Fonts. Never seed the real analytics database with test visits.
+
+To rerun SQL tests: install the temporary test engine with `npm install --prefix .analytics-test-runtime --no-save --package-lock=false @electric-sql/pglite`, then run `node scripts/test-analytics.mjs`. This engine is ignored by Git and never connects to Supabase. Analytics 2.0 honors DNT/GPC before storing identifiers; existing legacy aggregate counters remain separate.

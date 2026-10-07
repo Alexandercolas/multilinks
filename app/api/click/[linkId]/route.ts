@@ -1,3 +1,4 @@
+import { recordAnalytics } from "@/lib/analytics-tracking";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requestFingerprint } from "@/lib/request-fingerprint";
@@ -12,5 +13,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ link
   if (typeof destination !== "string" || !/^https?:\/\//i.test(destination)) {
     return NextResponse.redirect(new URL("/", request.url));
   }
+  if (allowed) await recordAnalytics(request, "link_click", null, linkId);
   return NextResponse.redirect(destination, 307);
 }

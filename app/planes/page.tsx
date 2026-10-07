@@ -1,141 +1,42 @@
-import Link from "next/link";
-import { Check, Crown, Minus } from "lucide-react";
-import { ProCheckout } from "@/components/billing/pro-checkout";
-import { ProActivationStatus } from "@/components/billing/pro-activation-status";
-import { Logo } from "@/components/logo";
-import { createClient } from "@/lib/supabase/server";
-
-export const metadata = { title: "Planes", description: "Compara los planes Gratis y Pro de MultiLinks." };
-
-type Row = { feature: string; free: string | boolean; pro: string | boolean };
-
-const COMPARISON: Row[] = [
-  { feature: "Enlaces activos", free: "3 el primer mes, luego 1", pro: "Hasta 50" },
-  { feature: "Miniaturas de YouTube", free: false, pro: true },
-  { feature: "Imagen de fondo propia", free: false, pro: true },
-  { feature: "Temas y fondos premium", free: "1 de regalo", pro: "Todos + Neon Dark" },
-  { feature: "Colores y paletas personalizadas", free: true, pro: true },
-  { feature: "Foto de perfil, secciones e íconos", free: true, pro: true },
-  { feature: "Reordenar enlaces", free: true, pro: true },
-  { feature: "Estadísticas de visitas y clics", free: true, pro: true },
-  { feature: 'Marca "Hecho con MultiLinks"', free: "Visible", pro: "Oculta" },
-  { feature: "Soporte", free: "Estándar", pro: "Prioritario" },
+import Link from 'next/link';
+import { Check, Crown, Minus } from 'lucide-react';
+import { ProCheckout } from '@/components/billing/pro-checkout';
+import { ProActivationStatus } from '@/components/billing/pro-activation-status';
+import { PremiumBanner } from '@/components/premium/premium-banner';
+import { Logo } from '@/components/logo';
+import { createClient } from '@/lib/supabase/server';
+import type { AccountAccess } from '@/lib/premium-access';
+export const metadata={title:'Free y Premium',description:'30 días de Premium completo, luego Free o Premium por US$3.50 al mes.'};
+const comparison=[
+  {feature:'Enlaces publicados',free:'1',premium:'Ilimitados'},
+  {feature:'Enlaces adicionales guardados',free:true,premium:true},
+  {feature:'Smart Media',free:'Enlace básico',premium:'Tarjetas y reproductores'},
+  {feature:'Analytics',free:'7 días y Top Links',premium:'Historial, campañas y CSV'},
+  {feature:'Fondos propios y portada',free:false,premium:true},
+  {feature:'Temas y fondos premium',free:'3 fondos de regalo',premium:'Todos los disponibles'},
+  {feature:'Colores, foto, bio, secciones e íconos',free:true,premium:true},
+  {feature:'QR de tu perfil',free:true,premium:true},
+  {feature:'Marca MultiLinks',free:'Visible',premium:'Oculta'},
 ];
-
-function Cell({ value, accent }: { value: string | boolean; accent?: boolean }) {
-  if (value === true) {
-    return (
-      <span className={`inline-grid h-6 w-6 place-items-center rounded-full border ${accent ? "border-lime/30 bg-lime/10 text-lime" : "border-white/15 bg-white/[.04] text-white/60"}`}>
-        <Check size={14} />
-      </span>
-    );
-  }
-  if (value === false) {
-    return (
-      <span className="inline-grid h-6 w-6 place-items-center rounded-full border border-white/10 text-white/25">
-        <Minus size={14} />
-      </span>
-    );
-  }
-  return <span className={`text-sm font-semibold ${accent ? "text-lime" : "text-white/70"}`}>{value}</span>;
-}
-
-export default async function PlansPage({ searchParams }: { searchParams: Promise<{ checkout?: string }> }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const result = user
-    ? await supabase.from("subscriptions").select("plan_id,status,billing_interval,billing_portal_url").eq("user_id", user.id).maybeSingle()
-    : { data: null };
-  const subscription = result.data;
-  const params = await searchParams;
-  const isPro = subscription?.plan_id === "pro" && ["active", "trialing"].includes(subscription.status);
-
-  return (
-    <main className="relative min-h-screen overflow-hidden bg-[#090b0d] px-5 py-8 text-white sm:py-12">
-      <span aria-hidden="true" className="pointer-events-none absolute -left-48 -top-48 h-[34rem] w-[34rem] rounded-full bg-lime/12 blur-3xl" />
-      <span aria-hidden="true" className="pointer-events-none absolute -bottom-52 right-[-10rem] h-[38rem] w-[38rem] rounded-full bg-grape/12 blur-3xl" />
-      <div className="relative mx-auto max-w-5xl">
-        <header className="flex items-center justify-between gap-4">
-          <div className="text-white"><Logo /></div>
-          <Link href={user ? "/dashboard" : "/"} className="rounded-xl border border-white/15 bg-white/[.045] px-4 py-2 text-sm font-black text-white/70 transition hover:border-lime/45 hover:text-lime motion-reduce:transition-none">Volver</Link>
-        </header>
-
-        {user ? <ProActivationStatus checkoutSuccess={params.checkout === "success"} initialIsPro={isPro} userId={user.id} /> : null}
-
-        <section className="py-12 text-center sm:py-16">
-          <span className="inline-flex items-center gap-2 font-display text-xs font-black uppercase tracking-[.16em] text-lime">
-            <span className="h-2 w-2 rounded-full bg-lime shadow-[0_0_14px_#c9ff58]" /> Planes simples
-          </span>
-          <h1 className="mt-5 font-display text-4xl font-black tracking-[-.04em] sm:text-6xl">Crece a tu <span className="text-lime">ritmo.</span></h1>
-          <p className="mx-auto mt-5 max-w-2xl text-white/50">Empieza gratis. Activa Pro cuando quieras más enlaces y un perfil sin límites de diseño.</p>
-        </section>
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          <article className="rounded-[2rem] border border-white/15 bg-[#101318]/90 p-7 shadow-[0_24px_75px_rgba(0,0,0,.30)]">
-            <h2 className="font-display text-xl font-black">Gratis</h2>
-            <p className="mt-4 font-display text-4xl font-black text-white">US$0</p>
-            <p className="mt-1 text-xs font-bold text-white/40">para siempre</p>
-            <p className="mt-6 text-sm font-semibold text-white/55">Ideal para empezar: 3 enlaces durante el primer mes y 1 enlace después, con la personalización esencial.</p>
-            <Link href={user ? "/dashboard" : "/sign-in?next=/planes"} className="mt-6 inline-flex rounded-xl border border-white/15 bg-white/[.05] px-5 py-3 text-sm font-black text-white transition hover:border-lime/45 hover:text-lime motion-reduce:transition-none">
-              {user ? "Ir a mi panel" : "Empezar gratis"}
-            </Link>
-          </article>
-
-          <article className="relative rounded-[2rem] border border-lime/45 bg-[#101318]/95 p-7 shadow-[0_24px_85px_rgba(201,255,88,.13)]">
-            <span className="absolute -top-4 right-5 inline-flex items-center gap-2 rounded-full border border-lime/35 bg-[#11150f] px-3 py-2 text-xs font-black text-lime shadow-[0_0_24px_rgba(201,255,88,.13)]">
-              <Crown size={15} /> RECOMENDADO
-            </span>
-            <h2 className="font-display text-xl font-black">Pro</h2>
-            {isPro ? (
-              <div className="mt-4">
-                <p className="font-display text-2xl font-black text-lime">Tu plan Pro está activo</p>
-                <p className="mt-2 text-sm font-semibold text-white/60">Modalidad {subscription?.billing_interval === "annual" ? "anual" : "mensual"}.</p>
-                {subscription?.billing_portal_url ? (
-                  <a href={subscription.billing_portal_url} className="mt-4 inline-block rounded-xl border border-white/15 bg-white/[.05] px-4 py-2 font-black text-white transition hover:border-lime/45 hover:text-lime motion-reduce:transition-none">Administrar suscripción</a>
-                ) : null}
-              </div>
-            ) : user ? (
-              <div className="mt-4"><ProCheckout userId={user.id} /></div>
-            ) : (
-              <div className="mt-4">
-                <p className="font-display text-4xl font-black text-lime">US$3.50</p>
-                <p className="mt-1 text-xs font-bold text-white/40">al mes · o US$39.99 al año</p>
-                <Link href="/sign-in?next=/planes" className="mt-6 inline-flex rounded-xl bg-lime px-6 py-3 font-black text-ink transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(201,255,88,.18)] motion-reduce:transform-none motion-reduce:transition-none">Iniciar sesión para elegir Pro</Link>
-              </div>
-            )}
-          </article>
-        </div>
-
-        <section className="mt-12 overflow-hidden rounded-[2rem] border border-white/12 bg-[#101318]/80 p-2 sm:p-3">
-          <div className="hidden grid-cols-[1fr_7rem_7rem] gap-4 px-5 py-3 text-[11px] font-black uppercase tracking-[.12em] text-white/45 sm:grid">
-            <span>Qué incluye</span>
-            <span className="text-center">Gratis</span>
-            <span className="text-center text-lime">Pro</span>
-          </div>
-          <div className="divide-y divide-white/[.06]">
-            {COMPARISON.map((row) => (
-              <div
-                key={row.feature}
-                className="px-3 py-4 sm:grid sm:grid-cols-[1fr_7rem_7rem] sm:items-center sm:gap-4 sm:px-5 sm:py-3.5"
-              >
-                <p className="text-sm font-semibold text-white/80">{row.feature}</p>
-                <div className="mt-2.5 flex items-stretch gap-3 sm:mt-0 sm:contents">
-                  <span className="flex flex-1 items-center justify-between gap-2 rounded-lg bg-white/[.03] px-3 py-2 sm:block sm:flex-none sm:justify-center sm:rounded-none sm:bg-transparent sm:p-0 sm:text-center">
-                    <span className="text-[10px] font-black uppercase tracking-wide text-white/35 sm:hidden">Gratis</span>
-                    <Cell value={row.free} />
-                  </span>
-                  <span className="flex flex-1 items-center justify-between gap-2 rounded-lg bg-lime/[.06] px-3 py-2 sm:block sm:flex-none sm:justify-center sm:rounded-none sm:bg-transparent sm:p-0 sm:text-center">
-                    <span className="text-[10px] font-black uppercase tracking-wide text-lime/60 sm:hidden">Pro</span>
-                    <Cell value={row.pro} accent />
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <p className="mt-8 text-center text-xs font-semibold text-white/35">Pago seguro procesado por Lemon Squeezy. MultiLinks no almacena los datos de tu tarjeta.</p>
-      </div>
-    </main>
-  );
+function Value({value}:{value:string|boolean}){return typeof value==='string'?<span className="text-sm font-semibold">{value}</span>:value?<Check size={17} className="inline text-lime" aria-label="Incluido"/>:<Minus size={17} className="inline text-white/30" aria-label="No incluido"/>;}
+export default async function PlansPage({searchParams}:{searchParams:Promise<{checkout?:string}>}) {
+  const client=await createClient();const {data:{user}}=await client.auth.getUser();
+  const {data:plan}=await client.from('plans').select('price_monthly').eq('id','pro').maybeSingle();
+  const access:AccountAccess|null=user?(await client.rpc('account_access')).data:null;
+  const params=await searchParams;const subscribed=access?.source==='subscription';
+  const price=access?.price_monthly??plan?.price_monthly??350;
+  return <main className="min-h-screen overflow-hidden bg-[#090b0d] px-4 py-8 text-white sm:px-6 sm:py-12"><div className="mx-auto max-w-5xl">
+    <header className="flex items-center justify-between gap-4"><Logo/><Link href={user?'/dashboard':'/'} className="rounded-xl border border-white/15 px-4 py-2 text-sm font-bold">Volver</Link></header>
+    {user&&<div className="mt-8"><PremiumBanner access={access}/></div>}
+    {user&&<ProActivationStatus checkoutSuccess={params.checkout==='success'} initialIsPro={subscribed&&access?.state==='PREMIUM_ACTIVE'} userId={user.id}/>}
+    <section className="py-12 text-center"><p className="text-xs font-black uppercase tracking-widest text-lime">Free + Premium</p><h1 className="mt-5 font-display text-4xl font-black tracking-tight sm:text-6xl">Prueba todo MultiLinks.</h1><p className="mx-auto mt-5 max-w-2xl text-white/55">Tus primeros 30 días incluyen todas las funciones Premium, sin tarjeta. Después eliges: continuar en Free o activar Premium por US${(price/100).toFixed(2)}/mes.</p></section>
+    <div className="grid gap-6 lg:grid-cols-2"><article className="rounded-3xl border border-white/15 bg-card p-7"><h2 className="text-xl font-black">Free</h2><p className="mt-5 text-4xl font-black">US$0</p><p className="mt-2 text-sm text-white/45">Para empezar, sin fecha de vencimiento.</p><p className="mt-6 text-sm leading-6 text-white/65">Publica un enlace, personaliza tu perfil y consulta estadísticas básicas. Tus enlaces y configuraciones adicionales permanecen guardados.</p><Link href={user?'/dashboard':'/sign-in?mode=signup'} className="mt-6 inline-block rounded-xl border border-white/20 px-5 py-3 font-bold">{user?'Ir al dashboard':'Probar Premium 30 días'}</Link></article>
+      <article className="relative rounded-3xl border border-lime/40 bg-card p-7"><div className="flex items-center gap-2 text-lime"><Crown size={20}/><h2 className="text-xl font-black">Premium</h2></div><p className="mt-4 text-sm text-white/55">Más libertad, más herramientas y más datos.</p>
+        {subscribed?<div className="mt-5"><p className="text-2xl font-black text-lime">Tu Premium está activo</p><a href="/api/billing/portal" className="mt-5 inline-block rounded-xl border border-white/20 px-5 py-3 font-bold">Gestionar suscripción</a></div>
+          : user?<div className="mt-5"><ProCheckout userId={user.id} monthlyPrice={price} annualAvailable={Boolean(process.env.LEMONSQUEEZY_PRO_ANNUAL_VARIANT_ID)}/><p className="mt-4 text-xs leading-5 text-white/45">Activar Premium ahora inicia el cobro indicado en el checkout. La prueba inicial no requiere pago ni se renueva automáticamente.</p></div>
+          : <div className="mt-6"><p className="text-4xl font-black text-lime">US${(price/100).toFixed(2)}<span className="text-sm text-white/45">/mes</span></p><Link href="/sign-in?mode=signup&next=/planes" className="mt-6 inline-block rounded-xl bg-lime px-5 py-3 font-black text-ink">Probar Premium 30 días</Link></div>}
+      </article></div>
+    <section className="mt-10 rounded-3xl border border-white/12 bg-card p-4 sm:p-6"><h2 className="mb-5 text-xl font-bold">Todo lo que puedes hacer</h2><div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] gap-3 border-b border-white/10 pb-4 text-xs font-black uppercase"><span>Función</span><span className="text-center">Free</span><span className="text-center text-lime">Premium</span></div>{comparison.map(row=><div key={row.feature} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 border-b border-white/5 py-4"><span className="break-words text-xs text-white/70 sm:text-sm">{row.feature}</span><span className="text-center"><Value value={row.free}/></span><span className="text-center"><Value value={row.premium}/></span></div>)}</section>
+    <section className="mt-8 text-sm leading-6 text-white/50"><h2 className="font-bold text-white">Qué pasa cuando termina tu prueba</h2><p className="mt-2">Sin una suscripción activa, tu cuenta continúa en Free. Publicamos el primer enlace activo según el orden de tu editor; los demás se guardan y vuelven a publicarse al reactivar Premium. No borramos tu contenido, tus fondos ni tus estadísticas.</p><p className="mt-3">Pago seguro con Lemon Squeezy. Gestiona la renovación y cancelación desde su portal. Los impuestos aplicables se muestran antes de pagar. MultiLinks no almacena datos de tarjetas.</p></section>
+  </div></main>;
 }

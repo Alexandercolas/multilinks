@@ -43,22 +43,14 @@ export function ProActivationStatus({
   useEffect(() => {
     if (!checkoutSuccess || !hasPendingCheckout || isPro) return;
 
-    const supabase = createClient();
     const startedAt = Date.now();
     let cancelled = false;
 
     async function verifySubscription() {
-      const { data } = await supabase
-        .from("subscriptions")
-        .select("plan_id,status")
-        .eq("user_id", userId)
-        .maybeSingle();
-
+      const response = await fetch("/api/billing/access", { cache: "no-store" }).catch(() => null);
+      const data = response?.ok ? await response.json() : null;
       if (cancelled) return;
-      const active =
-        data?.plan_id === "pro" &&
-        ["active", "trialing"].includes(data.status);
-
+      const active = data?.has_premium === true && data?.source === "subscription" && data?.state === "PREMIUM_ACTIVE";
       if (active) {
         setIsPro(true);
         return;
@@ -125,10 +117,10 @@ export function ProActivationStatus({
         </span>
         <div>
           <p className="font-display text-sm font-black text-white">
-            Bienvenido a MultiLinks Pro
+            Bienvenido a MultiLinks Premium
           </p>
           <p className="mt-1 text-sm font-semibold text-white/55">
-            Ya tienes hasta 50 enlaces activos y todo el diseño premium disponible.
+            Tu suscripción está confirmada. Ya tienes enlaces ilimitados y todas las funciones Premium.
           </p>
         </div>
       </div>
@@ -146,8 +138,8 @@ export function ProActivationStatus({
         </p>
         <p className="mt-1 text-sm font-semibold text-white/45">
           {timedOut
-            ? "Esto está tardando más de lo normal. Tu pago se procesó correctamente y tu cuenta Pro se activará en los próximos minutos. Puedes seguir usando MultiLinks mientras tanto."
-            : "Lemon Squeezy ya nos devolvió al sitio. Estamos confirmando la activación de Pro."}
+            ? "Esto está tardando más de lo normal. Todavía no recibimos una confirmación verificable. Consulta el estado en Lemon Squeezy o contacta a soporte; tu contenido permanece guardado."
+            : "Lemon Squeezy ya nos devolvió al sitio. Estamos confirmando la suscripción en el backend."}
         </p>
         {timedOut ? (
           <Link

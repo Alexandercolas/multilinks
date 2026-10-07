@@ -1,3 +1,4 @@
+import { recordAnalytics } from "@/lib/analytics-tracking";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requestFingerprint } from "@/lib/request-fingerprint";
@@ -19,6 +20,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ lin
   });
   if (allowed) {
     await supabase.rpc("record_link_play", { target_link: linkId });
+    await recordAnalytics(request, "media_play", null, linkId);
   }
   return NextResponse.json({ ok: true });
 }

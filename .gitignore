@@ -12,3 +12,6 @@ tsconfig.tsbuildinfo
 # Local notes
 Multilinks.docx
 *.docx
+
+# Isolated Analytics SQL test dependency
+.analytics-test-runtime/

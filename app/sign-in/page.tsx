@@ -74,7 +74,7 @@ export default function SignInPage() {
       <div className="text-white lg:hidden"><Logo/></div>
       <span className="mt-8 inline-flex items-center gap-2 font-display text-[10px] font-black uppercase tracking-[.15em] text-lime lg:mt-0"><span className="h-2 w-2 rounded-full bg-lime shadow-[0_0_14px_#c9ff58]"/> Acceso MultiLinks</span>
       <h1 className="mt-5 font-display text-3xl font-black tracking-[-.04em]">{mode === "login" ? "Qué bueno verte" : "Crea tu MultiLink"}</h1>
-      <p className="mt-3 text-sm text-white/50">{mode === "login" ? "Entra para administrar tu página." : "Tu página pública empieza aquí."}</p>
+      <p className="mt-3 text-sm text-white/50">{mode === "login" ? "Entra para administrar tu página." : "Crea tu página y prueba todas las funciones Premium durante 30 días, sin tarjeta."}</p>
       <form onSubmit={submit} className="mt-7 space-y-4">
         <label className="block text-sm font-bold text-white/75">Correo<input type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-white/[.045] px-4 py-3.5 font-normal text-white outline-none transition placeholder:text-white/25 focus:border-lime/70 focus:bg-white/[.07]"/></label>
         <label className="block text-sm font-bold text-white/75">Contraseña<input type="password" required minLength={8} autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} onChange={e => setPassword(e.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-white/[.045] px-4 py-3.5 font-normal text-white outline-none transition focus:border-lime/70 focus:bg-white/[.07]"/></label>

@@ -8,9 +8,10 @@ const OPTIONS = [
   { interval: "annual" as const, label: "Anual", price: "US$39.99", note: "cada año · ahorras US$2.01" },
 ];
 
-export function ProCheckout({ userId }: { userId: string }) {
+export function ProCheckout({ userId, monthlyPrice = 350, annualAvailable = false }: { userId: string; monthlyPrice?: number; annualAvailable?: boolean }) {
   const [interval, setInterval] = useState<"monthly" | "annual">("monthly");
-  const selected = OPTIONS.find((option) => option.interval === interval) ?? OPTIONS[0];
+  const options = OPTIONS.filter(option => option.interval === "monthly" || annualAvailable).map(option => option.interval === "monthly" ? { ...option, price: `US$${(monthlyPrice/100).toFixed(2)}` } : option);
+  const selected = options.find((option) => option.interval === interval) ?? options[0];
 
   return (
     <div>
@@ -19,7 +20,7 @@ export function ProCheckout({ userId }: { userId: string }) {
         aria-label="Modalidad de pago"
         className="inline-flex rounded-xl border border-white/15 bg-white/[.04] p-1"
       >
-        {OPTIONS.map((option) => (
+        {options.map((option) => (
           <button
             key={option.interval}
             type="button"

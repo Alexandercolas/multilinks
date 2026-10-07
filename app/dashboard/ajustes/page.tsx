@@ -4,11 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, BookOpen, CreditCard, ExternalLink, HelpCircle, KeyRound, LifeBuoy, LockKeyhole, LogOut, Mail, ShieldCheck, Trash2, UserRound } from "lucide-react";
+import { PremiumBanner } from "@/components/premium/premium-banner";
+import { useAccountAccess } from "@/components/premium/access-provider";
 import { Logo } from "@/components/logo";
 import { createClient } from "@/lib/supabase/client";
 
 export default function SettingsPage() {
   const router = useRouter();
+  const { access } = useAccountAccess();
   const [email, setEmail] = useState("");
   const [ready, setReady] = useState(false);
   const [confirmation, setConfirmation] = useState("");
@@ -52,6 +55,7 @@ export default function SettingsPage() {
     <div className="relative mx-auto max-w-5xl px-5 py-10 sm:py-14">
       <div><p className="font-display text-xs font-black uppercase tracking-[.16em] text-lime">TU CUENTA</p><h1 className="mt-2 font-display text-3xl font-black tracking-[-.04em] sm:text-5xl">Configuración y seguridad</h1><p className="mt-4 max-w-2xl text-white/50">Administra el acceso, la ayuda y las preferencias principales de tu cuenta MultiLinks.</p></div>
 
+      <div className="mt-7"><PremiumBanner access={access} /></div>
       <div className="mt-9 grid gap-5 md:grid-cols-2">
         <SettingsCard icon={<UserRound size={21}/>} title="Cuenta" description="Tu identidad y sesión actual.">
           <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[.035] p-4"><Mail className="mt-0.5 shrink-0 text-lime" size={18}/><div className="min-w-0"><p className="text-xs font-bold text-white/35">Correo de acceso</p><p className="mt-1 break-all text-sm font-bold text-white/80">{email}</p></div></div>

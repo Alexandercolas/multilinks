@@ -63,7 +63,32 @@ try {
       .locator("footer")
       .getByRole("link", { name: "Crear mi perfil", exact: true });
     assert.equal(await signup.getAttribute("href"), "/sign-in?mode=signup");
-    await signup.click();
+    const shortcut = page
+      .getByRole("link", { name: "Crear perfil", exact: true })
+      .filter({ visible: true });
+    assert.equal(await shortcut.count(), 1);
+    assert.equal(await shortcut.getAttribute("href"), "/sign-in?mode=signup");
+    const qr =
+      width < 1024
+        ? page.getByRole("button", { name: "Mostrar QR", exact: true })
+        : page
+            .getByRole("img", {
+              name: "Código QR del perfil de MultiLinks",
+              exact: true,
+            })
+            .filter({ visible: true });
+    const qrBounds = await qr.boundingBox();
+    const shortcutBounds = await shortcut.boundingBox();
+    assert.ok(shortcutBounds.x >= qrBounds.x + qrBounds.width);
+    assert.ok(
+      Math.abs(
+        shortcutBounds.y +
+          shortcutBounds.height / 2 -
+          qrBounds.y -
+          qrBounds.height / 2,
+      ) < 2,
+    );
+    await shortcut.click();
     await page.waitForURL("**/sign-in?mode=signup");
     await page
       .getByRole("button", { name: "Crear cuenta", exact: true })

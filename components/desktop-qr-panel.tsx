@@ -1,4 +1,18 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
+
+export function CreateProfileShortcut() {
+  return (
+    <Link
+      href="/sign-in?mode=signup"
+      className="profile-focus inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-1.5 text-[11px] font-medium opacity-80 transition hover:opacity-100 hover:underline"
+    >
+      Crear perfil
+      <ArrowUpRight aria-hidden="true" size={12} />
+    </Link>
+  );
+}
 export function ProfileQr({
   qrSvg,
   title,
@@ -34,8 +48,9 @@ export function DesktopQrPanel({
       className="hidden lg:block"
     >
       <h2 className="text-sm font-semibold">Compartir perfil</h2>
-      <div className="mt-5">
+      <div className="mt-5 flex items-center gap-2">
         <ProfileQr qrSvg={qrSvg} title={title} />
+        <CreateProfileShortcut />
       </div>
       <p className="mt-3 max-w-[180px] text-xs leading-5 opacity-80">
         Escanea para abrir este perfil en tu móvil.

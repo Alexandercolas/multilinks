@@ -1,7 +1,11 @@
 "use client";
 import { Check, Copy, QrCode, Share2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { DesktopQrPanel, ProfileQr } from "@/components/desktop-qr-panel";
+import {
+  CreateProfileShortcut,
+  DesktopQrPanel,
+  ProfileQr,
+} from "@/components/desktop-qr-panel";
 
 async function copyUrl(url: string) {
   try {
@@ -119,6 +123,7 @@ export function ProfileShareTools({
           <QrCode aria-hidden="true" size={16} />
           <span className="sr-only">Mostrar QR</span>
         </button>
+        <CreateProfileShortcut />
       </div>
       <DesktopQrPanel title={title} url={url} qrSvg={qrSvg}>
         {actions}

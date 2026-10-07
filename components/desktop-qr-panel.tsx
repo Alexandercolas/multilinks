@@ -1,29 +1,49 @@
-import { Smartphone } from "lucide-react";
-
-// Desktop-only: a visitor browsing on a wide screen can scan this to open the
-// same profile on their phone. Hidden entirely on small viewports — if you're
-// already on mobile there's nothing to scan for.
-export function DesktopQrPanel({ qrSvg, url, dark }: { qrSvg: string; url: string; dark: boolean }) {
-  const displayUrl = url.replace(/^https?:\/\//, "");
+import type { ReactNode } from "react";
+export function ProfileQr({
+  qrSvg,
+  title,
+  large = false,
+}: {
+  qrSvg: string;
+  title: string;
+  large?: boolean;
+}) {
   return (
     <div
-      className={`hidden w-48 shrink-0 animate-fade-up flex-col items-center gap-3 rounded-[1.75rem] p-5 text-center lg:flex ${
-        dark
-          ? "border border-white/12 bg-white/[.04] text-white/70"
-          : "border border-black/[.06] bg-white text-ink/70 shadow-[0_1px_2px_rgba(21,21,21,.04),0_12px_32px_-16px_rgba(21,21,21,.16)]"
-      }`}
-      style={{ animationDelay: "120ms" }}
+      role="img"
+      aria-label={`Código QR del perfil de ${title}`}
+      className={`${large ? "h-56 w-56" : "h-28 w-28"} shrink-0 overflow-hidden rounded-xl bg-white [&_svg]:block [&_svg]:h-full [&_svg]:w-full`}
+      dangerouslySetInnerHTML={{ __html: qrSvg }}
+    />
+  );
+}
+export function DesktopQrPanel({
+  qrSvg,
+  url,
+  title,
+  children,
+}: {
+  qrSvg: string;
+  url: string;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <aside
+      aria-label="Compartir perfil en escritorio"
+      className="hidden lg:block"
     >
-      <span className={`inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[.1em] ${dark ? "text-white/50" : "text-ink/45"}`}>
-        <Smartphone size={13} /> Ver en tu móvil
-      </span>
-      <span
-        className={`grid h-32 w-32 place-items-center rounded-2xl p-2 ${dark ? "bg-white/[.06]" : "bg-cream"}`}
-        role="img"
-        aria-label={`Código QR para abrir ${displayUrl} en un teléfono`}
-        dangerouslySetInnerHTML={{ __html: qrSvg }}
-      />
-      <span className={`break-all text-[11px] font-semibold ${dark ? "text-white/40" : "text-ink/40"}`}>{displayUrl}</span>
-    </div>
+      <h2 className="text-sm font-semibold">Compartir perfil</h2>
+      <div className="mt-5">
+        <ProfileQr qrSvg={qrSvg} title={title} />
+      </div>
+      <p className="mt-3 max-w-[180px] text-xs leading-5 opacity-80">
+        Escanea para abrir este perfil en tu móvil.
+      </p>
+      <p className="mt-4 break-all text-xs leading-5 opacity-80">
+        {url.replace(/^https?:\/\//, "")}
+      </p>
+      <div className="mt-5 space-y-2">{children}</div>
+    </aside>
   );
 }

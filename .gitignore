@@ -15,3 +15,4 @@ Multilinks.docx
 
 # Isolated Analytics SQL test dependency
 .analytics-test-runtime/
+.profile-test-runtime/

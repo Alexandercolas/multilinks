@@ -7,7 +7,8 @@ const nextConfig: NextConfig = {
   async headers() {
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",
+      // React's development debugging needs eval; production keeps the stricter policy.
+      `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ""}`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
@@ -18,7 +19,8 @@ const nextConfig: NextConfig = {
       "base-uri 'self'",
       "form-action 'self'",
       "frame-ancestors 'none'",
-      "upgrade-insecure-requests",
+      // Safari upgrades localhost HTTP too; local development has no TLS server.
+      ...(process.env.NODE_ENV === 'development' ? [] : ["upgrade-insecure-requests"]),
     ].join("; ");
     return [{ source: "/(.*)", headers: [
       { key: "Content-Security-Policy", value: csp },

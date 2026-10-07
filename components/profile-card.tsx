@@ -1,14 +1,20 @@
 import { ArrowUpRight, Flag, Play } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import type { Profile } from "@/types/profile";
 import { themeClasses } from "@/lib/demo-profile";
 import { isSafeLink } from "@/lib/profile-storage";
 import { getLinkMedia } from "@/lib/link-media";
-import { detectPlatform, platformIconUrl } from "@/lib/platforms";
+import { detectPlatform } from "@/lib/platforms";
 import { embedInfoFor } from "@/lib/media-embed";
 import { LinkFavicon } from "@/components/link-favicon";
 import { MediaEmbed } from "@/components/media-embed";
-import { accessibleProfileTextColor, backgroundImageStyle, getPremiumBackground, premiumBackgroundStyle } from "@/lib/profile-backgrounds";
+import {
+  accessibleProfileTextColor,
+  backgroundImageStyle,
+  getPremiumBackground,
+  premiumBackgroundStyle,
+} from "@/lib/profile-backgrounds";
 
 // The icon field is meant to hold an emoji or an image URL (the dashboard's
 // own placeholder says so), but some legacy links have a stray plain word in
@@ -18,115 +24,199 @@ function isDisplayableIcon(value: string): boolean {
   return /^https?:\/\//i.test(value) || Array.from(value).length <= 4;
 }
 
-export function ProfileCard({ profile, preview = false, showBranding = true, richMedia = false }: { profile: Profile; preview?: boolean; showBranding?: boolean; richMedia?: boolean }) {
-  const buttonRadius = profile.buttonStyle === "pill" ? "rounded-full" : profile.buttonStyle === "square" ? "rounded-lg" : "rounded-2xl";
+export function ProfileCard({
+  profile,
+  preview = false,
+  showBranding = true,
+  richMedia = false,
+}: {
+  profile: Profile;
+  preview?: boolean;
+  showBranding?: boolean;
+  richMedia?: boolean;
+}) {
+  const buttonRadius =
+    profile.buttonStyle === "pill"
+      ? "rounded-full"
+      : profile.buttonStyle === "square"
+        ? "rounded-lg"
+        : "rounded-2xl";
   // Cards with an image / stacked content can't be pill-shaped or they turn into ellipses.
-  const cardRadius = profile.buttonStyle === "square" ? "rounded-xl" : "rounded-2xl";
-  const visibleLinks = profile.links.filter((link) => link.active && isSafeLink(link.url));
+  const cardRadius =
+    profile.buttonStyle === "square" ? "rounded-xl" : "rounded-2xl";
+  const visibleLinks = profile.links.filter(
+    (link) => link.active && isSafeLink(link.url),
+  );
   // "Social" links (Instagram/TikTok/Telegram/Facebook/...) get pulled out of the
   // list into their own icon row, right under the bio -- the classic link-in-bio
   // social bar, instead of taking up a full row each in the main list.
   const socialLinks = visibleLinks.filter((link) => link.linkType === "social");
-  const listLinks = visibleLinks.filter((link) => link.linkType !== "social");
+  const listLinks = visibleLinks
+    .filter((link) => link.linkType !== "social")
+    .sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)));
   const customImage = profile.backgroundImage;
   const selectedBackground = getPremiumBackground(profile.backgroundPreset);
+  const texturedBackground = Boolean(
+    customImage || (selectedBackground && !("gradient" in selectedBackground)),
+  );
   const profileTextColor = customImage
     ? "#ffffff"
     : selectedBackground
-      ? selectedBackground.dark ? "#ffffff" : "#151515"
+      ? selectedBackground.dark
+        ? "#ffffff"
+        : "#151515"
       : accessibleProfileTextColor(profile.backgroundColor);
   const darkSurface = profileTextColor === "#ffffff";
   const backgroundColor = customImage
     ? "#0f1115"
     : selectedBackground
-      ? selectedBackground.dark ? "#0f1115" : "#f7f4ed"
+      ? selectedBackground.dark
+        ? "#0f1115"
+        : "#f7f4ed"
       : profile.backgroundColor;
 
   // One premium surface language, tuned for light vs dark backgrounds.
-  const cardSurface = darkSurface
-    ? "border border-white/12 bg-white/[.06] text-white backdrop-blur-md hover:border-white/25 hover:bg-white/[.09]"
-    : "border border-black/[.07] bg-white text-ink shadow-[0_1px_2px_rgba(21,21,21,.04),0_12px_32px_-16px_rgba(21,21,21,.16)] hover:border-black/[.14]";
+  const cardSurface =
+    texturedBackground && darkSurface
+      ? "border border-white/[.15] bg-black/70 text-white backdrop-blur-md hover:border-white/30"
+      : darkSurface
+        ? "border border-white/[.12] bg-white/[.06] text-white hover:border-white/25 hover:bg-white/[.09]"
+        : "border border-black/[.07] bg-white/95 text-ink hover:border-black/[.14]";
   const iconTile = darkSurface
     ? "border border-white/10 bg-white/[.06]"
     : "border border-black/[.06] bg-black/[.03]";
 
   return (
     <section
-      className={`relative min-h-full overflow-hidden ${themeClasses[profile.theme]} px-5 py-11 text-center sm:px-8 sm:py-14`}
-      style={{ backgroundColor, color: profileTextColor, ...premiumBackgroundStyle(profile.backgroundPreset), ...backgroundImageStyle(customImage) }}
+      className={`relative min-h-full overflow-hidden ${themeClasses[profile.theme]} px-5 py-8 text-center sm:px-9 sm:py-10`}
+      style={{
+        backgroundColor,
+        color: profileTextColor,
+        ...premiumBackgroundStyle(profile.backgroundPreset),
+        ...backgroundImageStyle(customImage),
+      }}
     >
       {customImage ? (
-        <span className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/45 to-black/60" aria-hidden="true" />
+        <span
+          className="absolute inset-0 bg-gradient-to-b from-black/[.06] via-transparent to-black/10"
+          aria-hidden="true"
+        />
       ) : profile.backgroundPreset ? (
-        <span className={`absolute inset-0 ${darkSurface ? "bg-black/25" : "bg-white/10"}`} aria-hidden="true" />
+        <span
+          className={`absolute inset-0 ${darkSurface ? "bg-black/[.06]" : "bg-white/10"}`}
+          aria-hidden="true"
+        />
       ) : darkSurface ? (
-        <span className="absolute inset-0 bg-[radial-gradient(120%_60%_at_50%_0%,rgba(255,255,255,.07),transparent_60%)]" aria-hidden="true" />
+        <span
+          className="absolute inset-0 bg-[radial-gradient(120%_60%_at_50%_0%,rgba(255,255,255,.07),transparent_60%)]"
+          aria-hidden="true"
+        />
       ) : null}
 
       {profile.coverImage ? (
         <div
           role="img"
           aria-label={`Portada de ${profile.displayName}`}
-          className="relative -mx-5 -mt-11 mb-3 h-28 bg-cover bg-center sm:-mx-8 sm:-mt-14 sm:h-36"
+          className="relative -mx-5 -mt-8 mb-3 h-36 bg-cover bg-center sm:-mx-9 sm:-mt-10 sm:h-44"
           style={{ backgroundImage: `url(${profile.coverImage})` }}
         >
-          <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-black/[.06] to-black/25" />
+          <span
+            aria-hidden="true"
+            className="absolute inset-0 bg-gradient-to-b from-black/[.06] to-black/25"
+          />
         </div>
       ) : null}
 
-      <div className="relative mx-auto max-w-md">
-        <div className={`animate-fade-up ${profile.coverImage ? "-mt-14 sm:-mt-16" : ""}`}>
-          <div
-            className={`mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-[1.75rem] font-display text-2xl font-black ${profile.coverImage ? (darkSurface ? "ring-[3px] ring-[#141414]" : "ring-[3px] ring-white") : darkSurface ? "ring-1 ring-white/20 shadow-[0_10px_40px_-8px_rgba(0,0,0,.5)]" : "ring-1 ring-black/[.06] shadow-[0_12px_40px_-12px_rgba(21,21,21,.28)]"}`}
-            style={{ backgroundColor: darkSurface ? "#c6ff3d" : profile.accentColor, color: "#151515" }}
-          >
-            {profile.avatarImage ? (
-              <div
-                role="img"
-                aria-label={`Foto de ${profile.displayName}`}
-                className="h-full w-full bg-cover bg-center"
-                style={{ backgroundImage: `url(${profile.avatarImage})` }}
-              />
-            ) : profile.avatar || profile.displayName.slice(0, 2).toUpperCase()}
+      <div className="relative mx-auto max-w-xl">
+        <header
+          className={
+            texturedBackground
+              ? `rounded-2xl p-5 backdrop-blur-md ${darkSurface ? "bg-black/[.65]" : "bg-white/[.85]"}`
+              : undefined
+          }
+        >
+          <div className={`${profile.coverImage ? "-mt-14 sm:-mt-16" : ""}`}>
+            <div
+              className={`mx-auto flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center overflow-hidden rounded-[1.5rem] font-display text-2xl font-black ${profile.coverImage ? (darkSurface ? "ring-[3px] ring-[#141414]" : "ring-[3px] ring-white") : darkSurface ? "ring-1 ring-white/20" : "ring-1 ring-black/10"}`}
+              style={{
+                backgroundColor: profile.accentColor ?? "#c9ff58",
+                color: accessibleProfileTextColor(profile.accentColor),
+              }}
+            >
+              {profile.avatarImage ? (
+                <Image
+                  unoptimized
+                  src={profile.avatarImage}
+                  alt={`Foto de ${profile.displayName}`}
+                  width={96}
+                  height={96}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                profile.avatar || profile.displayName.slice(0, 2).toUpperCase()
+              )}
+            </div>
           </div>
-        </div>
 
-        <div className="animate-fade-up [animation-delay:80ms]">
-          <h1 className="mt-6 font-display text-[1.75rem] font-black leading-tight tracking-[-.02em] sm:text-3xl">
-            {profile.displayName}
-          </h1>
-          <p className={`mt-2 font-display text-sm font-bold ${darkSurface ? "text-white/55" : "text-ink/45"}`}>
-            @{profile.username}
-          </p>
-        </div>
+          <div className="mt-5">
+            <h1 className="break-words font-display text-[1.5rem] font-bold leading-snug tracking-[-.03em] sm:text-[1.875rem]">
+              {profile.displayName}
+            </h1>
+            <p className={`mt-2 break-all text-[13px] font-medium`}>
+              @{profile.username}
+            </p>
+          </div>
 
-        {profile.bio ? (
-          <p className={`mx-auto mt-5 max-w-sm animate-fade-up text-[15px] leading-7 [animation-delay:160ms] ${darkSurface ? "text-white/75" : "text-ink/70"}`}>
-            {profile.bio}
-          </p>
-        ) : null}
-
+          {profile.bio ? (
+            <p
+              className={`mx-auto mt-4 max-w-md whitespace-pre-line break-words text-sm leading-6`}
+            >
+              {profile.bio}
+            </p>
+          ) : null}
+        </header>
         {socialLinks.length ? (
-          <div className="mx-auto mt-6 flex max-w-sm animate-fade-up flex-wrap items-center justify-center gap-3 [animation-delay:200ms]">
+          <div className="mx-auto mt-6 flex max-w-sm flex-wrap items-center justify-center gap-3">
             {socialLinks.map((link) => {
               const trackable = /^[0-9a-f-]{36}$/i.test(link.id);
-              const href = preview ? undefined : trackable ? `/api/click/${link.id}` : link.url;
-              const customIcon = link.icon && !["🔗", "ðŸ”—"].includes(link.icon) && isDisplayableIcon(link.icon) ? link.icon : null;
+              const href = preview
+                ? undefined
+                : trackable
+                  ? `/api/click/${link.id}`
+                  : link.url;
+              const customIcon =
+                link.icon &&
+                !["🔗", "ðŸ”—"].includes(link.icon) &&
+                isDisplayableIcon(link.icon)
+                  ? link.icon
+                  : null;
               const faviconSrc =
-                !customIcon && link.faviconUrl && /^(https:\/\/|\/api\/img\?)/i.test(link.faviconUrl)
+                !customIcon &&
+                link.faviconUrl &&
+                /^(https:\/\/|\/api\/img\?)/i.test(link.faviconUrl)
                   ? link.faviconUrl
                   : undefined;
               const platform = customIcon ? null : detectPlatform(link.url);
               return (
                 <a
                   key={link.id}
+                  data-analytics-link={
+                    !preview && trackable ? link.id : undefined
+                  }
                   href={href}
                   target={!preview ? "_blank" : undefined}
                   rel="noreferrer"
                   title={link.title}
                   aria-label={link.title}
-                  className={`grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full border text-lg transition hover:-translate-y-0.5 motion-reduce:transform-none ${platform ? "" : iconTile}`}
-                  style={platform ? { backgroundColor: `${platform.color}14`, borderColor: `${platform.color}40` } : undefined}
+                  className={`grid h-11 w-11 shrink-0 place-items-center overflow-hidden profile-link rounded-xl border text-lg hover:-translate-y-px motion-reduce:transform-none ${platform ? "" : iconTile}`}
+                  style={
+                    platform
+                      ? {
+                          backgroundColor: `${platform.color}14`,
+                          borderColor: `${platform.color}40`,
+                        }
+                      : undefined
+                  }
                 >
                   {customIcon ? (
                     /^https?:\/\//i.test(customIcon) ? (
@@ -140,7 +230,11 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                       customIcon
                     )
                   ) : (
-                    <LinkFavicon url={link.url} title={link.title} src={faviconSrc} />
+                    <LinkFavicon
+                      url={link.url}
+                      title={link.title}
+                      src={faviconSrc}
+                    />
                   )}
                 </a>
               );
@@ -148,33 +242,58 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
           </div>
         ) : null}
 
-        <div className="mx-auto mt-8 max-w-md space-y-3">
+        <div className="mx-auto mt-8 max-w-xl space-y-3">
           {listLinks.map((link, index) => {
             const trackable = /^[0-9a-f-]{36}$/i.test(link.id);
-            const href = preview ? undefined : trackable ? `/api/click/${link.id}` : link.url;
-            const showSection = link.sectionTitle && (index === 0 || listLinks[index - 1]?.sectionTitle !== link.sectionTitle);
+            const href = preview
+              ? undefined
+              : trackable
+                ? `/api/click/${link.id}`
+                : link.url;
+            const showSection =
+              link.sectionTitle &&
+              (index === 0 ||
+                listLinks[index - 1]?.sectionTitle !== link.sectionTitle);
             const media = richMedia ? getLinkMedia(link.url) : null;
             const persistedThumb =
-              link.thumbnail && /^(https:\/\/|\/api\/img\?)/i.test(link.thumbnail) ? link.thumbnail : null;
+              link.thumbnail &&
+              /^(https:\/\/|\/api\/img\?)/i.test(link.thumbnail)
+                ? link.thumbnail
+                : null;
             const urlThumb = media?.kind === "youtube" ? media.thumbnail : null;
-            const mediaThumb = richMedia ? persistedThumb ?? urlThumb : null;
+            const mediaThumb = richMedia ? (persistedThumb ?? urlThumb) : null;
             const brandedMedia = media?.kind === "branded" ? media : null;
-            const customIcon = link.icon && !["🔗", "ðŸ”—"].includes(link.icon) && isDisplayableIcon(link.icon) ? link.icon : null;
+            const customIcon =
+              link.icon &&
+              !["🔗", "ðŸ”—"].includes(link.icon) &&
+              isDisplayableIcon(link.icon)
+                ? link.icon
+                : null;
             const detectedPlatform = detectPlatform(link.url);
             const platform = customIcon ? null : detectedPlatform;
             const platformKind = detectedPlatform?.kind;
             const featured = Boolean(link.featured);
-            const iconSizeClass = featured ? "h-12 w-12 text-xl" : "h-10 w-10 text-lg";
+            const iconSizeClass = featured
+              ? "h-12 w-12 text-xl"
+              : "h-10 w-10 text-lg";
 
             // Decide the card shape from the persisted type, falling back to detection.
-            const linkType = link.linkType ?? (brandedMedia ? "action" : "standard");
-            const isMediaKind = linkType === "media" || platformKind === "video" || platformKind === "music";
+            const linkType =
+              link.linkType ?? (brandedMedia ? "action" : "standard");
+            const isMediaKind =
+              linkType === "media" ||
+              platformKind === "video" ||
+              platformKind === "music";
             // Official embed (Spotify/YouTube/SoundCloud/Apple Music/Deezer/Vimeo iframe),
             // click-to-play. A platform can be embeddable even before it has a saved
             // thumbnail (Deezer/Apple Music have no oEmbed), so this doesn't require mediaThumb.
-            const embed = richMedia && isMediaKind ? embedInfoFor(link.url, detectedPlatform?.id) : null;
+            const embed =
+              richMedia && isMediaKind
+                ? embedInfoFor(link.url, detectedPlatform?.id)
+                : null;
             // The big image card is for video/music with a thumbnail, or anything we can embed.
-            const showMediaCard = isMediaKind && (Boolean(mediaThumb) || Boolean(embed));
+            const showMediaCard =
+              isMediaKind && (Boolean(mediaThumb) || Boolean(embed));
             const actionPlatform = brandedMedia?.platform ?? detectedPlatform;
             const actionLabel =
               brandedMedia?.action ??
@@ -188,15 +307,22 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                       ? "Ver canal"
                       : "Abrir enlace");
             const showActionCard =
-              !showMediaCard && Boolean(actionPlatform) && (linkType === "action" || Boolean(brandedMedia));
-            const showPlayButton = platformKind === "video" || platformKind === "music";
+              !showMediaCard &&
+              Boolean(actionPlatform) &&
+              (linkType === "action" || Boolean(brandedMedia));
+            const showPlayButton =
+              platformKind === "video" || platformKind === "music";
 
             const faviconSrc =
-              !customIcon && link.faviconUrl && /^(https:\/\/|\/api\/img\?)/i.test(link.faviconUrl)
+              !customIcon &&
+              link.faviconUrl &&
+              /^(https:\/\/|\/api\/img\?)/i.test(link.faviconUrl)
                 ? link.faviconUrl
                 : undefined;
             const iconSlot = customIcon ? (
-              <span className={`grid shrink-0 place-items-center overflow-hidden rounded-xl ${iconSizeClass} ${iconTile}`}>
+              <span
+                className={`grid shrink-0 place-items-center overflow-hidden rounded-xl ${iconSizeClass} ${iconTile}`}
+              >
                 {/^https?:\/\//i.test(customIcon) ? (
                   <span
                     role="img"
@@ -204,14 +330,27 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                     className="h-full w-full bg-cover bg-center"
                     style={{ backgroundImage: `url(${customIcon})` }}
                   />
-                ) : customIcon}
+                ) : (
+                  customIcon
+                )}
               </span>
             ) : (
               <span
                 className={`grid shrink-0 place-items-center overflow-hidden rounded-xl border ${iconSizeClass} ${platform ? "" : iconTile}`}
-                style={platform ? { backgroundColor: `${platform.color}14`, borderColor: `${platform.color}40` } : undefined}
+                style={
+                  platform
+                    ? {
+                        backgroundColor: `${platform.color}14`,
+                        borderColor: `${platform.color}40`,
+                      }
+                    : undefined
+                }
               >
-                <LinkFavicon url={link.url} title={link.title} src={faviconSrc} />
+                <LinkFavicon
+                  url={link.url}
+                  title={link.title}
+                  src={faviconSrc}
+                />
               </span>
             );
 
@@ -219,41 +358,58 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
               <>
                 {iconSlot}
                 <span className="min-w-0 flex-1">
-                  <span className={`block truncate ${featured ? "text-base font-black" : "text-[15px] font-semibold"}`}>{link.title}</span>
+                  <span
+                    className={`block break-words ${featured ? "text-base font-black" : "text-[15px] font-semibold"}`}
+                  >
+                    {link.title}
+                  </span>
                   {link.description ? (
-                    <span className={`mt-0.5 block truncate text-xs font-medium ${darkSurface ? "text-white/50" : "text-ink/45"}`}>{link.description}</span>
+                    <span
+                      className={`mt-1 block break-words text-xs font-normal leading-5 ${darkSurface ? "text-white/80" : "text-ink/75"}`}
+                    >
+                      {link.description}
+                    </span>
                   ) : null}
                 </span>
-                <ArrowUpRight size={featured ? 19 : 17} className={`shrink-0 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${darkSurface ? "text-white/40" : "text-ink/35"}`} />
+                <ArrowUpRight
+                  aria-hidden="true"
+                  size={featured ? 19 : 17}
+                  className={`shrink-0 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${darkSurface ? "text-white/40" : "text-ink/35"}`}
+                />
               </>
             );
 
             return (
-              <div
-                key={link.id}
-                className="animate-fade-up"
-                style={{ animationDelay: `${220 + index * 70}ms` }}
-              >
+              <div key={link.id} data-analytics-link={link.id}>
                 {showSection ? (
-                  <h2 className={`mb-2.5 mt-7 text-center font-display text-[11px] font-black uppercase tracking-[.18em] ${darkSurface ? "text-white/45" : "text-ink/40"}`}>
+                  <h2
+                    className={`mb-2.5 mt-7 text-center font-display text-[11px] font-black uppercase tracking-[.18em] ${darkSurface ? "text-white/45" : "text-ink/40"}`}
+                  >
                     {link.sectionTitle}
                   </h2>
                 ) : null}
                 {showMediaCard ? (
-                  <div className={`group relative flex w-full flex-col overflow-hidden transition hover:-translate-y-0.5 motion-reduce:transform-none ${cardRadius} ${cardSurface}`}>
+                  <div
+                    className={`group relative flex w-full flex-col overflow-hidden profile-link hover:-translate-y-px motion-reduce:transform-none ${cardRadius} ${cardSurface}`}
+                  >
                     {embed ? (
                       <MediaEmbed
                         embed={embed}
                         thumbnail={mediaThumb}
                         title={link.title}
                         label={detectedPlatform?.label ?? "el enlace"}
-                        externalHref={link.url}
+                        externalHref={href ?? link.url}
                         rounded=""
                         dark={darkSurface}
                         linkId={!preview && trackable ? link.id : undefined}
                       />
                     ) : mediaThumb ? (
-                      <a href={href} target={!preview ? "_blank" : undefined} rel="noreferrer" className="relative block w-full">
+                      <a
+                        href={href}
+                        target={!preview ? "_blank" : undefined}
+                        rel="noreferrer"
+                        className="profile-link relative block w-full"
+                      >
                         <span
                           role="img"
                           aria-label={`Miniatura de ${link.title}`}
@@ -262,9 +418,19 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                         />
                         {showPlayButton ? (
                           <>
-                            <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
-                            <span aria-hidden="true" className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/95 text-ink shadow-lg transition group-hover:scale-105 motion-reduce:transition-none">
-                              <Play size={18} className="translate-x-0.5 fill-current" />
+                            <span
+                              aria-hidden="true"
+                              className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent"
+                            />
+                            <span
+                              aria-hidden="true"
+                              className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/95 text-ink transition group-hover:scale-[1.03] motion-reduce:transition-none"
+                            >
+                              <Play
+                                aria-hidden="true"
+                                size={18}
+                                className="translate-x-0.5 fill-current"
+                              />
                             </span>
                           </>
                         ) : null}
@@ -274,7 +440,7 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                       href={href}
                       target={!preview ? "_blank" : undefined}
                       rel="noreferrer"
-                      className={`flex items-center gap-3 px-3.5 ${featured ? "py-4" : "py-3"} text-left transition hover:bg-black/[.02] motion-reduce:transform-none`}
+                      className={`profile-link flex min-h-[72px] items-center gap-3 px-4 ${featured ? "py-4" : "py-3"} text-left transition hover:bg-black/[.02] motion-reduce:transform-none`}
                     >
                       {rowInner}
                     </a>
@@ -284,44 +450,38 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
                     href={href}
                     target={!preview ? "_blank" : undefined}
                     rel="noreferrer"
-                    className={`group relative flex w-full items-stretch overflow-hidden ${cardRadius} text-left transition hover:-translate-y-0.5 motion-reduce:transform-none ${cardSurface}`}
+                    className={`profile-link group flex min-h-[72px] w-full min-w-0 items-center gap-3 ${cardRadius} px-4 py-3.5 text-left ${cardSurface}`}
                   >
-                    <span
-                      className={`flex w-14 shrink-0 items-center justify-center ${darkSurface ? "bg-white/[.05]" : ""}`}
-                      style={darkSurface ? undefined : { backgroundColor: `${actionPlatform.color}18` }}
-                      aria-hidden="true"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={platformIconUrl(actionPlatform, darkSurface ? "ffffff" : actionPlatform.color.replace(/^#/, ""))}
-                        alt=""
-                        width="22"
-                        height="22"
-                        className="h-[22px] w-[22px] object-contain"
-                        loading="lazy"
-                        referrerPolicy="no-referrer"
-                      />
-                    </span>
-                    <span className="flex flex-1 items-center gap-3 px-3.5 py-3.5">
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[15px] font-semibold">{link.title}</span>
-                        <span
-                          className={`mt-0.5 block truncate text-xs font-semibold ${darkSurface ? "text-white/45" : ""}`}
-                          style={darkSurface ? undefined : { color: actionPlatform.color }}
-                        >
-                          {link.description || actionLabel}
-                        </span>
+                    {iconSlot}
+                    <span className="min-w-0 flex-1">
+                      <span className="block break-words text-[15px] font-semibold">
+                        {link.title}
                       </span>
-                      <ArrowUpRight size={17} className={`shrink-0 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${darkSurface ? "text-white/40" : "text-ink/35"}`} />
+                      <span
+                        className={`mt-1 block break-words text-xs leading-5 ${darkSurface ? "text-white/80" : "text-ink/75"}`}
+                      >
+                        {link.description || actionLabel}
+                      </span>
                     </span>
+                    <ArrowUpRight
+                      aria-hidden="true"
+                      size={17}
+                      className="shrink-0"
+                    />
                   </a>
                 ) : (
                   <a
                     href={href}
                     target={!preview ? "_blank" : undefined}
                     rel="noreferrer"
-                    className={`group relative flex w-full items-center gap-3 overflow-hidden ${featured ? cardRadius : buttonRadius} text-left transition hover:-translate-y-0.5 motion-reduce:transform-none ${featured ? "px-4 py-5" : "px-3.5 py-3"} ${cardSurface}`}
-                    style={featured ? { boxShadow: `inset 0 0 0 1px ${profile.accentColor}40` } : undefined}
+                    className={`profile-link group relative flex min-h-[72px] w-full min-w-0 items-center gap-3 overflow-hidden ${featured ? cardRadius : buttonRadius} text-left hover:-translate-y-px motion-reduce:transform-none ${featured ? "px-4 py-5" : "px-3.5 py-3"} ${cardSurface}`}
+                    style={
+                      featured
+                        ? {
+                            boxShadow: `inset 0 0 0 1px ${profile.accentColor}40`,
+                          }
+                        : undefined
+                    }
                   >
                     <span
                       className={`absolute inset-y-2 left-0 rounded-full ${featured ? "w-1" : "w-[3px]"}`}
@@ -336,22 +496,49 @@ export function ProfileCard({ profile, preview = false, showBranding = true, ric
           })}
         </div>
 
-        {showBranding ? (() => {
-          // The growth loop: every free page invites its own visitors to make one too.
-          const ctaClass = `mx-auto mt-8 flex w-full animate-fade-up items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-bold transition [animation-delay:520ms] motion-reduce:transform-none motion-reduce:transition-none ${darkSurface ? "bg-white text-ink" : "bg-ink text-white"}`;
-          const label = `Únete a @${profile.username} en MultiLinks`;
-          return preview ? (
-            <span className={ctaClass}>{label}</span>
-          ) : (
-            <Link href="/sign-in?mode=signup" className={`${ctaClass} hover:-translate-y-0.5 hover:opacity-90`}>
-              {label}
-            </Link>
-          );
-        })() : null}
+        {showBranding ? (
+          <footer
+            className={`mt-10 border-t border-current/[.15] pt-6 ${texturedBackground ? `rounded-xl p-4 backdrop-blur-md ${darkSurface ? "bg-black/[.65]" : "bg-white/[.85]"}` : ""}`}
+          >
+            {preview ? (
+              <span className="text-xs font-semibold">
+                MultiLinks · Crea tu propia página
+              </span>
+            ) : (
+              <Link
+                href="/"
+                className="profile-focus inline-flex min-h-11 flex-col items-center justify-center gap-1 text-xs"
+              >
+                <span className="inline-flex items-center gap-1.5 font-semibold">
+                  <span aria-hidden="true" className="font-display">
+                    M
+                  </span>
+                  MultiLinks
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  Crea tu propia página
+                  <ArrowUpRight aria-hidden="true" size={12} />
+                </span>
+              </Link>
+            )}
+          </footer>
+        ) : null}
         {!preview ? (
-          <div className={`mt-5 flex items-center justify-center gap-4 text-xs font-semibold ${darkSurface ? "text-white/40" : "text-ink/40"}`}>
-            <Link href={`/report/${profile.username}`} className="inline-flex items-center gap-1.5 transition hover:opacity-100 hover:underline"><Flag size={12} /> Reportar</Link>
-            <Link href="/ayuda" className="transition hover:underline">Ayuda</Link>
+          <div
+            className={`mt-5 flex items-center justify-center gap-4 rounded-xl text-xs font-medium ${texturedBackground ? (darkSurface ? "bg-black/[.65] backdrop-blur-md" : "bg-white/[.85] backdrop-blur-md") : ""} `}
+          >
+            <Link
+              href={`/report/${profile.username}`}
+              className="profile-focus inline-flex min-h-11 items-center gap-1.5 transition hover:opacity-100 hover:underline"
+            >
+              <Flag aria-hidden="true" size={12} /> Reportar
+            </Link>
+            <Link
+              href="/ayuda"
+              className="profile-focus inline-flex min-h-11 items-center transition hover:underline"
+            >
+              Ayuda
+            </Link>
           </div>
         ) : null}
       </div>

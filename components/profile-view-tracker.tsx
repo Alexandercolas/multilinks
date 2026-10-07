@@ -15,12 +15,12 @@ export function ProfileViewTracker({ profileId }: { profileId: string }) {
     const pending = new Set<string>();
     const observer = new IntersectionObserver(entries => {
       for (const entry of entries) {
-        const href = (entry.target as HTMLAnchorElement).getAttribute("href") ?? "";
-        const id = href.split("/").pop() ?? "";
+        const id = entry.target.getAttribute("data-analytics-link") ?? "";
+        if (!/^[0-9a-f-]{36}$/i.test(id)) continue;
         if (entry.isIntersecting && entry.intersectionRatio >= 0.5 && !seen.has(id)) { seen.add(id); pending.add(id); }
       }
     }, { threshold: 0.5 });
-    document.querySelectorAll('a[href^="/api/click/"]').forEach(element => observer.observe(element));
+    document.querySelectorAll('[data-analytics-link]').forEach(element => observer.observe(element));
     const flush = setInterval(() => {
       if (!pending.size) return;
       const links = [...pending].slice(0, 50); links.forEach(id => pending.delete(id));

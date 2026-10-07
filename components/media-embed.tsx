@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Play } from "lucide-react";
+import Image from "next/image";
 import type { EmbedInfo } from "@/lib/media-embed";
 
 // Click-to-play: the official iframe is never mounted until the visitor asks
@@ -34,16 +35,30 @@ export function MediaEmbed({
   const handlePlay = () => {
     setPlaying(true);
     if (linkId) {
-      fetch(`/api/play/${linkId}`, { method: "POST", keepalive: true }).catch(() => {});
+      fetch(`/api/play/${linkId}`, { method: "POST", keepalive: true }).catch(
+        () => {},
+      );
     }
   };
 
   if (playing) {
     return (
       <div className={`w-full overflow-hidden ${rounded}`}>
-        <div className={embed.aspect === "video" ? "relative aspect-video w-full" : "relative w-full"} style={embed.aspect === "audio" ? { height: embed.heightPx } : undefined}>
+        <div
+          className={
+            embed.aspect === "video"
+              ? "relative aspect-video w-full"
+              : "relative w-full"
+          }
+          style={
+            embed.aspect === "audio" ? { height: embed.heightPx } : undefined
+          }
+        >
           {!loaded ? (
-            <div aria-hidden="true" className={`absolute inset-0 animate-pulse ${dark ? "bg-white/[.06]" : "bg-black/[.05]"}`} />
+            <div
+              aria-hidden="true"
+              className={`absolute inset-0 animate-pulse ${dark ? "bg-white/[.06]" : "bg-black/[.05]"}`}
+            />
           ) : null}
           <iframe
             src={embed.src}
@@ -61,7 +76,7 @@ export function MediaEmbed({
           href={externalHref}
           target="_blank"
           rel="noreferrer"
-          className={`block px-3 py-1.5 text-center text-[11px] font-semibold transition ${dark ? "bg-white/[.05] text-white/45 hover:text-white/75" : "bg-black/[.03] text-ink/45 hover:text-ink/70"}`}
+          className={`profile-focus flex min-h-11 items-center justify-center px-3 text-center text-xs font-medium ${dark ? "bg-white/[.05] text-white/80" : "bg-black/[.03] text-ink/80"}`}
         >
           Abrir en {label} ↗
         </a>
@@ -69,20 +84,77 @@ export function MediaEmbed({
     );
   }
 
+  if (embed.aspect === "audio")
+    return (
+      <button
+        type="button"
+        onClick={handlePlay}
+        aria-label={`Reproducir ${title} (${label})`}
+        className={`profile-link group flex min-h-28 w-full items-center gap-4 p-4 text-left ${dark ? "bg-white/[.025]" : "bg-ink/[.025]"}`}
+      >
+        {thumbnail ? (
+          <Image
+            unoptimized
+            src={thumbnail}
+            alt=""
+            width={72}
+            height={72}
+            loading="lazy"
+            className="h-[72px] w-[72px] shrink-0 rounded-xl object-cover"
+          />
+        ) : null}
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold">
+            Escuchar en {label}
+          </span>
+          <span className="mt-1 block text-xs leading-5">
+            Abrir el reproductor
+          </span>
+        </span>
+        <span
+          aria-hidden="true"
+          className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ${dark ? "bg-white text-ink" : "bg-ink text-white"}`}
+        >
+          <Play
+            aria-hidden="true"
+            size={17}
+            className="translate-x-px fill-current"
+          />
+        </span>
+      </button>
+    );
+
   return (
     <button
       type="button"
       onClick={handlePlay}
       aria-label={`Reproducir ${title} (${label})`}
-      className="group relative block aspect-video w-full cursor-pointer bg-cover bg-center"
-      style={thumbnail ? { backgroundImage: `url(${thumbnail})` } : { backgroundColor: "rgba(0,0,0,.4)" }}
+      className="profile-link group relative block aspect-video w-full cursor-pointer overflow-hidden bg-ink"
     >
-      <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+      {thumbnail ? (
+        <Image
+          unoptimized
+          src={thumbnail}
+          alt=""
+          width={640}
+          height={360}
+          loading="lazy"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : null}
       <span
         aria-hidden="true"
-        className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/95 text-ink shadow-lg transition group-hover:scale-105 motion-reduce:transition-none"
+        className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent"
+      />
+      <span
+        aria-hidden="true"
+        className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/95 text-ink transition group-hover:scale-[1.03] motion-reduce:transition-none"
       >
-        <Play size={18} className="translate-x-0.5 fill-current" />
+        <Play
+          aria-hidden="true"
+          size={18}
+          className="translate-x-0.5 fill-current"
+        />
       </span>
     </button>
   );

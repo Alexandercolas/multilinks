@@ -12,5 +12,5 @@ export default defineConfig([
       "react/jsx-no-comment-textnodes": "off",
     },
   },
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
+  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts", ".profile-test-runtime/**", ".analytics-test-runtime/**"]),
 ]);

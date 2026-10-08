@@ -159,24 +159,26 @@ export function ProfileCard({
           </div>
 
           <div className="mt-5">
-            <h1 className="break-words font-display text-[1.5rem] font-bold leading-snug tracking-[-.03em] sm:text-[1.875rem]">
+            <h1 className="break-words [overflow-wrap:anywhere] font-display text-[1.75rem] font-bold leading-[1.2] tracking-[-.03em] sm:text-[1.875rem]">
               {profile.displayName}
             </h1>
-            <p className={`mt-2 break-all text-[13px] font-medium`}>
+            <p
+              className={`mt-2 break-all text-[13px] font-medium ${darkSurface ? "text-white/80" : "text-ink/75"}`}
+            >
               @{profile.username}
             </p>
           </div>
 
           {profile.bio ? (
             <p
-              className={`mx-auto mt-4 max-w-md whitespace-pre-line break-words text-sm leading-6`}
+              className={`mx-auto mt-4 max-w-[34ch] whitespace-pre-line break-words [overflow-wrap:anywhere] text-[15px] leading-6 sm:max-w-md sm:text-sm`}
             >
               {profile.bio}
             </p>
           ) : null}
         </header>
         {socialLinks.length ? (
-          <div className="mx-auto mt-6 flex max-w-sm flex-wrap items-center justify-center gap-3">
+          <div className="mx-auto mt-5 flex max-w-sm flex-wrap items-center justify-center gap-2.5 sm:mt-6 sm:gap-3">
             {socialLinks.map((link) => {
               const trackable = /^[0-9a-f-]{36}$/i.test(link.id);
               const href = preview
@@ -242,7 +244,7 @@ export function ProfileCard({
           </div>
         ) : null}
 
-        <div className="mx-auto mt-8 max-w-xl space-y-3">
+        <div className="mx-auto mt-6 max-w-xl space-y-3 sm:mt-8">
           {listLinks.map((link, index) => {
             const trackable = /^[0-9a-f-]{36}$/i.test(link.id);
             const href = preview
@@ -359,13 +361,13 @@ export function ProfileCard({
                 {iconSlot}
                 <span className="min-w-0 flex-1">
                   <span
-                    className={`block break-words ${featured ? "text-base font-black" : "text-[15px] font-semibold"}`}
+                    className={`block break-words [overflow-wrap:anywhere] leading-snug ${featured ? "text-[17px] font-bold sm:text-base" : "text-[15px] font-semibold"}`}
                   >
                     {link.title}
                   </span>
                   {link.description ? (
                     <span
-                      className={`mt-1 block break-words text-xs font-normal leading-5 ${darkSurface ? "text-white/80" : "text-ink/75"}`}
+                      className={`mt-1.5 block break-words [overflow-wrap:anywhere] text-[13px] font-normal leading-5 sm:text-xs ${darkSurface ? "text-white/80" : "text-ink/75"}`}
                     >
                       {link.description}
                     </span>
@@ -383,7 +385,7 @@ export function ProfileCard({
               <div key={link.id} data-analytics-link={link.id}>
                 {showSection ? (
                   <h2
-                    className={`mb-2.5 mt-7 text-center font-display text-[11px] font-black uppercase tracking-[.18em] ${darkSurface ? "text-white/45" : "text-ink/40"}`}
+                    className={`mb-2.5 mt-7 text-center font-display text-[11px] font-black uppercase tracking-[.18em] ${darkSurface ? "text-white/80" : "text-ink/75"}`}
                   >
                     {link.sectionTitle}
                   </h2>

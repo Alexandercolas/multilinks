@@ -26,7 +26,7 @@ try {
     });
     Object.defineProperty(navigator, "share", { value: undefined });
   });
-  for (const width of [360, 1440]) {
+  for (const width of [360, 390, 430, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(base + "/demo");
     await page

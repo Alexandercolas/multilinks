@@ -112,7 +112,7 @@ export function ProfileShareTools({
           aria-label="Copiar enlace del perfil"
         >
           <Copy aria-hidden="true" size={16} />
-          <span className="hidden min-[390px]:inline">Copiar enlace</span>
+          <span className="hidden min-[430px]:inline">Copiar enlace</span>
         </button>
         <button
           type="button"
@@ -131,7 +131,7 @@ export function ProfileShareTools({
       <p
         role="status"
         aria-live="polite"
-        className="mt-2 min-h-5 text-xs font-medium"
+        className={status ? "mt-2 min-h-5 text-xs font-medium" : "sr-only"}
       >
         {status && (
           <>

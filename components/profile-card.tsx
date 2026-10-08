@@ -9,6 +9,7 @@ import { detectPlatform } from "@/lib/platforms";
 import { embedInfoFor } from "@/lib/media-embed";
 import { LinkFavicon } from "@/components/link-favicon";
 import { MediaEmbed } from "@/components/media-embed";
+import { MediaArtwork } from "@/components/media-artwork";
 import {
   accessibleProfileTextColor,
   backgroundImageStyle,
@@ -162,9 +163,7 @@ export function ProfileCard({
             <h1 className="break-words [overflow-wrap:anywhere] font-display text-[1.75rem] font-bold leading-[1.2] tracking-[-.03em] sm:text-[1.875rem]">
               {profile.displayName}
             </h1>
-            <p
-              className={`mt-2 break-all text-[13px] font-medium ${darkSurface ? "text-white/80" : "text-ink/75"}`}
-            >
+            <p className="mt-2 break-all text-[13px] font-medium">
               @{profile.username}
             </p>
           </div>
@@ -384,9 +383,7 @@ export function ProfileCard({
             return (
               <div key={link.id} data-analytics-link={link.id}>
                 {showSection ? (
-                  <h2
-                    className={`mb-2.5 mt-7 text-center font-display text-[11px] font-black uppercase tracking-[.18em] ${darkSurface ? "text-white/80" : "text-ink/75"}`}
-                  >
+                  <h2 className="mb-2.5 mt-7 text-center font-display text-[11px] font-black uppercase tracking-[.18em]">
                     {link.sectionTitle}
                   </h2>
                 ) : null}
@@ -411,13 +408,14 @@ export function ProfileCard({
                         target={!preview ? "_blank" : undefined}
                         rel="noreferrer"
                         className="profile-link relative block w-full"
+                        aria-label={`Abrir ${link.title}`}
                       >
-                        <span
-                          role="img"
-                          aria-label={`Miniatura de ${link.title}`}
-                          className="block aspect-video w-full bg-cover bg-center"
-                          style={{ backgroundImage: `url(${mediaThumb})` }}
-                        />
+                        <span className="relative block aspect-video w-full">
+                          <MediaArtwork
+                            src={mediaThumb}
+                            kind={platformKind === "music" ? "audio" : "video"}
+                          />
+                        </span>
                         {showPlayButton ? (
                           <>
                             <span

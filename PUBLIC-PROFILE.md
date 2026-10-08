@@ -25,6 +25,8 @@ YouTube conserva proporción 16:9 y thumbnails con ajuste cover, sin deformació
 
 Los iframes no se cargan antes de la interacción. Las imágenes multimedia son diferidas y tienen dimensiones; el avatar mantiene su carga inicial. Se conservan `/api/click`, `/api/play`, `/api/view` y `/api/impressions`. El observador mide la tarjeta completa con `data-analytics-link`, en vez de solo un ancla dentro de una tarjeta multimedia. Los permisos Free/Premium siguen resolviéndose en backend.
 
+Las miniaturas de audio y video usan una portada con icono local cuando falta la imagen o falla su carga, sin modificar el tamaño de la tarjeta ni el enlace de reproducción. Los favicons muestran un icono local mientras se carga el logo y conservan esa alternativa si todas las fuentes fallan. La suite simula fallos de portadas y logos; comprueba también contraste de los textos en los temas disponibles.
+
 ## Verificación reproducible
 
 ```powershell

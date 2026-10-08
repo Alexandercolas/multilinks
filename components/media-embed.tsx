@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Play } from "lucide-react";
-import Image from "next/image";
+import { MediaArtwork } from "@/components/media-artwork";
 import type { EmbedInfo } from "@/lib/media-embed";
 
 // Click-to-play: the official iframe is never mounted until the visitor asks
@@ -92,17 +92,7 @@ export function MediaEmbed({
         aria-label={`Reproducir ${title} (${label})`}
         className={`profile-link group flex min-h-28 w-full items-center gap-4 p-4 text-left ${dark ? "bg-white/[.025]" : "bg-ink/[.025]"}`}
       >
-        {thumbnail ? (
-          <Image
-            unoptimized
-            src={thumbnail}
-            alt=""
-            width={72}
-            height={72}
-            loading="lazy"
-            className="h-[72px] w-[72px] shrink-0 rounded-xl object-cover"
-          />
-        ) : null}
+        <MediaArtwork src={thumbnail} kind="audio" compact />
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold">
             Escuchar en {label}
@@ -131,17 +121,7 @@ export function MediaEmbed({
       aria-label={`Reproducir ${title} (${label})`}
       className="profile-link group relative block aspect-video w-full cursor-pointer overflow-hidden bg-ink"
     >
-      {thumbnail ? (
-        <Image
-          unoptimized
-          src={thumbnail}
-          alt=""
-          width={640}
-          height={360}
-          loading="lazy"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-      ) : null}
+      <MediaArtwork src={thumbnail} kind="video" />
       <span
         aria-hidden="true"
         className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent"

@@ -61,6 +61,9 @@ try {
         : {}),
     });
     const page = await browser.newPage();
+    page.setDefaultNavigationTimeout(
+      Number(process.env.QA_NAVIGATION_TIMEOUT || 30000),
+    );
     const errors = [];
     const tracking = [];
     page.on("pageerror", (e) => errors.push(e.message));
@@ -98,6 +101,11 @@ try {
     });
     await page.route("**/api/favicon?*", (route) =>
       route.fulfill({ status: 404, body: "" }),
+    );
+    await page.route("https://i.ytimg.com/**", (route) => route.abort());
+    await page.route("https://i.scdn.co/**", (route) => route.abort());
+    await page.route("https://cdn.simpleicons.org/**", (route) =>
+      route.abort(),
     );
     await page.route("https://www.youtube-nocookie.com/**", (route) =>
       route.fulfill({
@@ -181,6 +189,16 @@ try {
       assert.ok(
         Math.abs(video.width / video.height - 16 / 9) < 0.03,
         "Video aspect ratio",
+      );
+      const artwork = page.locator('[data-media-artwork="video"]');
+      await artwork.scrollIntoViewIfNeeded();
+      await page.waitForFunction(
+        () => !document.querySelector('[data-media-artwork="video"] img'),
+      );
+      assert.equal(
+        await artwork.locator("svg").count(),
+        1,
+        "Video keeps its fallback when the thumbnail fails",
       );
       if (width < 1024) {
         assert.equal(
@@ -406,6 +424,16 @@ try {
         await page.locator('link[rel="canonical"]').getAttribute("href"),
       );
       await overflow();
+      const audioArtwork = page.locator('[data-media-artwork="audio"]');
+      await audioArtwork.scrollIntoViewIfNeeded();
+      await page.waitForFunction(
+        () => !document.querySelector('[data-media-artwork="audio"] img'),
+      );
+      assert.equal(
+        await audioArtwork.locator("svg").count(),
+        1,
+        "Audio keeps its fallback when the thumbnail fails",
+      );
     }
     assert.deepEqual(errors, []);
     console.log(
@@ -419,4 +447,8 @@ try {
   if (browser) await browser.close();
   await rm(file);
   await rmdir(folder);
+  await rm(
+    new URL("../.next/dev/types/app/profile-qa/page.ts", import.meta.url),
+    { force: true },
+  );
 }

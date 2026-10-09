@@ -7,7 +7,8 @@ export const demoProfile: Profile = {
   avatar: "ML",
   theme: "neon",
   backgroundColor: "#0f1115",
-  accentColor: "#c6ff3d",
+  backgroundPreset: "black-elegant",
+  accentColor: "#dedbd4",
   buttonStyle: "rounded",
   links: [
     { id: "1", title: "Crear mi página", url: "/dashboard", active: true, icon: "✨", sectionTitle: "Empieza aquí", description: "Gratis y lista en minutos", featured: true },

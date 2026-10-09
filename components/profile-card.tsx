@@ -77,10 +77,10 @@ export function ProfileCard({
   // One premium surface language, tuned for light vs dark backgrounds.
   const cardSurface =
     texturedBackground && darkSurface
-      ? "border border-white/[.15] bg-black/70 text-white backdrop-blur-md hover:border-white/30"
+      ? "border border-white/[.12] bg-[#111111]/95 text-white backdrop-blur-md hover:border-white/25 hover:bg-[#191919]"
       : darkSurface
-        ? "border border-white/[.12] bg-white/[.06] text-white hover:border-white/25 hover:bg-white/[.09]"
-        : "border border-black/[.07] bg-white/95 text-ink hover:border-black/[.14]";
+        ? "border border-white/[.10] bg-[#141414] text-white hover:border-white/25 hover:bg-[#1c1c1c]"
+        : "border border-black/[.08] bg-white/95 text-ink hover:border-black/[.18] hover:bg-white";
   const iconTile = darkSurface
     ? "border border-white/10 bg-white/[.06]"
     : "border border-black/[.06] bg-black/[.03]";
@@ -244,7 +244,7 @@ export function ProfileCard({
           </nav>
         ) : null}
 
-        <div className="mx-auto mt-6 max-w-xl space-y-3 sm:mt-8">
+        <div className="mx-auto mt-6 max-w-xl space-y-2.5 sm:mt-7">
           {listLinks.map((link, index) => {
             const trackable = /^[0-9a-f-]{36}$/i.test(link.id);
             const href = preview
@@ -275,9 +275,7 @@ export function ProfileCard({
             const platform = customIcon ? null : detectedPlatform;
             const platformKind = detectedPlatform?.kind;
             const featured = Boolean(link.featured);
-            const iconSizeClass = featured
-              ? "h-12 w-12 text-xl"
-              : "h-10 w-10 text-lg";
+            const iconSizeClass = "h-9 w-9 text-base";
 
             // Decide the card shape from the persisted type, falling back to detection.
             const linkType =
@@ -361,13 +359,13 @@ export function ProfileCard({
                 {iconSlot}
                 <span className="min-w-0 flex-1">
                   <span
-                    className={`block break-words [overflow-wrap:anywhere] leading-snug ${featured ? "text-[17px] font-bold sm:text-base" : "text-[15px] font-semibold"}`}
+                    className="block break-words [overflow-wrap:anywhere] text-[15px] font-semibold leading-snug"
                   >
                     {link.title}
                   </span>
                   {link.description ? (
                     <span
-                      className={`mt-1.5 block break-words [overflow-wrap:anywhere] text-[13px] font-normal leading-5 sm:text-xs ${darkSurface ? "text-white/80" : "text-ink/75"}`}
+                      className={`mt-1 block break-words [overflow-wrap:anywhere] text-[13px] font-normal leading-5 ${darkSurface ? "text-white/75" : "text-ink/75"}`}
                     >
                       {link.description}
                     </span>
@@ -375,7 +373,7 @@ export function ProfileCard({
                 </span>
                 <ArrowUpRight
                   aria-hidden="true"
-                  size={featured ? 19 : 17}
+                  size={15}
                   className={`shrink-0 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${darkSurface ? "text-white/40" : "text-ink/35"}`}
                 />
               </>
@@ -441,7 +439,7 @@ export function ProfileCard({
                       href={href}
                       target={!preview ? "_blank" : undefined}
                       rel="noreferrer"
-                      className={`profile-link flex min-h-[72px] items-center gap-3 px-4 ${featured ? "py-4" : "py-3"} text-left transition hover:bg-black/[.02] motion-reduce:transform-none`}
+                      className="profile-link flex min-h-[64px] items-center gap-3 px-3.5 py-3 text-left transition hover:bg-black/[.02] motion-reduce:transform-none"
                     >
                       {rowInner}
                     </a>
@@ -451,7 +449,7 @@ export function ProfileCard({
                     href={href}
                     target={!preview ? "_blank" : undefined}
                     rel="noreferrer"
-                    className={`profile-link group flex min-h-[72px] w-full min-w-0 items-center gap-3 ${cardRadius} px-4 py-3.5 text-left ${cardSurface}`}
+                    className={`profile-link group flex min-h-[64px] w-full min-w-0 items-center gap-3 ${cardRadius} px-3.5 py-3 text-left ${cardSurface}`}
                   >
                     {iconSlot}
                     <span className="min-w-0 flex-1">
@@ -475,20 +473,8 @@ export function ProfileCard({
                     href={href}
                     target={!preview ? "_blank" : undefined}
                     rel="noreferrer"
-                    className={`profile-link group relative flex min-h-[72px] w-full min-w-0 items-center gap-3 overflow-hidden ${featured ? cardRadius : buttonRadius} text-left hover:-translate-y-px motion-reduce:transform-none ${featured ? "px-4 py-5" : "px-3.5 py-3"} ${cardSurface}`}
-                    style={
-                      featured
-                        ? {
-                            boxShadow: `inset 0 0 0 1px ${profile.accentColor}40`,
-                          }
-                        : undefined
-                    }
+                    className={`profile-link group relative flex min-h-[64px] w-full min-w-0 items-center gap-3 overflow-hidden ${featured ? cardRadius : buttonRadius} px-3.5 py-3 text-left hover:-translate-y-px motion-reduce:transform-none ${cardSurface}`}
                   >
-                    <span
-                      className={`absolute inset-y-2 left-0 rounded-full ${featured ? "w-1" : "w-[3px]"}`}
-                      style={{ backgroundColor: profile.accentColor }}
-                      aria-hidden="true"
-                    />
                     {rowInner}
                   </a>
                 )}
@@ -522,7 +508,7 @@ export function ProfileCard({
             {!preview && (
               <Link
                 href="/sign-in?mode=signup"
-                className={`profile-focus mx-auto mt-3 flex min-h-12 w-full max-w-xs items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition hover:opacity-90 ${darkSurface ? "bg-white text-ink" : "bg-ink text-white"}`}
+                className={`profile-focus mx-auto mt-3 flex min-h-11 w-fit items-center justify-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition ${darkSurface ? "border-white/20 bg-[#141414] text-white hover:bg-[#202020]" : "border-black/15 bg-white/95 text-ink hover:bg-white"}`}
               >
                 Crear mi perfil
                 <ArrowUpRight aria-hidden="true" size={17} />

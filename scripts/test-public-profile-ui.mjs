@@ -387,6 +387,7 @@ try {
         "theme=violet",
         "theme=sunset",
         "theme=neon",
+        "background=black-elegant",
         "background=champagne",
         "background=soft-violet",
         "background=pink-marble",
@@ -444,6 +445,11 @@ try {
         if (query === "image=1&cover=1")
           await page.screenshot({
             path: fileURLToPath(new URL("profile-background.png", output)),
+            fullPage: true,
+          });
+        if (query === "background=black-elegant")
+          await page.screenshot({
+            path: fileURLToPath(new URL("profile-black-elegant.png", output)),
             fullPage: true,
           });
       }

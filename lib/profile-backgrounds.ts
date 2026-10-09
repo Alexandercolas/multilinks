@@ -3,6 +3,7 @@ export const BACKGROUND_IMAGE_PREFIX = "image:";
 export const BACKGROUND_IMAGE_BUCKET = "backgrounds";
 
 export const premiumBackgrounds = [
+  { id: "black-elegant", name: "Black · Negro elegante", gradient: "linear-gradient(160deg,#141414 0%,#080808 60%,#101010 100%)", dark: true },
   { id: "neon-cut", name: "Neon Cut", position: "0% 0%", dark: true },
   { id: "violet-flow", name: "Violet Flow", position: "33.333% 0%", dark: true },
   { id: "purple-edge", name: "Purple Edge", position: "66.667% 0%", dark: true },

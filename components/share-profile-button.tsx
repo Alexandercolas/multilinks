@@ -74,7 +74,7 @@ export function ProfileShareTools({
     }
     await copy();
   }
-  const button = `profile-control ${dark ? "border-white/[.15] hover:bg-white/[.06]" : "border-ink/[.15] hover:bg-ink/[.04]"}`;
+  const button = `profile-control border-transparent ${dark ? "hover:bg-white/[.06]" : "hover:bg-ink/[.04]"}`;
   const actions = (
     <>
       <button
@@ -98,7 +98,7 @@ export function ProfileShareTools({
   return (
     <div className={`${dark ? "text-white" : "text-ink"}`}>
       <div
-        className="flex flex-wrap items-center gap-2 lg:hidden"
+        className={`flex w-fit max-w-full flex-wrap items-center gap-0.5 rounded-2xl border p-1 lg:hidden ${dark ? "border-white/10 bg-white/[.025]" : "border-black/10 bg-white/50"}`}
         aria-label="Compartir perfil"
       >
         <button type="button" onClick={share} className={button}>

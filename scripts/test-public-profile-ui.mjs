@@ -38,7 +38,7 @@ import {ProfileViewTracker} from '@/components/profile-view-tracker';
 import {generateProfileQr} from '@/lib/qr';
 import {publicProfileUrl} from '@/lib/public-profile-url';
 import type {Profile} from '@/types/profile';
-export default async function QA({searchParams}:{searchParams:Promise<Record<string,string>>}){if(process.env.NODE_ENV!=='development')notFound();const q=await searchParams;const url=await publicProfileUrl('studio-fixture');const theme=(['lime','violet','sunset','neon'].includes(q.theme)?q.theme:'neon') as Profile['theme'];const colors={lime:'#c9ff58',violet:'#8566ff',sunset:'#ff7356',neon:'#0f1115'};const profile:Profile={username:'studio-fixture',displayName:q.long?'Estudio de música, diseño y proyectos extraordinariamente creativos':'Ari Studio',bio:'Música, diseño y pequeñas ideas que se convierten en grandes proyectos.\nEncuentra aquí lo que estoy creando.',avatar:'AS',theme,backgroundColor:colors[theme],accentColor:'#c9ff58',buttonStyle:q.style as Profile['buttonStyle']||'rounded',backgroundPreset:q.background,backgroundImage:q.image?'/backgrounds/pink-marble.png':undefined,coverImage:q.cover?'/backgrounds/fuchsia-ribbon.png':undefined,links:[{id:'30000000-0000-0000-0000-000000000001',title:'Instagram',url:'https://instagram.com/example',active:true,linkType:'social'},{id:'30000000-0000-0000-0000-000000000002',title:q.long?'Un título de enlace largo que debe leerse completo en cualquier teléfono y sin desaparecer':'Explora mi último proyecto',description:'Ideas y colaboraciones. Un espacio para crear algo que importe.',url:'https://example.com/project',active:true,featured:true,icon:'↗'},{id:'30000000-0000-0000-0000-000000000003',title:'Hablemos de tu próxima idea',description:'Consultas, proyectos y colaboraciones',url:'https://example.com/contact',active:true,icon:'✉'},{id:'30000000-0000-0000-0000-000000000004',title:'Un día en el estudio',description:'Un vistazo al proceso creativo.',url:'https://youtu.be/dQw4w9WgXcQ',active:true,linkType:'media'},{id:'30000000-0000-0000-0000-000000000005',title:'La playlist del estudio',description:'Lo que escucho mientras creo.',url:'https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M',active:true,linkType:'media'},{id:'30000000-0000-0000-0000-000000000006',title:'Mis favoritos en YouTube Music',url:'https://music.youtube.com/watch?v=dQw4w9WgXcQ',active:true,linkType:'media'}]};return <><ProfileViewTracker profileId="30000000-0000-0000-0000-000000000099"/><PublicProfileShell profile={profile} url={url} qrSvg={await generateProfileQr(url)} showBranding={q.premium!=='true'} richMedia={q.free!=='true'} isOwner={q.owner==='true'}/></>}
+export default async function QA({searchParams}:{searchParams:Promise<Record<string,string>>}){if(process.env.NODE_ENV!=='development')notFound();const q=await searchParams;const url=await publicProfileUrl('studio-fixture');const theme=(['lime','violet','sunset','neon'].includes(q.theme)?q.theme:'neon') as Profile['theme'];const colors={lime:'#c9ff58',violet:'#8566ff',sunset:'#ff7356',neon:'#0f1115'};const profile:Profile={username:'studio-fixture',displayName:q.long?'Estudio de música, diseño y proyectos extraordinariamente creativos':'Ari Studio',bio:'Música, diseño y pequeñas ideas que se convierten en grandes proyectos.\nEncuentra aquí lo que estoy creando.',avatar:'AS',theme,backgroundColor:colors[theme],accentColor:'#c9ff58',buttonStyle:q.style as Profile['buttonStyle']||'rounded',backgroundPreset:q.background,backgroundImage:q.image?'/backgrounds/pink-marble.png':undefined,coverImage:q.cover?'/backgrounds/fuchsia-ribbon.png':undefined,links:[{id:'30000000-0000-0000-0000-000000000001',title:'Instagram',url:'https://instagram.com/example',active:true,linkType:'standard'},{id:'30000000-0000-0000-0000-000000000007',title:'TikTok',url:'https://www.tiktok.com/@example',active:true},{id:'30000000-0000-0000-0000-000000000008',title:'X',url:'https://x.com/example',active:true,linkType:'standard'},{id:'30000000-0000-0000-0000-000000000002',title:q.long?'Un título de enlace largo que debe leerse completo en cualquier teléfono y sin desaparecer':'Explora mi último proyecto',description:'Ideas y colaboraciones. Un espacio para crear algo que importe.',url:'https://example.com/project',active:true,featured:true,icon:'↗'},{id:'30000000-0000-0000-0000-000000000003',title:'Hablemos de tu próxima idea',description:'Consultas, proyectos y colaboraciones',url:'https://example.com/contact',active:true,icon:'✉'},{id:'30000000-0000-0000-0000-000000000004',title:'Un día en el estudio',description:'Un vistazo al proceso creativo.',url:'https://youtu.be/dQw4w9WgXcQ',active:true,linkType:'media'},{id:'30000000-0000-0000-0000-000000000005',title:'La playlist del estudio',description:'Lo que escucho mientras creo.',url:'https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M',active:true,linkType:'media'},{id:'30000000-0000-0000-0000-000000000006',title:'Mis favoritos en YouTube Music',url:'https://music.youtube.com/watch?v=dQw4w9WgXcQ',active:true,linkType:'media'}]};return <><ProfileViewTracker profileId="30000000-0000-0000-0000-000000000099"/><PublicProfileShell profile={profile} url={url} qrSvg={await generateProfileQr(url)} showBranding={q.premium!=='true'} richMedia={q.free!=='true'} isOwner={q.owner==='true'}/></>}
 `,
 );
 const engines = (process.env.QA_ENGINES ?? "chrome,edge,firefox,webkit").split(
@@ -175,6 +175,40 @@ try {
         content: "nextjs-portal{display:none !important}",
       });
       await overflow();
+      const socials = page.getByRole("navigation", { name: "Redes sociales" });
+      assert.equal(await socials.getByRole("link").count(), 3);
+      const socialBoxes = await Promise.all(
+        ["Instagram", "TikTok", "X"].map(async (name) => {
+          assert.equal(
+            await page.getByRole("link", { name, exact: true }).count(),
+            1,
+          );
+          return socials.getByRole("link", { name, exact: true }).boundingBox();
+        }),
+      );
+      assert.ok(
+        socialBoxes.every(
+          (box) => box && box.width === 44 && box.height === 44,
+        ),
+      );
+      assert.ok(
+        socialBoxes.every((box) => Math.abs(box.y - socialBoxes[0].y) < 1),
+        "Social icons must share a horizontal row",
+      );
+      assert.ok(
+        socialBoxes[1].x > socialBoxes[0].x &&
+          socialBoxes[2].x > socialBoxes[1].x,
+      );
+      const identity = await page
+        .getByRole("heading", { name: "Ari Studio", exact: true })
+        .boundingBox();
+      const firstCard = await page
+        .getByRole("link", { name: /Explora mi último proyecto/ })
+        .boundingBox();
+      assert.ok(
+        socialBoxes[0].y > identity.y + identity.height &&
+          firstCard.y > socialBoxes[0].y + 44,
+      );
       assert.equal(
         await page.locator("iframe").count(),
         0,

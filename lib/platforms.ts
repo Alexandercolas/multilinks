@@ -110,3 +110,37 @@ export function platformIconUrl(platform: Platform, color?: string) {
   const suffix = color ? `/${color.replace(/^#/, "")}` : "";
   return `https://cdn.simpleicons.org/${platform.slug}${suffix}`;
 }
+
+/** Includes older network links saved before the social card type existed. */
+export function isSocialProfileLink(link: {
+  url: string;
+  linkType?: string;
+}): boolean {
+  if (link.linkType === "social") return true;
+  const platform = detectPlatform(link.url);
+  if (!platform) return false;
+  if (platform.kind === "social") return true;
+  const path = new URL(link.url).pathname;
+  switch (platform.id) {
+    case "tiktok":
+      return /^\/@[^/]+\/?$/.test(path);
+    case "youtube":
+      return /^\/(?:@[^/]+|(?:channel|c|user)\/[^/]+)(?:\/(?:videos|shorts|streams|playlists|community|about))?\/?$/.test(
+        path,
+      );
+    case "twitch":
+      return (
+        /^\/(?!videos(?:\/|$)|directory(?:\/|$)|downloads(?:\/|$)|p(?:\/|$))[^/]+\/?$/.test(
+          path,
+        ) && !new URL(link.url).hostname.startsWith("clips.")
+      );
+    case "pinterest":
+      return /^\/(?!pin(?:\/|$)|search(?:\/|$))[^/]+\/?$/.test(path);
+    case "discord":
+    case "telegram":
+    case "whatsapp":
+      return true;
+    default:
+      return false;
+  }
+}

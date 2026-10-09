@@ -5,7 +5,7 @@ import type { Profile } from "@/types/profile";
 import { themeClasses } from "@/lib/demo-profile";
 import { isSafeLink } from "@/lib/profile-storage";
 import { getLinkMedia } from "@/lib/link-media";
-import { detectPlatform } from "@/lib/platforms";
+import { detectPlatform, isSocialProfileLink } from "@/lib/platforms";
 import { embedInfoFor } from "@/lib/media-embed";
 import { LinkFavicon } from "@/components/link-favicon";
 import { MediaEmbed } from "@/components/media-embed";
@@ -48,12 +48,10 @@ export function ProfileCard({
   const visibleLinks = profile.links.filter(
     (link) => link.active && isSafeLink(link.url),
   );
-  // "Social" links (Instagram/TikTok/Telegram/Facebook/...) get pulled out of the
-  // list into their own icon row, right under the bio -- the classic link-in-bio
-  // social bar, instead of taking up a full row each in the main list.
-  const socialLinks = visibleLinks.filter((link) => link.linkType === "social");
+  // Network profiles belong below the identity, including legacy standard links.
+  const socialLinks = visibleLinks.filter(isSocialProfileLink);
   const listLinks = visibleLinks
-    .filter((link) => link.linkType !== "social")
+    .filter((link) => !isSocialProfileLink(link))
     .sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)));
   const customImage = profile.backgroundImage;
   const selectedBackground = getPremiumBackground(profile.backgroundPreset);
@@ -177,7 +175,10 @@ export function ProfileCard({
           ) : null}
         </header>
         {socialLinks.length ? (
-          <div className="mx-auto mt-5 flex max-w-sm flex-wrap items-center justify-center gap-2.5 sm:mt-6 sm:gap-3">
+          <nav
+            aria-label="Redes sociales"
+            className="mx-auto mt-5 flex max-w-sm flex-row flex-wrap items-center justify-center gap-2.5 sm:mt-6 sm:gap-3"
+          >
             {socialLinks.map((link) => {
               const trackable = /^[0-9a-f-]{36}$/i.test(link.id);
               const href = preview
@@ -240,7 +241,7 @@ export function ProfileCard({
                 </a>
               );
             })}
-          </div>
+          </nav>
         ) : null}
 
         <div className="mx-auto mt-6 max-w-xl space-y-3 sm:mt-8">

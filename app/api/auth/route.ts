@@ -4,10 +4,20 @@ import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { isSameOriginRequest } from "@/lib/security/same-origin";
+import { authRequestOrigin } from "@/lib/auth-navigation";
 
 const requestSchema = z.discriminatedUnion("mode", [
-  z.object({ mode: z.literal("login"), email: z.string().email().max(320), password: z.string().min(1).max(128) }),
-  z.object({ mode: z.literal("signup"), email: z.string().email().max(320), password: z.string().min(8).max(128) }),
+  z.object({
+    mode: z.literal("login"),
+    email: z.string().email().max(320),
+    password: z.string().min(1).max(128),
+  }),
+  z.object({
+    mode: z.literal("signup"),
+    email: z.string().email().max(320),
+    password: z.string().min(8).max(128),
+  }),
   z.object({ mode: z.literal("magic"), email: z.string().email().max(320) }),
   z.object({ mode: z.literal("forgot"), email: z.string().email().max(320) }),
 ]);
@@ -19,64 +29,133 @@ const limits = {
   forgot: { maxHits: 3, windowSeconds: 15 * 60 },
 } as const;
 
-function requestFingerprint(request: Request, mode: keyof typeof limits, email: string) {
-  const forwarded = request.headers.get("x-vercel-forwarded-for") ?? request.headers.get("x-forwarded-for") ?? "unknown";
+function requestFingerprint(
+  request: Request,
+  mode: keyof typeof limits,
+  email: string,
+) {
+  const forwarded =
+    request.headers.get("x-vercel-forwarded-for") ??
+    request.headers.get("x-forwarded-for") ??
+    "unknown";
   const ip = forwarded.split(",")[0]?.trim() || "unknown";
-  return createHash("sha256").update(`${mode}:${ip}:${email.toLowerCase()}`).digest("hex");
+  return createHash("sha256")
+    .update(`${mode}:${ip}:${email.toLowerCase()}`)
+    .digest("hex");
 }
 
 export async function POST(request: Request) {
+  if (!isSameOriginRequest(request))
+    return NextResponse.json(
+      { message: "Origen no autorizado." },
+      { status: 403 },
+    );
   let body: unknown;
-  try { body = await request.json(); }
-  catch { return NextResponse.json({ message: "Solicitud inválida." }, { status: 400 }); }
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { message: "Solicitud inválida." },
+      { status: 400 },
+    );
+  }
 
   const parsed = requestSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ message: "Revisa los datos enviados." }, { status: 400 });
+  if (!parsed.success)
+    return NextResponse.json(
+      { message: "Revisa los datos enviados." },
+      { status: 400 },
+    );
 
   const { mode, email } = parsed.data;
   const limit = limits[mode];
   const admin = createAdminClient();
-  const { data: allowed, error: limitError } = await admin.rpc("check_request_rate_limit", {
-    target_key: requestFingerprint(request, mode, email),
-    max_hits: limit.maxHits,
-    window_seconds: limit.windowSeconds,
-  });
+  const { data: allowed, error: limitError } = await admin.rpc(
+    "check_request_rate_limit",
+    {
+      target_key: requestFingerprint(request, mode, email),
+      max_hits: limit.maxHits,
+      window_seconds: limit.windowSeconds,
+    },
+  );
 
   if (limitError) {
-    Sentry.captureException(new Error("Authentication rate limit check failed"));
+    Sentry.captureException(
+      new Error("Authentication rate limit check failed"),
+    );
     console.error("Authentication rate limit check failed", limitError);
-    return NextResponse.json({ message: "No pudimos validar el acceso. Inténtalo nuevamente." }, { status: 503 });
+    return NextResponse.json(
+      { message: "No pudimos validar el acceso. Inténtalo nuevamente." },
+      { status: 503 },
+    );
   }
-  if (!allowed) return NextResponse.json({ message: "Demasiados intentos. Espera unos minutos antes de volver a intentarlo." }, { status: 429 });
+  if (!allowed)
+    return NextResponse.json(
+      {
+        message:
+          "Demasiados intentos. Espera unos minutos antes de volver a intentarlo.",
+      },
+      { status: 429 },
+    );
 
   const supabase = await createClient();
-  const redirectTo = `${new URL(request.url).origin}/auth/callback`;
+  const redirectTo = `${authRequestOrigin(request)}/auth/callback`;
 
   if (mode === "signup") {
-    const { data, error } = await supabase.auth.signUp({ email, password: parsed.data.password, options: { emailRedirectTo: redirectTo } });
-    if (error) return NextResponse.json({ message: "No pudimos crear la cuenta. Verifica los datos o intenta nuevamente." }, { status: 400 });
-    return NextResponse.json({ ok: true, needsEmailConfirmation: !data.session });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password: parsed.data.password,
+      options: { emailRedirectTo: redirectTo },
+    });
+    if (error)
+      return NextResponse.json(
+        {
+          message:
+            "No pudimos crear la cuenta. Verifica los datos o intenta nuevamente.",
+        },
+        { status: 400 },
+      );
+    return NextResponse.json({
+      ok: true,
+      needsEmailConfirmation: !data.session,
+    });
   }
 
   if (mode === "magic") {
-    const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo, shouldCreateUser: false } });
-    if (error) return NextResponse.json({ message: "No pudimos enviar el enlace. Inténtalo nuevamente." }, { status: 400 });
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: redirectTo, shouldCreateUser: false },
+    });
+    if (error)
+      return NextResponse.json(
+        { message: "No pudimos enviar el enlace. Inténtalo nuevamente." },
+        { status: 400 },
+      );
     return NextResponse.json({ ok: true });
   }
 
   if (mode === "forgot") {
-    const resetRedirectTo = `${new URL(request.url).origin}/auth/callback?next=/reset-password`;
+    const resetRedirectTo = `${authRequestOrigin(request)}/auth/callback?next=/reset-password`;
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: resetRedirectTo,
     });
     if (error) {
-      Sentry.captureException(new Error("Password recovery email request failed"));
+      Sentry.captureException(
+        new Error("Password recovery email request failed"),
+      );
       console.error("Password recovery email request failed", error);
     }
     return NextResponse.json({ ok: true });
   }
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password: parsed.data.password });
-  if (error) return NextResponse.json({ message: "Correo o contraseña incorrectos." }, { status: 401 });
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password: parsed.data.password,
+  });
+  if (error)
+    return NextResponse.json(
+      { message: "Correo o contraseña incorrectos." },
+      { status: 401 },
+    );
   return NextResponse.json({ ok: true });
 }

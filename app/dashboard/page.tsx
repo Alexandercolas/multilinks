@@ -42,6 +42,8 @@ import { Logo } from "@/components/logo";
 import { ProfileCard } from "@/components/profile-card";
 import { DashboardNavigation } from "@/components/dashboard-navigation";
 import { DashboardSkeleton } from "@/components/dashboard-skeleton";
+import { ProfileLaunchGuide } from "@/components/profile-launch-guide";
+import { usernameError } from "@/lib/profile-onboarding";
 import { useAccountAccess } from "@/components/premium/access-provider";
 import { PremiumBanner } from "@/components/premium/premium-banner";
 import { PremiumModal } from "@/components/premium/premium-modal";
@@ -50,7 +52,12 @@ import { demoProfile } from "@/lib/demo-profile";
 import { isSafeLink } from "@/lib/profile-storage";
 import { getLinkMedia } from "@/lib/link-media";
 import { detectPlatform } from "@/lib/platforms";
-import { CARD_TYPE_LABELS, CARD_TYPE_OPTIONS, type LinkPreview, type SmartCardType } from "@/lib/link-preview-types";
+import {
+  CARD_TYPE_LABELS,
+  CARD_TYPE_OPTIONS,
+  type LinkPreview,
+  type SmartCardType,
+} from "@/lib/link-preview-types";
 import {
   BACKGROUND_IMAGE_BUCKET,
   decodeStoredBackground,
@@ -64,6 +71,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { LinkItem, Profile } from "@/types/profile";
 
 type DbProfile = {
+  published: boolean;
   username: string;
   display_name: string;
   bio: string;
@@ -92,7 +100,14 @@ type DbLink = {
   metadata: { favicon?: string } | null;
 };
 
-const LINK_TYPE_VALUES: SmartCardType[] = ["standard", "simple", "media", "featured", "social", "action"];
+const LINK_TYPE_VALUES: SmartCardType[] = [
+  "standard",
+  "simple",
+  "media",
+  "featured",
+  "social",
+  "action",
+];
 
 const CURATED_PALETTES = [
   { name: "Nocturno lima", background: "#111510", accent: "#c9ff58" },
@@ -135,7 +150,8 @@ function SortableLinkRow({
   useEffect(() => {
     const url = link.url.trim();
     const looksComplete = /^https?:\/\/[^\s.]+\.[^\s]{2,}/i.test(url);
-    if (!looksComplete || !isSafeLink(url) || url === analyzedUrl.current) return;
+    if (!looksComplete || !isSafeLink(url) || url === analyzedUrl.current)
+      return;
 
     const timer = window.setTimeout(() => {
       analyzedUrl.current = url;
@@ -153,15 +169,23 @@ function SortableLinkRow({
           }
           const result = data.preview as LinkPreview;
           setPreview(result);
-          setPreviewImage(typeof data.imageDisplay === "string" ? data.imageDisplay : null);
+          setPreviewImage(
+            typeof data.imageDisplay === "string" ? data.imageDisplay : null,
+          );
           setPreviewState("done");
           const patch: Partial<LinkItem> = { provider: result.provider };
           const currentTitle = link.title.trim();
-          if ((!currentTitle || currentTitle === "Nuevo enlace") && result.title) patch.title = result.title;
-          if (!link.description?.trim() && result.description) patch.description = result.description;
+          if (
+            (!currentTitle || currentTitle === "Nuevo enlace") &&
+            result.title
+          )
+            patch.title = result.title;
+          if (!link.description?.trim() && result.description)
+            patch.description = result.description;
           if (!link.thumbnail && result.image) patch.thumbnail = result.image;
           if (result.favicon) patch.faviconUrl = result.favicon;
-          if (!link.linkType) patch.linkType = link.featured ? "featured" : result.cardType;
+          if (!link.linkType)
+            patch.linkType = link.featured ? "featured" : result.cardType;
           onUpdateRef.current(link.id, patch);
         })
         .catch(() => setPreviewState("error"));
@@ -195,195 +219,224 @@ function SortableLinkRow({
       className={`flex flex-col gap-2 rounded-2xl border bg-white/[.025] p-3 sm:flex-row sm:items-start sm:gap-3 ${isDragging ? "opacity-35" : "opacity-100"} ${isSafeLink(link.url) ? "border-white/10" : "border-red-400/60"}`}
     >
       <div className="flex min-w-0 items-start gap-2 sm:flex-1 sm:gap-3">
-      <button
-        ref={setActivatorNodeRef}
-        type="button"
-        aria-label={`Reordenar ${link.title || "enlace"}`}
-        className="mt-1 shrink-0 touch-none cursor-grab rounded-lg p-1 text-white/20 transition hover:bg-white/[.06] hover:text-white/55 active:cursor-grabbing motion-reduce:transition-none"
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical size={20} />
-      </button>
-      <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_90px]">
-        <input
-          value={link.title}
-          maxLength={100}
-          aria-label="Título del enlace"
-          placeholder="Título"
-          onChange={(event) => onUpdate(link.id, { title: event.target.value })}
-          className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm font-semibold text-white outline-none placeholder:text-white/25 focus:border-lime/70"
-        />
-        <input
-          value={link.url}
-          aria-label="Dirección del enlace"
-          placeholder="https://..."
-          onChange={(event) => onUpdate(link.id, { url: event.target.value })}
-          className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70"
-        />
-        <input
-          value={link.icon ?? ""}
-          maxLength={500}
-          aria-label="Ícono del enlace"
-          placeholder="Emoji o URL"
-          onChange={(event) => onUpdate(link.id, { icon: event.target.value })}
-          className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70"
-        />
-        {previewState !== "idle" || platform || link.thumbnail ? (
-          <div className="sm:col-span-3 space-y-2">
-            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-              {previewState === "loading" ? (
-                <span className="inline-flex items-center gap-1.5 text-white/45">
-                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-white/70" />
-                  Detectando enlace…
-                </span>
-              ) : platform || preview?.siteName ? (
-                <span
-                  className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-white/75"
-                  style={
-                    platform
-                      ? { backgroundColor: `${platform.color}1f`, borderColor: `${platform.color}55` }
-                      : { borderColor: "rgba(255,255,255,.14)" }
-                  }
-                >
-                  {platform ? (
-                    <img
-                      src={`https://cdn.simpleicons.org/${platform.slug}`}
-                      alt=""
-                      width="12"
-                      height="12"
-                      className="h-3 w-3 object-contain"
-                    />
-                  ) : (
-                    <Link2 size={12} />
-                  )}
-                  Detectado: {platform?.label ?? preview?.siteName}
-                </span>
+        <button
+          ref={setActivatorNodeRef}
+          type="button"
+          aria-label={`Reordenar ${link.title || "enlace"}`}
+          className="mt-1 shrink-0 touch-none cursor-grab rounded-lg p-1 text-white/20 transition hover:bg-white/[.06] hover:text-white/55 active:cursor-grabbing motion-reduce:transition-none"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical size={20} />
+        </button>
+        <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_90px]">
+          <input
+            value={link.title}
+            maxLength={100}
+            aria-label="Título del enlace"
+            placeholder="Título"
+            onChange={(event) =>
+              onUpdate(link.id, { title: event.target.value })
+            }
+            className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm font-semibold text-white outline-none placeholder:text-white/25 focus:border-lime/70"
+          />
+          <input
+            value={link.url}
+            aria-label="Dirección del enlace"
+            placeholder="https://..."
+            onChange={(event) => onUpdate(link.id, { url: event.target.value })}
+            className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70"
+          />
+          <input
+            value={link.icon ?? ""}
+            maxLength={500}
+            aria-label="Ícono del enlace"
+            placeholder="Emoji o URL"
+            onChange={(event) =>
+              onUpdate(link.id, { icon: event.target.value })
+            }
+            className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70"
+          />
+          {previewState !== "idle" || platform || link.thumbnail ? (
+            <div className="sm:col-span-3 space-y-2">
+              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+                {previewState === "loading" ? (
+                  <span className="inline-flex items-center gap-1.5 text-white/45">
+                    <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-white/70" />
+                    Detectando enlace…
+                  </span>
+                ) : platform || preview?.siteName ? (
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-white/75"
+                    style={
+                      platform
+                        ? {
+                            backgroundColor: `${platform.color}1f`,
+                            borderColor: `${platform.color}55`,
+                          }
+                        : { borderColor: "rgba(255,255,255,.14)" }
+                    }
+                  >
+                    {platform ? (
+                      <img
+                        src={`https://cdn.simpleicons.org/${platform.slug}`}
+                        alt=""
+                        width="12"
+                        height="12"
+                        className="h-3 w-3 object-contain"
+                      />
+                    ) : (
+                      <Link2 size={12} />
+                    )}
+                    Detectado: {platform?.label ?? preview?.siteName}
+                  </span>
+                ) : null}
+                {previewState === "blocked" ? (
+                  <span className="text-white/35">
+                    No se pudo analizar esa dirección
+                  </span>
+                ) : previewState === "error" ? (
+                  <span className="text-white/35">
+                    Sin vista previa disponible
+                  </span>
+                ) : null}
+              </div>
+
+              {(previewState === "done" && preview) || link.thumbnail ? (
+                <div className="rounded-xl border border-white/10 bg-white/[.03] p-2">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    {link.thumbnail ? (
+                      <span
+                        role="img"
+                        aria-label="Miniatura del enlace"
+                        className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-cover bg-center"
+                        style={{
+                          backgroundImage: `url(${previewImage ?? link.thumbnail})`,
+                        }}
+                      />
+                    ) : null}
+                    <p className="min-w-0 flex-1 truncate text-xs font-semibold text-white/80">
+                      {link.title || preview?.title || "Sin título"}
+                    </p>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-white/40">
+                    <label className="flex items-center gap-1.5">
+                      Estilo
+                      <select
+                        value={link.linkType ?? "standard"}
+                        onChange={(event) =>
+                          onUpdate(link.id, {
+                            linkType: event.target.value as SmartCardType,
+                          })
+                        }
+                        className="max-w-[8rem] rounded-md border border-white/10 bg-white/[.05] px-2 py-1 text-[11px] font-semibold text-white/80 outline-none focus:border-lime/60"
+                      >
+                        {CARD_TYPE_OPTIONS.map((option) => (
+                          <option
+                            key={option}
+                            value={option}
+                            className="bg-card text-white"
+                          >
+                            {CARD_TYPE_LABELS[option]}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    {(link.clicks ?? 0) > 0 || (link.plays ?? 0) > 0 ? (
+                      <span className="flex items-center gap-2.5">
+                        {(link.clicks ?? 0) > 0 ? (
+                          <span className="flex items-center gap-1">
+                            <MousePointerClick size={11} />{" "}
+                            {(link.clicks ?? 0).toLocaleString("es-DO")}
+                          </span>
+                        ) : null}
+                        {(link.plays ?? 0) > 0 ? (
+                          <span className="flex items-center gap-1">
+                            <Play size={11} />{" "}
+                            {(link.plays ?? 0).toLocaleString("es-DO")}
+                          </span>
+                        ) : null}
+                      </span>
+                    ) : null}
+                    {link.thumbnail ? (
+                      <button
+                        type="button"
+                        onClick={() => onUpdate(link.id, { thumbnail: "" })}
+                        className="font-semibold text-white/40 transition hover:text-red-300"
+                      >
+                        Quitar imagen
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
               ) : null}
-              {previewState === "blocked" ? (
-                <span className="text-white/35">No se pudo analizar esa dirección</span>
-              ) : previewState === "error" ? (
-                <span className="text-white/35">Sin vista previa disponible</span>
+
+              {(media?.kind === "youtube" || link.linkType === "media") &&
+              !isPro ? (
+                <p className="flex items-center gap-1.5 text-xs font-semibold text-white/40">
+                  <Crown size={13} className="text-lime" /> Las tarjetas
+                  multimedia se muestran con MultiLinks Premium
+                </p>
               ) : null}
             </div>
-
-            {(previewState === "done" && preview) || link.thumbnail ? (
-              <div className="rounded-xl border border-white/10 bg-white/[.03] p-2">
-                <div className="flex min-w-0 items-center gap-2.5">
-                  {link.thumbnail ? (
-                    <span
-                      role="img"
-                      aria-label="Miniatura del enlace"
-                      className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-cover bg-center"
-                      style={{ backgroundImage: `url(${previewImage ?? link.thumbnail})` }}
-                    />
-                  ) : null}
-                  <p className="min-w-0 flex-1 truncate text-xs font-semibold text-white/80">
-                    {link.title || preview?.title || "Sin título"}
-                  </p>
-                </div>
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-white/40">
-                  <label className="flex items-center gap-1.5">
-                    Estilo
-                    <select
-                      value={link.linkType ?? "standard"}
-                      onChange={(event) =>
-                        onUpdate(link.id, { linkType: event.target.value as SmartCardType })
-                      }
-                      className="max-w-[8rem] rounded-md border border-white/10 bg-white/[.05] px-2 py-1 text-[11px] font-semibold text-white/80 outline-none focus:border-lime/60"
-                    >
-                      {CARD_TYPE_OPTIONS.map((option) => (
-                        <option key={option} value={option} className="bg-card text-white">
-                          {CARD_TYPE_LABELS[option]}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  {(link.clicks ?? 0) > 0 || (link.plays ?? 0) > 0 ? (
-                    <span className="flex items-center gap-2.5">
-                      {(link.clicks ?? 0) > 0 ? (
-                        <span className="flex items-center gap-1">
-                          <MousePointerClick size={11} /> {(link.clicks ?? 0).toLocaleString("es-DO")}
-                        </span>
-                      ) : null}
-                      {(link.plays ?? 0) > 0 ? (
-                        <span className="flex items-center gap-1">
-                          <Play size={11} /> {(link.plays ?? 0).toLocaleString("es-DO")}
-                        </span>
-                      ) : null}
-                    </span>
-                  ) : null}
-                  {link.thumbnail ? (
-                    <button
-                      type="button"
-                      onClick={() => onUpdate(link.id, { thumbnail: "" })}
-                      className="font-semibold text-white/40 transition hover:text-red-300"
-                    >
-                      Quitar imagen
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
-
-            {(media?.kind === "youtube" || link.linkType === "media") && !isPro ? (
-              <p className="flex items-center gap-1.5 text-xs font-semibold text-white/40">
-                <Crown size={13} className="text-lime" /> Las tarjetas multimedia se muestran con MultiLinks Premium
-              </p>
-            ) : null}
-          </div>
-        ) : null}
-        <input
-          value={link.description ?? ""}
-          maxLength={200}
-          aria-label="Descripción del enlace"
-          placeholder="Descripción (opcional)"
-          onChange={(event) =>
-            onUpdate(link.id, { description: event.target.value })
-          }
-          className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70 sm:col-span-3"
-        />
-        <input
-          value={link.sectionTitle ?? ""}
-          maxLength={60}
-          aria-label="Título de sección"
-          placeholder="Sección opcional, por ejemplo: Mis redes"
-          onChange={(event) =>
-            onUpdate(link.id, { sectionTitle: event.target.value })
-          }
-          className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70 sm:col-span-3"
-        />
-      </div>
+          ) : null}
+          <input
+            value={link.description ?? ""}
+            maxLength={200}
+            aria-label="Descripción del enlace"
+            placeholder="Descripción (opcional)"
+            onChange={(event) =>
+              onUpdate(link.id, { description: event.target.value })
+            }
+            className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70 sm:col-span-3"
+          />
+          <input
+            value={link.sectionTitle ?? ""}
+            maxLength={60}
+            aria-label="Título de sección"
+            placeholder="Sección opcional, por ejemplo: Mis redes"
+            onChange={(event) =>
+              onUpdate(link.id, { sectionTitle: event.target.value })
+            }
+            className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70 sm:col-span-3"
+          />
+        </div>
       </div>
       <div className="flex shrink-0 items-center justify-end gap-1 sm:flex-col sm:items-center sm:gap-1.5">
-      <button
-        type="button"
-        aria-label={link.featured ? "Quitar de destacados" : "Destacar enlace"}
-        aria-pressed={Boolean(link.featured)}
-        title={link.featured ? "Enlace destacado" : "Destacar (se muestra más grande)"}
-        onClick={() => onUpdate(link.id, { featured: !link.featured })}
-        className={`shrink-0 rounded-lg p-2 transition motion-reduce:transition-none ${link.featured ? "text-lime" : "text-white/25 hover:text-white/60"}`}
-      >
-        <Star size={17} className={link.featured ? "fill-current" : ""} />
-      </button>
-      <button
-        type="button"
-        aria-label="Activar enlace"
-        onClick={() => onUpdate(link.id, { active: !link.active })}
-        className={`h-6 w-11 shrink-0 rounded-full p-1 ${link.active ? "bg-lime" : "bg-white/15"}`}
-      >
-        <span
-          className={`block h-4 w-4 rounded-full bg-card transition motion-reduce:transition-none ${link.active ? "translate-x-5" : ""}`}
-        />
-      </button>
-      <button
-        type="button"
-        aria-label="Eliminar"
-        onClick={() => onRemove(link.id)}
-        className="shrink-0 p-2 text-white/30 transition hover:text-red-300 motion-reduce:transition-none"
-      >
-        <Trash2 size={18} />
-      </button>
+        <button
+          type="button"
+          aria-label={
+            link.featured ? "Quitar de destacados" : "Destacar enlace"
+          }
+          aria-pressed={Boolean(link.featured)}
+          title={
+            link.featured
+              ? "Enlace destacado"
+              : "Destacar (se muestra más grande)"
+          }
+          onClick={() => onUpdate(link.id, { featured: !link.featured })}
+          className={`shrink-0 rounded-lg p-2 transition motion-reduce:transition-none ${link.featured ? "text-lime" : "text-white/25 hover:text-white/60"}`}
+        >
+          <Star size={17} className={link.featured ? "fill-current" : ""} />
+        </button>
+        <button
+          type="button"
+          aria-label="Activar enlace"
+          onClick={() => onUpdate(link.id, { active: !link.active })}
+          className={`h-6 w-11 shrink-0 rounded-full p-1 ${link.active ? "bg-lime" : "bg-white/15"}`}
+        >
+          <span
+            className={`block h-4 w-4 rounded-full bg-card transition motion-reduce:transition-none ${link.active ? "translate-x-5" : ""}`}
+          />
+        </button>
+        <button
+          type="button"
+          aria-label="Eliminar"
+          onClick={() => onRemove(link.id)}
+          className="shrink-0 p-2 text-white/30 transition hover:text-red-300 motion-reduce:transition-none"
+        >
+          <Trash2 size={18} />
+        </button>
       </div>
     </div>
   );
@@ -399,10 +452,17 @@ export default function Dashboard() {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverError, setCoverError] = useState("");
   const [ready, setReady] = useState(false);
+  const [hasStoredProfile, setHasStoredProfile] = useState(false);
+  const [publishedUsername, setPublishedUsername] = useState<string | null>(
+    null,
+  );
+  const [loadFailed, setLoadFailed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [backgroundsOpen, setBackgroundsOpen] = useState(false);
-  const [appearanceTab, setAppearanceTab] = useState<"fondo" | "botones">("fondo");
+  const [appearanceTab, setAppearanceTab] = useState<"fondo" | "botones">(
+    "fondo",
+  );
   const [totalViews, setTotalViews] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const { access, loading: accessLoading } = useAccountAccess();
@@ -412,7 +472,9 @@ export default function Dashboard() {
   const [reducedMotion, setReducedMotion] = useState(false);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
 
   useEffect(() => {
@@ -421,36 +483,50 @@ export default function Dashboard() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) { setReady(true); return; }
+      if (!user) {
+        router.replace("/sign-in?next=/dashboard");
+        return;
+      }
       const { data: adminAccess } = await supabase.rpc("is_admin");
       setIsAdmin(Boolean(adminAccess));
       const [
-        { data: dbProfile },
-        { data: dbLinks },
+        { data: dbProfile, error: profileLoadError },
+        { data: dbLinks, error: linksLoadError },
         { data: viewRows },
       ] = await Promise.all([
         supabase
           .from("profiles")
           .select(
-            "username,display_name,bio,avatar_url,theme,background_color,cover_image,accent_color,button_style",
+            "username,display_name,bio,avatar_url,theme,background_color,cover_image,accent_color,button_style,published",
           )
           .eq("id", user.id)
           .maybeSingle<DbProfile>(),
         supabase
           .from("links")
-          .select("id,title,url,active,clicks,plays,icon,section_title,description,featured,provider,link_type,thumbnail,metadata")
+          .select(
+            "id,title,url,active,clicks,plays,icon,section_title,description,featured,provider,link_type,thumbnail,metadata",
+          )
           .eq("profile_id", user.id)
           .order("position"),
         supabase
           .from("profile_daily_views")
           .select("views")
           .eq("profile_id", user.id),
-
       ]);
+      if (profileLoadError || linksLoadError) {
+        setLoadFailed(true);
+        setMessage(
+          "No pudimos cargar tu perfil. Recarga la página antes de guardar para proteger tus datos.",
+        );
+        setReady(true);
+        return;
+      }
       setTotalViews(
         (viewRows ?? []).reduce((total, row) => total + row.views, 0),
       );
       if (dbProfile) {
+        setHasStoredProfile(true);
+        setPublishedUsername(dbProfile.published ? dbProfile.username : null);
         const storedBackground = decodeStoredBackground(
           dbProfile.background_color,
         );
@@ -510,14 +586,19 @@ export default function Dashboard() {
         setProfile({
           ...demoProfile,
           username: base.length >= 3 ? base : `user-${user.id.slice(0, 6)}`,
-          displayName: "Mi perfil",
+          displayName: "",
+          bio: "",
+          avatar: base.slice(0, 2).toUpperCase() || "ML",
+          theme: "lime",
+          backgroundColor: "#c9ff58",
+          accentColor: "#151515",
           links: [],
         });
       }
       setReady(true);
     }
     void loadProfile();
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -550,19 +631,45 @@ export default function Dashboard() {
       const oldIndex = current.links.findIndex((link) => link.id === active.id);
       const newIndex = current.links.findIndex((link) => link.id === over.id);
       if (oldIndex === -1 || newIndex === -1) return current;
-      return { ...current, links: arrayMove(current.links, oldIndex, newIndex) };
+      return {
+        ...current,
+        links: arrayMove(current.links, oldIndex, newIndex),
+      };
     });
   };
-  const previewProfile: Profile = isPro ? profile : {
-    ...profile, links: profile.links.filter(link => link.active).slice(0, 1),
-    theme: profile.theme === "neon" || profile.backgroundImage ? "lime" : profile.theme,
-    backgroundImage: undefined, coverImage: undefined,
-    backgroundPreset: isFreeBackground(profile.backgroundPreset) ? profile.backgroundPreset : undefined,
-    backgroundColor: profile.theme === "neon" || profile.backgroundImage ? "#c9ff58" : profile.backgroundColor,
-    accentColor: profile.theme === "neon" || profile.backgroundImage ? "#8566ff" : profile.accentColor,
+  const editingPreview = {
+    ...profile,
+    displayName: profile.displayName || "Tu nombre",
   };
+  const previewProfile: Profile = isPro
+    ? editingPreview
+    : {
+        ...editingPreview,
+        links: profile.links.filter((link) => link.active).slice(0, 1),
+        theme:
+          profile.theme === "neon" || profile.backgroundImage
+            ? "lime"
+            : profile.theme,
+        backgroundImage: undefined,
+        coverImage: undefined,
+        backgroundPreset: isFreeBackground(profile.backgroundPreset)
+          ? profile.backgroundPreset
+          : undefined,
+        backgroundColor:
+          profile.theme === "neon" || profile.backgroundImage
+            ? "#c9ff58"
+            : profile.backgroundColor,
+        accentColor:
+          profile.theme === "neon" || profile.backgroundImage
+            ? "#8566ff"
+            : profile.accentColor,
+      };
   const addLink = () => {
-    if (!canUseFeature(access, "unlimited_links") && profile.links.some(link => link.active)) setPremiumModal(true);
+    if (
+      !canUseFeature(access, "unlimited_links") &&
+      profile.links.some((link) => link.active)
+    )
+      setPremiumModal(true);
     setProfile((p) => ({
       ...p,
       links: [
@@ -600,7 +707,9 @@ export default function Dashboard() {
     setBackgroundError("");
     if (!file) return;
     if (!isPro) {
-      setBackgroundError("La imagen de fondo propia es una función de MultiLinks Premium.");
+      setBackgroundError(
+        "La imagen de fondo propia es una función de MultiLinks Premium.",
+      );
       return;
     }
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
@@ -660,7 +769,11 @@ export default function Dashboard() {
   function clearCover() {
     setCoverFile(null);
     setCoverError("");
-    setProfile((p) => ({ ...p, coverImage: undefined, coverImagePath: undefined }));
+    setProfile((p) => ({
+      ...p,
+      coverImage: undefined,
+      coverImagePath: undefined,
+    }));
   }
 
   // Picking any color / preset background also drops a custom image so the two
@@ -677,8 +790,32 @@ export default function Dashboard() {
   }
 
   async function save() {
-    if (profile.username.length < 3) {
-      setMessage("El usuario debe tener al menos 3 caracteres.");
+    if (saving) return;
+    if (loadFailed) {
+      setMessage("Recarga la página para cargar tu perfil antes de guardar.");
+      return;
+    }
+    const invalidUsername = usernameError(profile.username);
+    if (invalidUsername) {
+      setMessage(invalidUsername);
+      return;
+    }
+    if (
+      !profile.displayName.trim() ||
+      profile.displayName.trim().length > 100
+    ) {
+      setMessage("Escribe un nombre para tu perfil de hasta 100 caracteres.");
+      return;
+    }
+    if (
+      !publishedUsername &&
+      !profile.links.some(
+        (link) => link.active && isSafeLink(link.url) && link.title.trim(),
+      )
+    ) {
+      setMessage(
+        "Añade al menos un enlace activo con título antes de publicar tu primera página.",
+      );
       return;
     }
     if (profile.links.some((link) => !isSafeLink(link.url))) {
@@ -687,193 +824,261 @@ export default function Dashboard() {
     }
     setSaving(true);
     setMessage("");
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      router.push("/sign-in");
-      return;
-    }
-
-    let avatarUrl = profile.avatarImage;
-    if (photoFile) {
-      const extension = photoFile.name.split(".").pop()?.toLowerCase() || "jpg";
-      const path = `${user.id}/avatar.${extension}`;
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(path, photoFile, { upsert: true, contentType: photoFile.type });
-      if (uploadError) {
-        setMessage("No pudimos subir la foto.");
-        setSaving(false);
+    try {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        router.push("/sign-in");
         return;
       }
-      avatarUrl = supabase.storage.from("avatars").getPublicUrl(path)
-        .data.publicUrl;
-    }
 
-    let backgroundImagePath = profile.backgroundImagePath;
-    if (backgroundFile) {
-      const extension =
-        backgroundFile.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") ||
-        "jpg";
-      const path = `${user.id}/background-${Date.now()}.${extension}`;
-      const { error: backgroundUploadError } = await supabase.storage
-        .from(BACKGROUND_IMAGE_BUCKET)
-        .upload(path, backgroundFile, {
-          upsert: true,
-          contentType: backgroundFile.type,
-        });
-      if (backgroundUploadError) {
-        setMessage("No pudimos subir la imagen de fondo.");
-        setSaving(false);
-        return;
+      let avatarUrl = profile.avatarImage;
+      if (photoFile) {
+        const extension =
+          photoFile.name.split(".").pop()?.toLowerCase() || "jpg";
+        const path = `${user.id}/avatar.${extension}`;
+        const { error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(path, photoFile, {
+            upsert: true,
+            contentType: photoFile.type,
+          });
+        if (uploadError) {
+          setMessage("No pudimos subir la foto.");
+          setSaving(false);
+          return;
+        }
+        avatarUrl = supabase.storage.from("avatars").getPublicUrl(path)
+          .data.publicUrl;
       }
-      if (profile.backgroundImagePath && profile.backgroundImagePath !== path) {
+
+      let backgroundImagePath = profile.backgroundImagePath;
+      if (backgroundFile) {
+        const extension =
+          backgroundFile.name
+            .split(".")
+            .pop()
+            ?.toLowerCase()
+            .replace(/[^a-z0-9]/g, "") || "jpg";
+        const path = `${user.id}/background-${Date.now()}.${extension}`;
+        const { error: backgroundUploadError } = await supabase.storage
+          .from(BACKGROUND_IMAGE_BUCKET)
+          .upload(path, backgroundFile, {
+            upsert: true,
+            contentType: backgroundFile.type,
+          });
+        if (backgroundUploadError) {
+          setMessage("No pudimos subir la imagen de fondo.");
+          setSaving(false);
+          return;
+        }
+        if (
+          profile.backgroundImagePath &&
+          profile.backgroundImagePath !== path
+        ) {
+          await supabase.storage
+            .from(BACKGROUND_IMAGE_BUCKET)
+            .remove([profile.backgroundImagePath]);
+        }
+        backgroundImagePath = path;
+      } else if (!profile.backgroundImage && profile.backgroundImagePath) {
         await supabase.storage
           .from(BACKGROUND_IMAGE_BUCKET)
           .remove([profile.backgroundImagePath]);
+        backgroundImagePath = undefined;
       }
-      backgroundImagePath = path;
-    } else if (!profile.backgroundImage && profile.backgroundImagePath) {
-      await supabase.storage
-        .from(BACKGROUND_IMAGE_BUCKET)
-        .remove([profile.backgroundImagePath]);
-      backgroundImagePath = undefined;
-    }
 
-    let coverImagePath = profile.coverImagePath;
-    if (coverFile) {
-      const extension =
-        coverFile.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") ||
-        "jpg";
-      const path = `${user.id}/cover-${Date.now()}.${extension}`;
-      const { error: coverUploadError } = await supabase.storage
-        .from(BACKGROUND_IMAGE_BUCKET)
-        .upload(path, coverFile, { upsert: true, contentType: coverFile.type });
-      if (coverUploadError) {
-        setMessage("No pudimos subir la portada.");
+      let coverImagePath = profile.coverImagePath;
+      if (coverFile) {
+        const extension =
+          coverFile.name
+            .split(".")
+            .pop()
+            ?.toLowerCase()
+            .replace(/[^a-z0-9]/g, "") || "jpg";
+        const path = `${user.id}/cover-${Date.now()}.${extension}`;
+        const { error: coverUploadError } = await supabase.storage
+          .from(BACKGROUND_IMAGE_BUCKET)
+          .upload(path, coverFile, {
+            upsert: true,
+            contentType: coverFile.type,
+          });
+        if (coverUploadError) {
+          setMessage("No pudimos subir la portada.");
+          setSaving(false);
+          return;
+        }
+        if (profile.coverImagePath && profile.coverImagePath !== path) {
+          await supabase.storage
+            .from(BACKGROUND_IMAGE_BUCKET)
+            .remove([profile.coverImagePath]);
+        }
+        coverImagePath = path;
+      } else if (!profile.coverImage && profile.coverImagePath) {
+        await supabase.storage
+          .from(BACKGROUND_IMAGE_BUCKET)
+          .remove([profile.coverImagePath]);
+        coverImagePath = undefined;
+      }
+
+      const { error: profileError } = await supabase.from("profiles").upsert({
+        id: user.id,
+        ...(!hasStoredProfile ? { published: false } : {}),
+        username: profile.username,
+        display_name: profile.displayName,
+        bio: profile.bio,
+        avatar_url: avatarUrl?.startsWith("data:") ? null : (avatarUrl ?? null),
+        theme: profile.theme,
+        background_color: encodeStoredBackground(
+          profile.backgroundColor,
+          profile.backgroundPreset,
+          backgroundImagePath,
+        ),
+        cover_image: coverImagePath ?? null,
+        accent_color: profile.accentColor ?? "#8566ff",
+        button_style: profile.buttonStyle ?? "rounded",
+        updated_at: new Date().toISOString(),
+      });
+      if (profileError) {
+        setMessage(
+          profileError.code === "23505"
+            ? "Ese nombre de usuario ya está ocupado."
+            : profileError.code === "P0001"
+              ? profileError.message
+              : "No pudimos guardar el perfil.",
+        );
         setSaving(false);
         return;
       }
-      if (profile.coverImagePath && profile.coverImagePath !== path) {
-        await supabase.storage.from(BACKGROUND_IMAGE_BUCKET).remove([profile.coverImagePath]);
-      }
-      coverImagePath = path;
-    } else if (!profile.coverImage && profile.coverImagePath) {
-      await supabase.storage.from(BACKGROUND_IMAGE_BUCKET).remove([profile.coverImagePath]);
-      coverImagePath = undefined;
-    }
 
-    const { error: profileError } = await supabase.from("profiles").upsert({
-      id: user.id,
-      username: profile.username,
-      display_name: profile.displayName,
-      bio: profile.bio,
-      avatar_url: avatarUrl?.startsWith("data:") ? null : (avatarUrl ?? null),
-      theme: profile.theme,
-      background_color: encodeStoredBackground(
-        profile.backgroundColor,
-        profile.backgroundPreset,
+      // Upsert first (never delete before we know the write succeeds), then prune
+      // only the links the user removed in the editor. `clicks` is left out so the
+      // database keeps its running total.
+      const rows = profile.links.map((link, position) => ({
+        id: link.id,
+        profile_id: user.id,
+        title: (link.title?.trim() || "Enlace").slice(0, 100),
+        url: link.url.slice(0, 2048),
+        active: link.active,
+        position,
+        icon: link.icon?.trim().slice(0, 500) || null,
+        section_title: link.sectionTitle?.trim().slice(0, 60) || null,
+        description: (link.description?.trim() || "").slice(0, 200),
+        featured: Boolean(link.featured),
+        provider:
+          (link.provider || "generic")
+            .replace(/[^a-z0-9_-]/gi, "")
+            .slice(0, 40) || "generic",
+        link_type:
+          link.linkType && LINK_TYPE_VALUES.includes(link.linkType)
+            ? link.linkType
+            : "standard",
+        thumbnail: (() => {
+          const value = (link.thumbnail ?? "").trim();
+          return value.startsWith("https://") &&
+            value.length <= 590 &&
+            !/[\s"']/.test(value)
+            ? value
+            : "";
+        })(),
+        metadata: (() => {
+          const value = (link.faviconUrl ?? "").trim();
+          return value.startsWith("https://") &&
+            value.length <= 590 &&
+            !/[\s"']/.test(value)
+            ? { favicon: value }
+            : {};
+        })(),
+      }));
+      const keepIds = new Set(rows.map((row) => row.id));
+      const { error: linksError } = rows.length
+        ? await supabase.from("links").upsert(rows, { onConflict: "id" })
+        : { error: null };
+      if (linksError) {
+        setMessage(
+          linksError.code === "23514"
+            ? "Algún título o texto de un enlace excede el límite. Acórtalo e intenta de nuevo."
+            : "No pudimos guardar los enlaces. Tus enlaces anteriores siguen intactos.",
+        );
+        console.error("Links upsert failed", linksError);
+        setSaving(false);
+        return;
+      }
+      // Remove only the links the user explicitly deleted in the editor.
+      const { data: currentLinks, error: currentLinksError } = await supabase
+        .from("links")
+        .select("id")
+        .eq("profile_id", user.id);
+      if (currentLinksError) {
+        setMessage(
+          "No pudimos comprobar tus enlaces guardados. Inténtalo nuevamente.",
+        );
+        return;
+      }
+      const removedIds = (currentLinks ?? [])
+        .map((row) => row.id as string)
+        .filter((id) => !keepIds.has(id));
+      if (removedIds.length) {
+        const { error: pruneError } = await supabase
+          .from("links")
+          .delete()
+          .in("id", removedIds);
+        if (pruneError) {
+          console.error(
+            "No se pudieron limpiar los enlaces eliminados",
+            pruneError,
+          );
+          setMessage(
+            "Guardamos los cambios, pero no pudimos quitar los enlaces eliminados. Inténtalo nuevamente.",
+          );
+          return;
+        }
+      }
+
+      const { error: publishError } = await supabase
+        .from("profiles")
+        .update({ published: true })
+        .eq("id", user.id)
+        .select("username")
+        .single();
+      if (publishError) {
+        setMessage(
+          "Guardamos tus datos, pero no pudimos publicar la página. Inténtalo nuevamente.",
+        );
+        return;
+      }
+      setHasStoredProfile(true);
+      setPublishedUsername(profile.username);
+      setProfile({
+        ...profile,
+        avatarImage: avatarUrl?.startsWith("data:") ? undefined : avatarUrl,
         backgroundImagePath,
-      ),
-      cover_image: coverImagePath ?? null,
-      accent_color: profile.accentColor ?? "#8566ff",
-      button_style: profile.buttonStyle ?? "rounded",
-      updated_at: new Date().toISOString(),
-    });
-    if (profileError) {
-      setMessage(
-        profileError.code === "23505"
-          ? "Ese nombre de usuario ya está ocupado."
-          : profileError.code === "P0001"
-            ? profileError.message
-            : "No pudimos guardar el perfil.",
-      );
+        backgroundImage: backgroundImagePath
+          ? supabase.storage
+              .from(BACKGROUND_IMAGE_BUCKET)
+              .getPublicUrl(backgroundImagePath).data.publicUrl
+          : undefined,
+        coverImagePath,
+        coverImage: coverImagePath
+          ? supabase.storage
+              .from(BACKGROUND_IMAGE_BUCKET)
+              .getPublicUrl(coverImagePath).data.publicUrl
+          : undefined,
+      });
+      setPhotoFile(null);
+      setBackgroundFile(null);
+      setCoverFile(null);
+      setMessage("¡Cambios publicados!");
       setSaving(false);
-      return;
-    }
-
-    // Upsert first (never delete before we know the write succeeds), then prune
-    // only the links the user removed in the editor. `clicks` is left out so the
-    // database keeps its running total.
-    const rows = profile.links.map((link, position) => ({
-      id: link.id,
-      profile_id: user.id,
-      title: (link.title?.trim() || "Enlace").slice(0, 100),
-      url: link.url.slice(0, 2048),
-      active: link.active,
-      position,
-      icon: link.icon?.trim().slice(0, 500) || null,
-      section_title: link.sectionTitle?.trim().slice(0, 60) || null,
-      description: (link.description?.trim() || "").slice(0, 200),
-      featured: Boolean(link.featured),
-      provider: (link.provider || "generic").replace(/[^a-z0-9_-]/gi, "").slice(0, 40) || "generic",
-      link_type:
-        link.linkType && LINK_TYPE_VALUES.includes(link.linkType) ? link.linkType : "standard",
-      thumbnail: (() => {
-        const value = (link.thumbnail ?? "").trim();
-        return value.startsWith("https://") && value.length <= 590 && !/[\s"']/.test(value)
-          ? value
-          : "";
-      })(),
-      metadata: (() => {
-        const value = (link.faviconUrl ?? "").trim();
-        return value.startsWith("https://") && value.length <= 590 && !/[\s"']/.test(value)
-          ? { favicon: value }
-          : {};
-      })(),
-    }));
-    const keepIds = new Set(rows.map((row) => row.id));
-    const { error: linksError } = rows.length
-      ? await supabase.from("links").upsert(rows, { onConflict: "id" })
-      : { error: null };
-    if (linksError) {
+    } catch {
       setMessage(
-        linksError.code === "23514"
-          ? "Algún título o texto de un enlace excede el límite. Acórtalo e intenta de nuevo."
-          : "No pudimos guardar los enlaces. Tus enlaces anteriores siguen intactos.",
+        "No pudimos completar la publicación. Revisa tu conexión e inténtalo nuevamente.",
       );
-      console.error("Links upsert failed", linksError);
+    } finally {
       setSaving(false);
-      return;
     }
-    // Remove only the links the user explicitly deleted in the editor.
-    const { data: currentLinks } = await supabase
-      .from("links")
-      .select("id")
-      .eq("profile_id", user.id);
-    const removedIds = (currentLinks ?? [])
-      .map((row) => row.id as string)
-      .filter((id) => !keepIds.has(id));
-    if (removedIds.length) {
-      const { error: pruneError } = await supabase.from("links").delete().in("id", removedIds);
-      if (pruneError) {
-        console.error("No se pudieron limpiar los enlaces eliminados", pruneError);
-      }
-    }
-
-    setProfile({
-      ...profile,
-      avatarImage: avatarUrl?.startsWith("data:") ? undefined : avatarUrl,
-      backgroundImagePath,
-      backgroundImage: backgroundImagePath
-        ? supabase.storage
-            .from(BACKGROUND_IMAGE_BUCKET)
-            .getPublicUrl(backgroundImagePath).data.publicUrl
-        : undefined,
-      coverImagePath,
-      coverImage: coverImagePath
-        ? supabase.storage
-            .from(BACKGROUND_IMAGE_BUCKET)
-            .getPublicUrl(coverImagePath).data.publicUrl
-        : undefined,
-    });
-    setPhotoFile(null);
-    setBackgroundFile(null);
-    setCoverFile(null);
-    setMessage("¡Cambios publicados!");
-    setSaving(false);
   }
 
   async function signOut() {
@@ -886,7 +1091,13 @@ export default function Dashboard() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-surface text-white">
-      <PremiumModal open={premiumModal} onClose={() => setPremiumModal(false)} title="Publica todos tus enlaces" description="Free publica un enlace. Los demás permanecen guardados; Premium los desbloquea automáticamente." access={access} />
+      <PremiumModal
+        open={premiumModal}
+        onClose={() => setPremiumModal(false)}
+        title="Publica todos tus enlaces"
+        description="Free publica un enlace. Los demás permanecen guardados; Premium los desbloquea automáticamente."
+        access={access}
+      />
       <span
         aria-hidden="true"
         className="pointer-events-none fixed -left-48 -top-48 h-[34rem] w-[34rem] rounded-full bg-lime/10 blur-3xl"
@@ -913,13 +1124,16 @@ export default function Dashboard() {
             aria-label="Acciones de la cuenta"
             className="flex items-center gap-2"
           >
-            <Link
-              href={`/${profile.username}`}
-              className="inline-flex items-center gap-2 rounded-xl bg-lime px-3 py-2.5 text-sm font-black text-ink transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(201,255,88,.15)] motion-reduce:transform-none motion-reduce:transition-none"
-            >
-              <Eye size={17} />
-              <span className="hidden sm:inline">Ver mi perfil</span>
-            </Link>
+            {publishedUsername && (
+              <Link
+                href={`/${encodeURIComponent(publishedUsername)}`}
+                aria-label="Ver mi perfil publicado"
+                className="inline-flex items-center gap-2 rounded-xl bg-lime px-3 py-2.5 text-sm font-black text-ink transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(201,255,88,.15)] motion-reduce:transform-none motion-reduce:transition-none"
+              >
+                <Eye size={17} />
+                <span className="hidden sm:inline">Ver mi perfil</span>
+              </Link>
+            )}
             {isAdmin ? (
               <Link
                 href="/admin"
@@ -964,13 +1178,44 @@ export default function Dashboard() {
                 {saving ? "Publicando…" : "Guardar y publicar"}
               </button>
               {message ? (
-                <p className="mt-2 max-w-xs rounded-lg border border-white/10 bg-white/[.04] px-3 py-2 text-xs font-semibold text-white/60">
+                <p
+                  role="status"
+                  className="mt-2 max-w-xs rounded-lg border border-white/10 bg-white/[.04] px-3 py-2 text-xs font-semibold text-white/80"
+                >
                   {message}
                 </p>
               ) : null}
             </div>
           </div>
-          <Link href="/dashboard/analytics" className="mb-4 inline-flex items-center gap-2 rounded-xl border border-lime/25 bg-lime/10 px-5 py-3 font-bold text-lime">Analytics 2.0 →</Link>
+          <ProfileLaunchGuide
+            identityReady={
+              Boolean(profile.displayName.trim()) &&
+              !usernameError(profile.username)
+            }
+            linkReady={profile.links.some(
+              (link) =>
+                link.active &&
+                isSafeLink(link.url) &&
+                Boolean(link.title.trim()),
+            )}
+            publishedUsername={publishedUsername}
+            busy={saving}
+            onPublish={() => void save()}
+            onAddLink={() => {
+              if (!profile.links.length) addLink();
+              requestAnimationFrame(() =>
+                document.getElementById("enlaces")?.scrollIntoView({
+                  behavior: reducedMotion ? "auto" : "smooth",
+                }),
+              );
+            }}
+          />
+          <Link
+            href="/dashboard/analytics"
+            className="mb-4 inline-flex items-center gap-2 rounded-xl border border-lime/25 bg-lime/10 px-5 py-3 font-bold text-lime"
+          >
+            Analytics 2.0 →
+          </Link>
           <div
             id="estadisticas"
             className="mb-6 scroll-mt-24 grid gap-4 sm:grid-cols-3"
@@ -997,7 +1242,9 @@ export default function Dashboard() {
               )}
             />
           </div>
-          <div className="mb-6"><PremiumBanner access={access} /></div>
+          <div className="mb-6">
+            <PremiumBanner access={access} />
+          </div>
           <div
             id="perfil"
             className="scroll-mt-24 rounded-[2rem] border border-white/12 bg-card/95 p-6"
@@ -1050,6 +1297,7 @@ export default function Dashboard() {
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <Field
                 label="Nombre"
+                maxLength={100}
                 value={profile.displayName}
                 onChange={(displayName) =>
                   setProfile({ ...profile, displayName })
@@ -1057,6 +1305,7 @@ export default function Dashboard() {
               />
               <Field
                 label="Usuario"
+                maxLength={30}
                 value={profile.username}
                 onChange={(username) =>
                   setProfile({
@@ -1097,365 +1346,395 @@ export default function Dashboard() {
               ) : null}
             </div>
             <div className="mt-5 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/[.03] p-1">
-              <button type="button" onClick={() => setAppearanceTab("fondo")} className={`rounded-lg px-3 py-2 text-sm font-black transition motion-reduce:transition-none ${appearanceTab === "fondo" ? "bg-white/[.08] text-white" : "text-white/45 hover:text-white/80"}`}>Fondo y color</button>
-              <button type="button" onClick={() => setAppearanceTab("botones")} className={`rounded-lg px-3 py-2 text-sm font-black transition motion-reduce:transition-none ${appearanceTab === "botones" ? "bg-white/[.08] text-white" : "text-white/45 hover:text-white/80"}`}>Botones</button>
-            </div>
-            {appearanceTab === "fondo" ? (
-            <>
-            <div className="mt-6">
-              <p className="text-sm font-bold text-white/75">Temas rápidos</p>
-              <div className="mt-3 flex flex-wrap gap-3">
-                {(["lime", "violet", "sunset", "neon"] as const).map(
-                  (theme) => {
-                    const color =
-                      theme === "lime"
-                        ? "#c9ff58"
-                        : theme === "violet"
-                          ? "#8566ff"
-                          : theme === "sunset"
-                            ? "#ff7356"
-                            : "#0f1115";
-                    const locked = theme === "neon" && !isPro;
-                    return (
-                      <button
-                        key={theme}
-                        type="button"
-                        aria-label={
-                          locked
-                            ? "Tema Neon Dark, disponible en Premium"
-                            : `Tema ${theme}`
-                        }
-                        onClick={() =>
-                          locked
-                            ? setMessage(
-                                "Neon Dark es un tema exclusivo de MultiLinks Premium.",
-                              )
-                            : chooseColorBackground({
-                                theme,
-                                backgroundPreset: undefined,
-                                backgroundColor: color,
-                                accentColor:
-                                  theme === "neon"
-                                    ? "#c6ff3d"
-                                    : profile.accentColor,
-                              })
-                        }
-                        className={`relative h-11 w-11 rounded-full border-2 transition motion-reduce:transition-none ${profile.theme === theme && !profile.backgroundPreset ? "border-lime ring-2 ring-lime/35 ring-offset-2 ring-offset-card" : "border-white/15 hover:border-white/35"}`}
-                        style={{ backgroundColor: color }}
-                      >
-                        {locked ? (
-                          <span className="absolute -right-2 -top-2 grid h-5 w-5 place-items-center rounded-full bg-lime text-ink">
-                            <Crown size={11} />
-                          </span>
-                        ) : null}
-                      </button>
-                    );
-                  },
-                )}
-              </div>
-            </div>
-            <div className="mt-6 border-t border-white/10 pt-6">
               <button
                 type="button"
-                onClick={() => setBackgroundsOpen((open) => !open)}
-                aria-expanded={backgroundsOpen}
-                className="flex w-full items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[.035] px-4 py-4 text-left transition hover:border-lime/35 motion-reduce:transition-none"
+                onClick={() => setAppearanceTab("fondo")}
+                className={`rounded-lg px-3 py-2 text-sm font-black transition motion-reduce:transition-none ${appearanceTab === "fondo" ? "bg-white/[.08] text-white" : "text-white/45 hover:text-white/80"}`}
               >
-                <span>
-                  <span className="flex items-center gap-2 font-display text-sm font-black">
-                    {isPro ? (
-                      <Check size={16} className="text-lime" />
-                    ) : (
-                      <Crown size={16} className="text-lime" />
-                    )}
-                    Fondos Premium
-                  </span>
-                  <span className="mt-1 block text-xs text-white/35">
-                    24 diseños · 3 gratis · toca para desplegar
-                  </span>
-                </span>
-                <ChevronDown
-                  size={20}
-                  className={`text-white/45 transition motion-reduce:transition-none ${backgroundsOpen ? "rotate-180" : ""}`}
-                />
+                Fondo y color
               </button>
-              {backgroundsOpen ? (
-                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  {premiumBackgrounds.map((background) => {
-                    const selected = profile.backgroundPreset === background.id;
-                    const availableForFree = isFreeBackground(background.id);
-                    return (
-                      <button
-                        key={background.id}
-                        type="button"
-                        onClick={() => {
-                          if (!isPro && !availableForFree) {
-                            setMessage(
-                              "Los fondos Premium están disponibles con MultiLinks Premium.",
-                            );
-                            return;
+              <button
+                type="button"
+                onClick={() => setAppearanceTab("botones")}
+                className={`rounded-lg px-3 py-2 text-sm font-black transition motion-reduce:transition-none ${appearanceTab === "botones" ? "bg-white/[.08] text-white" : "text-white/45 hover:text-white/80"}`}
+              >
+                Botones
+              </button>
+            </div>
+            {appearanceTab === "fondo" ? (
+              <>
+                <div className="mt-6">
+                  <p className="text-sm font-bold text-white/75">
+                    Temas rápidos
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-3">
+                    {(["lime", "violet", "sunset", "neon"] as const).map(
+                      (theme) => {
+                        const color =
+                          theme === "lime"
+                            ? "#c9ff58"
+                            : theme === "violet"
+                              ? "#8566ff"
+                              : theme === "sunset"
+                                ? "#ff7356"
+                                : "#0f1115";
+                        const locked = theme === "neon" && !isPro;
+                        return (
+                          <button
+                            key={theme}
+                            type="button"
+                            aria-label={
+                              locked
+                                ? "Tema Neon Dark, disponible en Premium"
+                                : `Tema ${theme}`
+                            }
+                            onClick={() =>
+                              locked
+                                ? setMessage(
+                                    "Neon Dark es un tema exclusivo de MultiLinks Premium.",
+                                  )
+                                : chooseColorBackground({
+                                    theme,
+                                    backgroundPreset: undefined,
+                                    backgroundColor: color,
+                                    accentColor:
+                                      theme === "neon"
+                                        ? "#c6ff3d"
+                                        : profile.accentColor,
+                                  })
+                            }
+                            className={`relative h-11 w-11 rounded-full border-2 transition motion-reduce:transition-none ${profile.theme === theme && !profile.backgroundPreset ? "border-lime ring-2 ring-lime/35 ring-offset-2 ring-offset-card" : "border-white/15 hover:border-white/35"}`}
+                            style={{ backgroundColor: color }}
+                          >
+                            {locked ? (
+                              <span className="absolute -right-2 -top-2 grid h-5 w-5 place-items-center rounded-full bg-lime text-ink">
+                                <Crown size={11} />
+                              </span>
+                            ) : null}
+                          </button>
+                        );
+                      },
+                    )}
+                  </div>
+                </div>
+                <div className="mt-6 border-t border-white/10 pt-6">
+                  <button
+                    type="button"
+                    onClick={() => setBackgroundsOpen((open) => !open)}
+                    aria-expanded={backgroundsOpen}
+                    className="flex w-full items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[.035] px-4 py-4 text-left transition hover:border-lime/35 motion-reduce:transition-none"
+                  >
+                    <span>
+                      <span className="flex items-center gap-2 font-display text-sm font-black">
+                        {isPro ? (
+                          <Check size={16} className="text-lime" />
+                        ) : (
+                          <Crown size={16} className="text-lime" />
+                        )}
+                        Fondos Premium
+                      </span>
+                      <span className="mt-1 block text-xs text-white/35">
+                        24 diseños · 3 gratis · toca para desplegar
+                      </span>
+                    </span>
+                    <ChevronDown
+                      size={20}
+                      className={`text-white/45 transition motion-reduce:transition-none ${backgroundsOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                  {backgroundsOpen ? (
+                    <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      {premiumBackgrounds.map((background) => {
+                        const selected =
+                          profile.backgroundPreset === background.id;
+                        const availableForFree = isFreeBackground(
+                          background.id,
+                        );
+                        return (
+                          <button
+                            key={background.id}
+                            type="button"
+                            onClick={() => {
+                              if (!isPro && !availableForFree) {
+                                setMessage(
+                                  "Los fondos Premium están disponibles con MultiLinks Premium.",
+                                );
+                                return;
+                              }
+                              chooseColorBackground({
+                                theme: background.dark ? "neon" : "violet",
+                                backgroundPreset: background.id,
+                                backgroundColor: background.dark
+                                  ? "#0f1115"
+                                  : "#f7f4ed",
+                                accentColor: background.dark
+                                  ? "#c6ff3d"
+                                  : "#8566ff",
+                              });
+                            }}
+                            className={`group relative overflow-hidden rounded-2xl border-2 text-left transition hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none ${selected ? "border-lime shadow-[0_0_24px_rgba(201,255,88,.18)]" : "border-white/10 hover:border-white/30"}`}
+                          >
+                            <span
+                              className="block aspect-[9/13] bg-cover"
+                              style={premiumBackgroundStyle(background.id)}
+                            />
+                            <span className="absolute inset-x-0 bottom-0 bg-black/70 px-2 py-2 text-[10px] font-black text-white backdrop-blur-sm">
+                              {background.name}
+                            </span>
+                            {!isPro && !availableForFree ? (
+                              <span className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-lime text-ink">
+                                <Crown size={13} />
+                              </span>
+                            ) : !isPro && availableForFree ? (
+                              <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-ink">
+                                Gratis
+                              </span>
+                            ) : null}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                </div>
+                <div className="mt-6 border-t border-white/10 pt-6">
+                  <div className="flex items-center justify-between gap-4">
+                    <span>
+                      <span className="flex items-center gap-2 font-display text-sm font-black">
+                        {isPro ? (
+                          <ImagePlus size={16} className="text-lime" />
+                        ) : (
+                          <Crown size={16} className="text-lime" />
+                        )}
+                        Imagen de fondo
+                      </span>
+                      <span className="mt-1 block text-xs text-white/35">
+                        {isPro
+                          ? "JPG, PNG o WebP · máximo 3 MB"
+                          : "Sube tu propia imagen con MultiLinks Premium"}
+                      </span>
+                    </span>
+                    {isPro ? (
+                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-xl border border-white/15 bg-white/[.045] px-4 py-2 text-sm font-bold text-white/70 transition hover:border-lime/45 hover:text-lime motion-reduce:transition-none">
+                        <ImagePlus size={16} />{" "}
+                        {profile.backgroundImage ? "Cambiar" : "Subir"}
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          className="sr-only"
+                          onChange={(e) =>
+                            uploadBackground(e.target.files?.[0])
                           }
-                          chooseColorBackground({
-                            theme: background.dark ? "neon" : "violet",
-                            backgroundPreset: background.id,
-                            backgroundColor: background.dark
-                              ? "#0f1115"
-                              : "#f7f4ed",
-                            accentColor: background.dark
-                              ? "#c6ff3d"
-                              : "#8566ff",
-                          });
-                        }}
-                        className={`group relative overflow-hidden rounded-2xl border-2 text-left transition hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none ${selected ? "border-lime shadow-[0_0_24px_rgba(201,255,88,.18)]" : "border-white/10 hover:border-white/30"}`}
-                      >
-                        <span
-                          className="block aspect-[9/13] bg-cover"
-                          style={premiumBackgroundStyle(background.id)}
                         />
-                        <span className="absolute inset-x-0 bottom-0 bg-black/70 px-2 py-2 text-[10px] font-black text-white backdrop-blur-sm">
-                          {background.name}
-                        </span>
-                        {!isPro && !availableForFree ? (
-                          <span className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-lime text-ink">
-                            <Crown size={13} />
-                          </span>
-                        ) : !isPro && availableForFree ? (
-                          <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-ink">
-                            Gratis
-                          </span>
-                        ) : null}
+                      </label>
+                    ) : (
+                      <Link
+                        href="/planes"
+                        className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-lime px-4 py-2 text-sm font-black text-ink transition hover:shadow-[0_10px_26px_rgba(201,255,88,.16)] motion-reduce:transition-none"
+                      >
+                        <Crown size={14} /> Premium
+                      </Link>
+                    )}
+                  </div>
+                  {profile.backgroundImage ? (
+                    <div className="mt-4 flex items-center gap-4">
+                      <span
+                        role="img"
+                        aria-label="Imagen de fondo seleccionada"
+                        className="h-20 w-16 shrink-0 overflow-hidden rounded-xl border border-white/15 bg-cover bg-center"
+                        style={{
+                          backgroundImage: `url(${profile.backgroundImage})`,
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={clearBackgroundImage}
+                        className="text-sm font-semibold text-red-300"
+                      >
+                        Quitar imagen
                       </button>
-                    );
-                  })}
+                    </div>
+                  ) : null}
+                  {backgroundError ? (
+                    <p className="mt-2 text-xs font-semibold text-red-300">
+                      {backgroundError}
+                    </p>
+                  ) : null}
                 </div>
-              ) : null}
-            </div>
-            <div className="mt-6 border-t border-white/10 pt-6">
-              <div className="flex items-center justify-between gap-4">
-                <span>
-                  <span className="flex items-center gap-2 font-display text-sm font-black">
+                <div className="mt-6 border-t border-white/10 pt-6">
+                  <div className="flex items-center justify-between gap-4">
+                    <span>
+                      <span className="flex items-center gap-2 font-display text-sm font-black">
+                        {isPro ? (
+                          <ImagePlus size={16} className="text-lime" />
+                        ) : (
+                          <Crown size={16} className="text-lime" />
+                        )}
+                        Portada
+                      </span>
+                      <span className="mt-1 block text-xs text-white/35">
+                        {isPro
+                          ? "Banner arriba de tu foto · relación 3:1 recomendada"
+                          : "Agrega un banner con MultiLinks Premium"}
+                      </span>
+                    </span>
                     {isPro ? (
-                      <ImagePlus size={16} className="text-lime" />
+                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-xl border border-white/15 bg-white/[.045] px-4 py-2 text-sm font-bold text-white/70 transition hover:border-lime/45 hover:text-lime motion-reduce:transition-none">
+                        <ImagePlus size={16} />{" "}
+                        {profile.coverImage ? "Cambiar" : "Subir"}
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          className="sr-only"
+                          onChange={(e) => uploadCover(e.target.files?.[0])}
+                        />
+                      </label>
                     ) : (
-                      <Crown size={16} className="text-lime" />
+                      <Link
+                        href="/planes"
+                        className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-lime px-4 py-2 text-sm font-black text-ink transition hover:shadow-[0_10px_26px_rgba(201,255,88,.16)] motion-reduce:transition-none"
+                      >
+                        <Crown size={14} /> Premium
+                      </Link>
                     )}
-                    Imagen de fondo
-                  </span>
-                  <span className="mt-1 block text-xs text-white/35">
-                    {isPro
-                      ? "JPG, PNG o WebP · máximo 3 MB"
-                      : "Sube tu propia imagen con MultiLinks Premium"}
-                  </span>
-                </span>
-                {isPro ? (
-                  <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-xl border border-white/15 bg-white/[.045] px-4 py-2 text-sm font-bold text-white/70 transition hover:border-lime/45 hover:text-lime motion-reduce:transition-none">
-                    <ImagePlus size={16} />{" "}
-                    {profile.backgroundImage ? "Cambiar" : "Subir"}
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      className="sr-only"
-                      onChange={(e) => uploadBackground(e.target.files?.[0])}
-                    />
-                  </label>
-                ) : (
-                  <Link
-                    href="/planes"
-                    className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-lime px-4 py-2 text-sm font-black text-ink transition hover:shadow-[0_10px_26px_rgba(201,255,88,.16)] motion-reduce:transition-none"
-                  >
-                    <Crown size={14} /> Premium
-                  </Link>
-                )}
-              </div>
-              {profile.backgroundImage ? (
-                <div className="mt-4 flex items-center gap-4">
-                  <span
-                    role="img"
-                    aria-label="Imagen de fondo seleccionada"
-                    className="h-20 w-16 shrink-0 overflow-hidden rounded-xl border border-white/15 bg-cover bg-center"
-                    style={{ backgroundImage: `url(${profile.backgroundImage})` }}
-                  />
-                  <button
-                    type="button"
-                    onClick={clearBackgroundImage}
-                    className="text-sm font-semibold text-red-300"
-                  >
-                    Quitar imagen
-                  </button>
+                  </div>
+                  {profile.coverImage ? (
+                    <div className="mt-4 space-y-2">
+                      <span
+                        role="img"
+                        aria-label="Portada seleccionada"
+                        className="block aspect-[3/1] w-full overflow-hidden rounded-xl border border-white/15 bg-cover bg-center"
+                        style={{
+                          backgroundImage: `url(${profile.coverImage})`,
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={clearCover}
+                        className="text-sm font-semibold text-red-300"
+                      >
+                        Quitar portada
+                      </button>
+                    </div>
+                  ) : null}
+                  {coverError ? (
+                    <p className="mt-2 text-xs font-semibold text-red-300">
+                      {coverError}
+                    </p>
+                  ) : null}
                 </div>
-              ) : null}
-              {backgroundError ? (
-                <p className="mt-2 text-xs font-semibold text-red-300">
-                  {backgroundError}
-                </p>
-              ) : null}
-            </div>
-            <div className="mt-6 border-t border-white/10 pt-6">
-              <div className="flex items-center justify-between gap-4">
-                <span>
-                  <span className="flex items-center gap-2 font-display text-sm font-black">
-                    {isPro ? (
-                      <ImagePlus size={16} className="text-lime" />
-                    ) : (
-                      <Crown size={16} className="text-lime" />
-                    )}
-                    Portada
-                  </span>
-                  <span className="mt-1 block text-xs text-white/35">
-                    {isPro
-                      ? "Banner arriba de tu foto · relación 3:1 recomendada"
-                      : "Agrega un banner con MultiLinks Premium"}
-                  </span>
-                </span>
-                {isPro ? (
-                  <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-xl border border-white/15 bg-white/[.045] px-4 py-2 text-sm font-bold text-white/70 transition hover:border-lime/45 hover:text-lime motion-reduce:transition-none">
-                    <ImagePlus size={16} /> {profile.coverImage ? "Cambiar" : "Subir"}
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      className="sr-only"
-                      onChange={(e) => uploadCover(e.target.files?.[0])}
-                    />
-                  </label>
-                ) : (
-                  <Link
-                    href="/planes"
-                    className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-lime px-4 py-2 text-sm font-black text-ink transition hover:shadow-[0_10px_26px_rgba(201,255,88,.16)] motion-reduce:transition-none"
-                  >
-                    <Crown size={14} /> Premium
-                  </Link>
-                )}
-              </div>
-              {profile.coverImage ? (
-                <div className="mt-4 space-y-2">
-                  <span
-                    role="img"
-                    aria-label="Portada seleccionada"
-                    className="block aspect-[3/1] w-full overflow-hidden rounded-xl border border-white/15 bg-cover bg-center"
-                    style={{ backgroundImage: `url(${profile.coverImage})` }}
-                  />
-                  <button
-                    type="button"
-                    onClick={clearCover}
-                    className="text-sm font-semibold text-red-300"
-                  >
-                    Quitar portada
-                  </button>
-                </div>
-              ) : null}
-              {coverError ? (
-                <p className="mt-2 text-xs font-semibold text-red-300">{coverError}</p>
-              ) : null}
-            </div>
-            <div className="mt-6 border-t border-white/10 pt-6">
-              <p className="text-sm font-bold text-white/75">Paletas curadas</p>
-              <p className="mt-1 text-xs text-white/35">
-                Combinaciones equilibradas para mantener una presencia visual limpia.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-3">
-                {CURATED_PALETTES.map((palette) => {
-                  const selected =
-                    !profile.backgroundPreset &&
-                    profile.backgroundColor?.toLowerCase() === palette.background &&
-                    profile.accentColor?.toLowerCase() === palette.accent;
+                <div className="mt-6 border-t border-white/10 pt-6">
+                  <p className="text-sm font-bold text-white/75">
+                    Paletas curadas
+                  </p>
+                  <p className="mt-1 text-xs text-white/35">
+                    Combinaciones equilibradas para mantener una presencia
+                    visual limpia.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-3">
+                    {CURATED_PALETTES.map((palette) => {
+                      const selected =
+                        !profile.backgroundPreset &&
+                        profile.backgroundColor?.toLowerCase() ===
+                          palette.background &&
+                        profile.accentColor?.toLowerCase() === palette.accent;
 
-                  return (
-                    <button
-                      key={palette.name}
-                      type="button"
-                      title={palette.name}
-                      aria-label={`Usar paleta ${palette.name}`}
-                      aria-pressed={selected}
-                      onClick={() =>
+                      return (
+                        <button
+                          key={palette.name}
+                          type="button"
+                          title={palette.name}
+                          aria-label={`Usar paleta ${palette.name}`}
+                          aria-pressed={selected}
+                          onClick={() =>
+                            chooseColorBackground({
+                              theme: "violet",
+                              backgroundPreset: undefined,
+                              backgroundColor: palette.background,
+                              accentColor: palette.accent,
+                            })
+                          }
+                          className={`relative h-11 w-11 overflow-hidden rounded-full border-2 transition hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none ${selected ? "border-lime ring-2 ring-lime/35 ring-offset-2 ring-offset-card" : "border-white/15 hover:border-white/35"}`}
+                        >
+                          <span
+                            className="absolute inset-0"
+                            style={{
+                              backgroundColor: palette.background,
+                              clipPath: "polygon(0 0, 100% 0, 0 100%)",
+                            }}
+                            aria-hidden="true"
+                          />
+                          <span
+                            className="absolute inset-0"
+                            style={{
+                              backgroundColor: palette.accent,
+                              clipPath: "polygon(100% 0, 100% 100%, 0 100%)",
+                            }}
+                            aria-hidden="true"
+                          />
+                          {selected ? (
+                            <span className="absolute inset-0 grid place-items-center text-white drop-shadow-[0_1px_2px_rgba(0,0,0,.8)]">
+                              <Check size={15} strokeWidth={3} />
+                            </span>
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <p className="mt-6 text-xs font-black uppercase tracking-[.12em] text-white/35">
+                    Personalizado
+                  </p>
+                  <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                    <ColorField
+                      label="Color de fondo"
+                      value={profile.backgroundColor ?? "#c9ff58"}
+                      onChange={(backgroundColor) =>
                         chooseColorBackground({
-                          theme: "violet",
+                          backgroundColor,
                           backgroundPreset: undefined,
-                          backgroundColor: palette.background,
-                          accentColor: palette.accent,
                         })
                       }
-                      className={`relative h-11 w-11 overflow-hidden rounded-full border-2 transition hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none ${selected ? "border-lime ring-2 ring-lime/35 ring-offset-2 ring-offset-card" : "border-white/15 hover:border-white/35"}`}
-                    >
-                      <span
-                        className="absolute inset-0"
-                        style={{
-                          backgroundColor: palette.background,
-                          clipPath: "polygon(0 0, 100% 0, 0 100%)",
-                        }}
-                        aria-hidden="true"
-                      />
-                      <span
-                        className="absolute inset-0"
-                        style={{
-                          backgroundColor: palette.accent,
-                          clipPath: "polygon(100% 0, 100% 100%, 0 100%)",
-                        }}
-                        aria-hidden="true"
-                      />
-                      {selected ? (
-                        <span className="absolute inset-0 grid place-items-center text-white drop-shadow-[0_1px_2px_rgba(0,0,0,.8)]">
-                          <Check size={15} strokeWidth={3} />
-                        </span>
-                      ) : null}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <p className="mt-6 text-xs font-black uppercase tracking-[.12em] text-white/35">
-                Personalizado
-              </p>
-              <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                <ColorField
-                  label="Color de fondo"
-                  value={profile.backgroundColor ?? "#c9ff58"}
-                  onChange={(backgroundColor) =>
-                    chooseColorBackground({
-                      backgroundColor,
-                      backgroundPreset: undefined,
-                    })
-                  }
-                />
-                <ColorField
-                  label="Color de acento"
-                  value={profile.accentColor ?? "#8566ff"}
-                  onChange={(accentColor) =>
-                    setProfile({ ...profile, accentColor })
-                  }
-                />
-              </div>
-            </div>
-            </>
+                    />
+                    <ColorField
+                      label="Color de acento"
+                      value={profile.accentColor ?? "#8566ff"}
+                      onChange={(accentColor) =>
+                        setProfile({ ...profile, accentColor })
+                      }
+                    />
+                  </div>
+                </div>
+              </>
             ) : null}
             {appearanceTab === "botones" ? (
-            <div className="mt-6">
-              <p className="text-sm font-bold text-white/75">
-                Forma de botones
-              </p>
-              <p className="mt-1 text-xs text-white/35">
-                Aplica a todos los enlaces de tu página.
-              </p>
-              <div className="mt-4 grid grid-cols-3 gap-2">
-                {(["rounded", "pill", "square"] as const).map((style) => (
-                  <button
-                    key={style}
-                    onClick={() =>
-                      setProfile({ ...profile, buttonStyle: style })
-                    }
-                    className={`flex flex-col items-center gap-2 rounded-xl border px-3 py-4 text-xs font-bold transition motion-reduce:transition-none ${profile.buttonStyle === style ? "border-lime/60 bg-lime/10 text-white" : "border-white/12 bg-white/[.03] text-white/55 hover:border-white/25 hover:text-white"}`}
-                  >
-                    <span
-                      className={`h-7 w-full border ${style === "pill" ? "rounded-full" : style === "square" ? "rounded-md" : "rounded-xl"} ${profile.buttonStyle === style ? "border-lime/50 bg-lime/15" : "border-white/20 bg-white/[.05]"}`}
-                    />
-                    {style === "rounded"
-                      ? "Redondeado"
-                      : style === "pill"
-                        ? "Cápsula"
-                        : "Cuadrado"}
-                  </button>
-                ))}
+              <div className="mt-6">
+                <p className="text-sm font-bold text-white/75">
+                  Forma de botones
+                </p>
+                <p className="mt-1 text-xs text-white/35">
+                  Aplica a todos los enlaces de tu página.
+                </p>
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  {(["rounded", "pill", "square"] as const).map((style) => (
+                    <button
+                      key={style}
+                      onClick={() =>
+                        setProfile({ ...profile, buttonStyle: style })
+                      }
+                      className={`flex flex-col items-center gap-2 rounded-xl border px-3 py-4 text-xs font-bold transition motion-reduce:transition-none ${profile.buttonStyle === style ? "border-lime/60 bg-lime/10 text-white" : "border-white/12 bg-white/[.03] text-white/55 hover:border-white/25 hover:text-white"}`}
+                    >
+                      <span
+                        className={`h-7 w-full border ${style === "pill" ? "rounded-full" : style === "square" ? "rounded-md" : "rounded-xl"} ${profile.buttonStyle === style ? "border-lime/50 bg-lime/15" : "border-white/20 bg-white/[.05]"}`}
+                      />
+                      {style === "rounded"
+                        ? "Redondeado"
+                        : style === "pill"
+                          ? "Cápsula"
+                          : "Cuadrado"}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
             ) : null}
           </div>
           <div
@@ -1491,15 +1770,30 @@ export default function Dashboard() {
                 <div className="mt-5 space-y-3">
                   {profile.links.map((link) => (
                     <div key={link.id}>
-                      {!isPro && link.active && profile.links.filter(item => item.active).findIndex(item => item.id === link.id) > 0 && <p className="mb-2 rounded-xl border border-lime/20 bg-lime/5 p-3 text-xs text-white/60">🔒 Este enlace está guardado pero bloqueado por el límite de tu plan. <Link href="/planes" className="font-bold text-lime">Activar Premium</Link></p>}
-                    <SortableLinkRow
-                      key={link.id}
-                      link={link}
-                      reducedMotion={reducedMotion}
-                      isPro={canUseFeature(access, "smart_media")}
-                      onUpdate={updateLink}
-                      onRemove={removeLink}
-                    />
+                      {!isPro &&
+                        link.active &&
+                        profile.links
+                          .filter((item) => item.active)
+                          .findIndex((item) => item.id === link.id) > 0 && (
+                          <p className="mb-2 rounded-xl border border-lime/20 bg-lime/5 p-3 text-xs text-white/60">
+                            🔒 Este enlace está guardado pero bloqueado por el
+                            límite de tu plan.{" "}
+                            <Link
+                              href="/planes"
+                              className="font-bold text-lime"
+                            >
+                              Activar Premium
+                            </Link>
+                          </p>
+                        )}
+                      <SortableLinkRow
+                        key={link.id}
+                        link={link}
+                        reducedMotion={reducedMotion}
+                        isPro={canUseFeature(access, "smart_media")}
+                        onUpdate={updateLink}
+                        onRemove={removeLink}
+                      />
                     </div>
                   ))}
                 </div>
@@ -1528,7 +1822,12 @@ export default function Dashboard() {
             </p>
             <div className="mx-auto h-[720px] max-w-[390px] overflow-hidden rounded-[42px] border-[10px] border-card-border bg-card-border shadow-[0_30px_90px_rgba(0,0,0,.45)]">
               <div className="h-full overflow-y-auto rounded-[30px]">
-                <ProfileCard profile={previewProfile} preview showBranding={!isPro} richMedia={isPro} />
+                <ProfileCard
+                  profile={previewProfile}
+                  preview
+                  showBranding={!isPro}
+                  richMedia={isPro}
+                />
               </div>
             </div>
           </div>
@@ -1542,15 +1841,18 @@ function Field({
   label,
   value,
   onChange,
+  maxLength,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  maxLength?: number;
 }) {
   return (
     <label className="text-sm font-bold text-white/75">
       {label}
       <input
+        maxLength={maxLength}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="mt-2 w-full rounded-xl border border-white/10 bg-white/[.045] px-4 py-3 font-normal text-white outline-none placeholder:text-white/25 focus:border-lime/70 focus:bg-white/[.07]"

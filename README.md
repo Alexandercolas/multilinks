@@ -16,3 +16,5 @@ El dashboard persiste perfiles y enlaces en Supabase. Incluye Free con un enlace
 Consulta [PREMIUM.md](PREMIUM.md) para configurar pagos, migraciones y permisos, y [ANALYTICS.md](ANALYTICS.md) para estadísticas, privacidad y validación.
 
 El diseño del perfil público, QR, compartir y pruebas responsive están documentados en [PUBLIC-PROFILE.md](PUBLIC-PROFILE.md).
+
+El registro, la primera publicación y el cambio de contraseña desde Ajustes están documentados en [ACCOUNT-FLOW.md](ACCOUNT-FLOW.md).

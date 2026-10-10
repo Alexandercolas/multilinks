@@ -195,7 +195,7 @@ export function ProfileCard({
               const faviconSrc =
                 !customIcon &&
                 link.faviconUrl &&
-                /^(https:\/\/|\/api\/img\?)/i.test(link.faviconUrl)
+                /^(https:\/\/|\/api\/(?:img|favicon)\?)/i.test(link.faviconUrl)
                   ? link.faviconUrl
                   : undefined;
               const platform = customIcon ? null : detectPlatform(link.url);
@@ -316,7 +316,7 @@ export function ProfileCard({
             const faviconSrc =
               !customIcon &&
               link.faviconUrl &&
-              /^(https:\/\/|\/api\/img\?)/i.test(link.faviconUrl)
+              /^(https:\/\/|\/api\/(?:img|favicon)\?)/i.test(link.faviconUrl)
                 ? link.faviconUrl
                 : undefined;
             const iconSlot = customIcon ? (
@@ -327,7 +327,7 @@ export function ProfileCard({
                   <span
                     role="img"
                     aria-label="Icono del enlace"
-                    className="h-full w-full bg-cover bg-center"
+                    className="h-full w-full bg-contain bg-center bg-no-repeat"
                     style={{ backgroundImage: `url(${customIcon})` }}
                   />
                 ) : (

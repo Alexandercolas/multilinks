@@ -358,14 +358,12 @@ export function ProfileCard({
               <>
                 {iconSlot}
                 <span className="min-w-0 flex-1">
-                  <span
-                    className="block break-words [overflow-wrap:anywhere] text-[15px] font-semibold leading-snug"
-                  >
+                  <span className="line-clamp-2 break-words [overflow-wrap:anywhere] text-[15px] font-semibold leading-snug">
                     {link.title}
                   </span>
                   {link.description ? (
                     <span
-                      className={`mt-1 block break-words [overflow-wrap:anywhere] text-[13px] font-normal leading-5 ${darkSurface ? "text-white/75" : "text-ink/75"}`}
+                      className={`mt-1 line-clamp-1 break-words [overflow-wrap:anywhere] text-[13px] font-normal leading-5 ${darkSurface ? "text-white/75" : "text-ink/75"}`}
                     >
                       {link.description}
                     </span>
@@ -439,7 +437,7 @@ export function ProfileCard({
                       href={href}
                       target={!preview ? "_blank" : undefined}
                       rel="noreferrer"
-                      className="profile-link flex min-h-[64px] items-center gap-3 px-3.5 py-3 text-left transition hover:bg-black/[.02] motion-reduce:transform-none"
+                      className="profile-link flex min-h-[60px] items-center gap-3 px-3.5 py-2.5 text-left transition hover:bg-black/[.02] motion-reduce:transform-none"
                     >
                       {rowInner}
                     </a>
@@ -449,15 +447,15 @@ export function ProfileCard({
                     href={href}
                     target={!preview ? "_blank" : undefined}
                     rel="noreferrer"
-                    className={`profile-link group flex min-h-[64px] w-full min-w-0 items-center gap-3 ${cardRadius} px-3.5 py-3 text-left ${cardSurface}`}
+                    className={`profile-link group flex min-h-[60px] w-full min-w-0 items-center gap-3 ${cardRadius} px-3.5 py-2.5 text-left ${cardSurface}`}
                   >
                     {iconSlot}
                     <span className="min-w-0 flex-1">
-                      <span className="block break-words text-[15px] font-semibold">
+                      <span className="line-clamp-2 break-words text-[15px] font-semibold">
                         {link.title}
                       </span>
                       <span
-                        className={`mt-1 block break-words text-xs leading-5 ${darkSurface ? "text-white/80" : "text-ink/75"}`}
+                        className={`mt-1 line-clamp-1 break-words text-xs leading-5 ${darkSurface ? "text-white/80" : "text-ink/75"}`}
                       >
                         {link.description || actionLabel}
                       </span>
@@ -473,7 +471,7 @@ export function ProfileCard({
                     href={href}
                     target={!preview ? "_blank" : undefined}
                     rel="noreferrer"
-                    className={`profile-link group relative flex min-h-[64px] w-full min-w-0 items-center gap-3 overflow-hidden ${featured ? cardRadius : buttonRadius} px-3.5 py-3 text-left hover:-translate-y-px motion-reduce:transform-none ${cardSurface}`}
+                    className={`profile-link group relative flex min-h-[60px] w-full min-w-0 items-center gap-3 overflow-hidden ${featured ? cardRadius : buttonRadius} px-3.5 py-2.5 text-left hover:-translate-y-px motion-reduce:transform-none ${cardSurface}`}
                   >
                     {rowInner}
                   </a>
@@ -484,9 +482,7 @@ export function ProfileCard({
         </div>
 
         {showBranding || !preview ? (
-          <footer
-            className={`mt-10 border-t border-current/[.15] pt-6 ${texturedBackground ? `rounded-xl p-4 backdrop-blur-md ${darkSurface ? "bg-black/[.65]" : "bg-white/[.85]"}` : ""}`}
-          >
+          <footer className="mt-8 pt-3">
             {showBranding &&
               (preview ? (
                 <span className="text-xs font-semibold">
@@ -508,7 +504,7 @@ export function ProfileCard({
             {!preview && (
               <Link
                 href="/sign-in?mode=signup"
-                className={`profile-focus mx-auto mt-3 flex min-h-11 w-fit items-center justify-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition ${darkSurface ? "border-white/20 bg-[#141414] text-white hover:bg-[#202020]" : "border-black/15 bg-white/95 text-ink hover:bg-white"}`}
+                className={`profile-focus mx-auto mt-3 flex min-h-11 w-fit items-center justify-center gap-2 rounded-full px-3 py-2 text-xs font-semibold transition hover:underline underline-offset-4 ${darkSurface ? "text-white/80 hover:text-white" : "text-ink/80 hover:text-ink"}`}
               >
                 Crear mi perfil
                 <ArrowUpRight aria-hidden="true" size={17} />

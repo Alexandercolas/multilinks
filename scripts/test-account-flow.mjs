@@ -192,6 +192,12 @@ try {
     await page.getByRole("link", { name: "Ver mi perfil publicado" }).count(),
     0,
   );
+  const panelNav = page.getByRole("navigation", {
+    name: "Secciones del panel",
+  });
+  await page
+    .getByRole("button", { name: "1. Nombre y usuario", exact: true })
+    .click();
   await page.getByLabel("Nombre", { exact: true }).fill("Perfil de prueba");
   await page.getByLabel("Usuario", { exact: true }).fill("dashboard");
   await page
@@ -199,6 +205,90 @@ try {
     .click();
   await page.getByRole("status").filter({ hasText: "reservado" }).waitFor();
   await page.getByLabel("Usuario", { exact: true }).fill(username);
+  await panelNav
+    .getByRole("button", { name: "Apariencia", exact: true })
+    .click();
+  assert.equal(
+    await page.getByLabel("Nombre", { exact: true }).isVisible(),
+    false,
+  );
+  assert.equal(
+    await page.getByLabel("Color de fondo", { exact: true }).isVisible(),
+    false,
+  );
+  await page.getByText("Colores personalizados", { exact: true }).click();
+  assert.equal(
+    await page.getByLabel("Color de fondo", { exact: true }).isVisible(),
+    true,
+  );
+  await page
+    .getByRole("button", { name: "Usar paleta Black elegante", exact: true })
+    .click();
+  assert.equal(
+    await page.getByLabel("Color de fondo", { exact: true }).inputValue(),
+    "#101010",
+  );
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.addScriptTag({
+      content: await readFile(
+        ".profile-test-runtime/node_modules/axe-core/axe.min.js",
+        "utf8",
+      ),
+    });
+    const violations = await page.evaluate(async () => {
+      const result = await window.axe.run(
+        { include: ["#apariencia", 'nav[aria-label="Secciones del panel"]'] },
+        { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa"] } },
+      );
+      return result.violations.map((v) => ({
+        id: v.id,
+        nodes: v.nodes.map((n) => n.target),
+      }));
+    });
+    assert.deepEqual(
+      violations,
+      [],
+      `Appearance and navigation accessibility at ${width}px`,
+    );
+    assert.ok(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      "Panel does not overflow",
+    );
+    await page.screenshot({
+      path: `.profile-test-runtime/screenshots/dashboard-appearance-${width}.png`,
+      fullPage: true,
+    });
+    if (width === 390) {
+      await page
+        .getByRole("button", { name: "Vista previa", exact: true })
+        .click();
+      assert.equal(
+        await page
+          .getByRole("complementary", { name: "Vista previa del perfil" })
+          .isVisible(),
+        true,
+      );
+      await page
+        .getByRole("button", { name: "Cerrar vista previa", exact: true })
+        .click();
+      assert.equal(
+        await page
+          .getByRole("complementary", { name: "Vista previa del perfil" })
+          .isVisible(),
+        false,
+      );
+    }
+  }
+  await panelNav.getByRole("button", { name: "Perfil", exact: true }).click();
+  assert.equal(
+    await page.getByLabel("Nombre", { exact: true }).inputValue(),
+    "Perfil de prueba",
+    "Changing sections keeps unsaved fields",
+  );
+  await panelNav.getByRole("button", { name: "Resumen", exact: true }).click();
   await page
     .getByRole("button", { name: "2. Tu primer enlace", exact: true })
     .click();
@@ -217,6 +307,7 @@ try {
         })
       : route.continue();
   await page.route("**/rest/v1/links*", failLinks);
+  await panelNav.getByRole("button", { name: "Resumen", exact: true }).click();
   await publish.click();
   await page
     .getByRole("status")
@@ -263,7 +354,9 @@ try {
   assert.equal(saved.error, null);
   assert.equal(saved.data.length, 1);
   assert.equal(saved.data[0].title, "Mi primer enlace");
+  await panelNav.getByRole("button", { name: "Perfil", exact: true }).click();
   await page.getByLabel("Usuario", { exact: true }).fill(username + "-edit");
+  await panelNav.getByRole("button", { name: "Resumen", exact: true }).click();
   assert.ok(
     (await page.getByLabel("Tu URL pública").inputValue()).endsWith(
       "/" + username,

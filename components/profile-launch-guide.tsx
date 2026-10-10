@@ -10,6 +10,7 @@ export function ProfileLaunchGuide({
   busy,
   onAddLink,
   onPublish,
+  onEditIdentity,
 }: {
   identityReady: boolean;
   linkReady: boolean;
@@ -17,6 +18,7 @@ export function ProfileLaunchGuide({
   busy: boolean;
   onAddLink: () => void;
   onPublish: () => void;
+  onEditIdentity: () => void;
 }) {
   const [origin, setOrigin] = useState("");
   const [notice, setNotice] = useState("");
@@ -41,7 +43,7 @@ export function ProfileLaunchGuide({
   return (
     <section
       aria-label="Publicación del perfil"
-      className="mb-6 rounded-2xl border border-lime/25 bg-card p-5 sm:p-6"
+      className="mb-6 rounded-2xl border border-white/10 bg-[#161616] p-5 sm:p-6"
     >
       <h2 className="text-lg font-bold">
         {publishedUsername
@@ -90,10 +92,10 @@ export function ProfileLaunchGuide({
           </p>
           <ol className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
             <li>
-              <a href="#perfil" className={action}>
+              <button type="button" onClick={onEditIdentity} className={action}>
                 {identityReady && <Check aria-hidden="true" size={16} />}1.
                 Nombre y usuario
-              </a>
+              </button>
             </li>
             <li>
               <button type="button" onClick={onAddLink} className={action}>
@@ -106,7 +108,7 @@ export function ProfileLaunchGuide({
                 type="button"
                 onClick={onPublish}
                 disabled={busy || !identityReady || !linkReady}
-                className={`${action} bg-lime text-ink disabled:opacity-50`}
+                className={`${action} bg-white text-ink disabled:opacity-50`}
               >
                 {busy ? "Publicando…" : "3. Publicar mi página"}
               </button>

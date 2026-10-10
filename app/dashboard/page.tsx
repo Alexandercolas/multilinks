@@ -40,7 +40,10 @@ import {
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { ProfileCard } from "@/components/profile-card";
-import { DashboardNavigation } from "@/components/dashboard-navigation";
+import {
+  DashboardNavigation,
+  type DashboardSection,
+} from "@/components/dashboard-navigation";
 import { DashboardSkeleton } from "@/components/dashboard-skeleton";
 import { ProfileLaunchGuide } from "@/components/profile-launch-guide";
 import { usernameError } from "@/lib/profile-onboarding";
@@ -110,6 +113,7 @@ const LINK_TYPE_VALUES: SmartCardType[] = [
 ];
 
 const CURATED_PALETTES = [
+  { name: "Black elegante", background: "#101010", accent: "#dedbd4" },
   { name: "Nocturno lima", background: "#111510", accent: "#c9ff58" },
   { name: "Grafito grape", background: "#14131a", accent: "#9b83ff" },
   { name: "Teal profundo", background: "#0e1a1a", accent: "#5eead4" },
@@ -238,14 +242,14 @@ function SortableLinkRow({
             onChange={(event) =>
               onUpdate(link.id, { title: event.target.value })
             }
-            className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm font-semibold text-white outline-none placeholder:text-white/25 focus:border-lime/70"
+            className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm font-semibold text-white outline-none placeholder:text-white/25 focus:border-white/70"
           />
           <input
             value={link.url}
             aria-label="Dirección del enlace"
             placeholder="https://..."
             onChange={(event) => onUpdate(link.id, { url: event.target.value })}
-            className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70"
+            className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-white/70"
           />
           <input
             value={link.icon ?? ""}
@@ -255,13 +259,13 @@ function SortableLinkRow({
             onChange={(event) =>
               onUpdate(link.id, { icon: event.target.value })
             }
-            className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70"
+            className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-white/70"
           />
           {previewState !== "idle" || platform || link.thumbnail ? (
             <div className="sm:col-span-3 space-y-2">
               <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
                 {previewState === "loading" ? (
-                  <span className="inline-flex items-center gap-1.5 text-white/45">
+                  <span className="inline-flex items-center gap-1.5 text-white/65">
                     <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-white/70" />
                     Detectando enlace…
                   </span>
@@ -292,11 +296,11 @@ function SortableLinkRow({
                   </span>
                 ) : null}
                 {previewState === "blocked" ? (
-                  <span className="text-white/35">
+                  <span className="text-white/60">
                     No se pudo analizar esa dirección
                   </span>
                 ) : previewState === "error" ? (
-                  <span className="text-white/35">
+                  <span className="text-white/60">
                     Sin vista previa disponible
                   </span>
                 ) : null}
@@ -319,7 +323,7 @@ function SortableLinkRow({
                       {link.title || preview?.title || "Sin título"}
                     </p>
                   </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-white/40">
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-white/60">
                     <label className="flex items-center gap-1.5">
                       Estilo
                       <select
@@ -329,7 +333,7 @@ function SortableLinkRow({
                             linkType: event.target.value as SmartCardType,
                           })
                         }
-                        className="max-w-[8rem] rounded-md border border-white/10 bg-white/[.05] px-2 py-1 text-[11px] font-semibold text-white/80 outline-none focus:border-lime/60"
+                        className="max-w-[8rem] rounded-md border border-white/10 bg-white/[.05] px-2 py-1 text-[11px] font-semibold text-white/80 outline-none focus:border-white/60"
                       >
                         {CARD_TYPE_OPTIONS.map((option) => (
                           <option
@@ -362,7 +366,7 @@ function SortableLinkRow({
                       <button
                         type="button"
                         onClick={() => onUpdate(link.id, { thumbnail: "" })}
-                        className="font-semibold text-white/40 transition hover:text-red-300"
+                        className="font-semibold text-white/60 transition hover:text-red-300"
                       >
                         Quitar imagen
                       </button>
@@ -373,8 +377,8 @@ function SortableLinkRow({
 
               {(media?.kind === "youtube" || link.linkType === "media") &&
               !isPro ? (
-                <p className="flex items-center gap-1.5 text-xs font-semibold text-white/40">
-                  <Crown size={13} className="text-lime" /> Las tarjetas
+                <p className="flex items-center gap-1.5 text-xs font-semibold text-white/60">
+                  <Crown size={13} className="text-white/80" /> Las tarjetas
                   multimedia se muestran con MultiLinks Premium
                 </p>
               ) : null}
@@ -388,7 +392,7 @@ function SortableLinkRow({
             onChange={(event) =>
               onUpdate(link.id, { description: event.target.value })
             }
-            className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70 sm:col-span-3"
+            className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-white/70 sm:col-span-3"
           />
           <input
             value={link.sectionTitle ?? ""}
@@ -398,7 +402,7 @@ function SortableLinkRow({
             onChange={(event) =>
               onUpdate(link.id, { sectionTitle: event.target.value })
             }
-            className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-lime/70 sm:col-span-3"
+            className="w-full min-w-0 rounded-lg border border-white/10 bg-white/[.045] px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 focus:border-white/70 sm:col-span-3"
           />
         </div>
       </div>
@@ -415,7 +419,7 @@ function SortableLinkRow({
               : "Destacar (se muestra más grande)"
           }
           onClick={() => onUpdate(link.id, { featured: !link.featured })}
-          className={`shrink-0 rounded-lg p-2 transition motion-reduce:transition-none ${link.featured ? "text-lime" : "text-white/25 hover:text-white/60"}`}
+          className={`shrink-0 rounded-lg p-2 transition motion-reduce:transition-none ${link.featured ? "text-white/80" : "text-white/25 hover:text-white/60"}`}
         >
           <Star size={17} className={link.featured ? "fill-current" : ""} />
         </button>
@@ -444,6 +448,9 @@ function SortableLinkRow({
 
 export default function Dashboard() {
   const router = useRouter();
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [activeSection, setActiveSection] =
+    useState<DashboardSection>("resumen");
   const [profile, setProfile] = useState<Profile>(demoProfile);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoError, setPhotoError] = useState("");
@@ -1090,7 +1097,7 @@ export default function Dashboard() {
   if (!ready || accessLoading) return <DashboardSkeleton />;
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-surface text-white">
+    <main className="relative min-h-screen overflow-x-clip bg-[#0c0c0c] text-white">
       <PremiumModal
         open={premiumModal}
         onClose={() => setPremiumModal(false)}
@@ -1098,23 +1105,15 @@ export default function Dashboard() {
         description="Free publica un enlace. Los demás permanecen guardados; Premium los desbloquea automáticamente."
         access={access}
       />
-      <span
-        aria-hidden="true"
-        className="pointer-events-none fixed -left-48 -top-48 h-[34rem] w-[34rem] rounded-full bg-lime/10 blur-3xl"
-      />
-      <span
-        aria-hidden="true"
-        className="pointer-events-none fixed -bottom-56 right-[-10rem] h-[38rem] w-[38rem] rounded-full bg-grape/10 blur-3xl"
-      />
-      <header className="relative border-b border-white/10 bg-surface-header/80 px-4 py-3 backdrop-blur-xl lg:px-8">
+      <header className="relative min-h-[76px] border-b border-white/10 bg-[#101010]/95 px-4 py-3 backdrop-blur-xl lg:px-8">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" aria-label="Volver al inicio" className="text-white">
+            <span className="text-white">
               <Logo />
-            </Link>
+            </span>
             {isPro ? (
-              <span className="rounded-full bg-gradient-to-r from-lime/55 to-grape/55 p-px">
-                <span className="block rounded-full bg-surface-header px-2.5 py-1 font-display text-[9px] font-black tracking-[.18em] text-white">
+              <span className="rounded-full bg-white/15 p-px">
+                <span className="block rounded-full bg-surface-header px-2.5 py-1 font-display text-[9px] font-semibold tracking-[.18em] text-white">
                   {access?.source === "trial" ? "PREMIUM TRIAL" : "PREMIUM"}
                 </span>
               </span>
@@ -1128,7 +1127,7 @@ export default function Dashboard() {
               <Link
                 href={`/${encodeURIComponent(publishedUsername)}`}
                 aria-label="Ver mi perfil publicado"
-                className="inline-flex items-center gap-2 rounded-xl bg-lime px-3 py-2.5 text-sm font-black text-ink transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(201,255,88,.15)] motion-reduce:transform-none motion-reduce:transition-none"
+                className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2.5 text-sm font-semibold text-ink transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(255,255,255,.15)] motion-reduce:transform-none motion-reduce:transition-none"
               >
                 <Eye size={17} />
                 <span className="hidden sm:inline">Ver mi perfil</span>
@@ -1147,33 +1146,61 @@ export default function Dashboard() {
               onClick={signOut}
               aria-label="Cerrar sesión"
               title="Cerrar sesión"
-              className="rounded-xl p-2.5 text-white/45 transition hover:bg-white/[.06] hover:text-white motion-reduce:transition-none"
+              className="rounded-xl p-2.5 text-white/65 transition hover:bg-white/[.06] hover:text-white motion-reduce:transition-none"
             >
               <LogOut size={19} />
             </button>
           </nav>
         </div>
       </header>
-      <DashboardNavigation isAdmin={isAdmin} />
-      <div className="relative mx-auto grid max-w-7xl gap-8 overflow-x-clip px-5 py-8 pb-28 lg:grid-cols-[1fr_400px] lg:gap-6 lg:pb-8 lg:pl-24">
+      <DashboardNavigation
+        isAdmin={isAdmin}
+        activeSection={activeSection}
+        onSelect={setActiveSection}
+      />
+      <div className="relative mx-auto grid max-w-[1440px] gap-8 overflow-x-clip px-4 py-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6 lg:pl-60 lg:pr-6">
         <section className="min-w-0">
-          <div
-            id="resumen"
-            className="mb-7 scroll-mt-24 flex flex-wrap items-end justify-between gap-4"
-          >
+          <div className="mb-7 scroll-mt-24 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="font-display text-xs font-black uppercase tracking-[.16em] text-lime">
+              <p className="font-display text-xs font-semibold uppercase tracking-[.16em] text-white/80">
                 TU ESPACIO
               </p>
-              <h1 className="mt-2 font-display text-3xl font-black tracking-[-.04em] text-white sm:text-4xl">
-                Personaliza tu página
+              <h1 className="mt-2 font-display text-3xl font-semibold tracking-[-.04em] text-white sm:text-4xl">
+                {
+                  {
+                    resumen: "Tu página, en orden",
+                    perfil: "Tu perfil",
+                    apariencia: "Diseña tu página",
+                    enlaces: "Tus enlaces",
+                  }[activeSection]
+                }
               </h1>
             </div>
             <div className="text-right">
               <button
+                type="button"
+                aria-expanded={previewOpen}
+                aria-controls="vista-previa"
+                onClick={() => {
+                  setPreviewOpen(!previewOpen);
+                  if (!previewOpen)
+                    requestAnimationFrame(() =>
+                      document
+                        .getElementById("vista-previa")
+                        ?.scrollIntoView({
+                          behavior: reducedMotion ? "auto" : "smooth",
+                        }),
+                    );
+                }}
+                className="mr-2 inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/20 px-3 text-sm font-medium lg:hidden"
+              >
+                <Eye size={16} aria-hidden="true" />
+                Vista previa
+              </button>
+              <button
                 onClick={save}
                 disabled={saving}
-                className="rounded-xl bg-lime px-6 py-3 text-sm font-black text-ink transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(201,255,88,.18)] disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none"
+                className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-ink transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(255,255,255,.18)] disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none"
               >
                 {saving ? "Publicando…" : "Guardar y publicar"}
               </button>
@@ -1187,71 +1214,101 @@ export default function Dashboard() {
               ) : null}
             </div>
           </div>
-          <ProfileLaunchGuide
-            identityReady={
-              Boolean(profile.displayName.trim()) &&
-              !usernameError(profile.username)
-            }
-            linkReady={profile.links.some(
-              (link) =>
-                link.active &&
-                isSafeLink(link.url) &&
-                Boolean(link.title.trim()),
-            )}
-            publishedUsername={publishedUsername}
-            busy={saving}
-            onPublish={() => void save()}
-            onAddLink={() => {
-              if (!profile.links.length) addLink();
-              requestAnimationFrame(() =>
-                document.getElementById("enlaces")?.scrollIntoView({
-                  behavior: reducedMotion ? "auto" : "smooth",
-                }),
-              );
-            }}
-          />
-          <Link
-            href="/dashboard/analytics"
-            className="mb-4 inline-flex items-center gap-2 rounded-xl border border-lime/25 bg-lime/10 px-5 py-3 font-bold text-lime"
-          >
-            Analytics 2.0 →
-          </Link>
-          <div
-            id="estadisticas"
-            className="mb-6 scroll-mt-24 grid gap-4 sm:grid-cols-3"
-          >
-            <StatCard
-              icon={<Eye size={20} />}
-              label="Vistas de página (histórico)"
-              value={totalViews}
-            />
-            <StatCard
-              icon={<MousePointerClick size={20} />}
-              label="Clics en enlaces"
-              value={profile.links.reduce(
-                (total, link) => total + (link.clicks ?? 0),
-                0,
+          <div id="resumen" hidden={activeSection !== "resumen"}>
+            <ProfileLaunchGuide
+              onEditIdentity={() => setActiveSection("perfil")}
+              identityReady={
+                Boolean(profile.displayName.trim()) &&
+                !usernameError(profile.username)
+              }
+              linkReady={profile.links.some(
+                (link) =>
+                  link.active &&
+                  isSafeLink(link.url) &&
+                  Boolean(link.title.trim()),
               )}
+              publishedUsername={publishedUsername}
+              busy={saving}
+              onPublish={() => void save()}
+              onAddLink={() => {
+                setActiveSection("enlaces");
+                if (!profile.links.length) addLink();
+                requestAnimationFrame(() =>
+                  document.getElementById("enlaces")?.scrollIntoView({
+                    behavior: reducedMotion ? "auto" : "smooth",
+                  }),
+                );
+              }}
             />
-            <StatCard
-              icon={<Play size={20} />}
-              label="Reproducciones"
-              value={profile.links.reduce(
-                (total, link) => total + (link.plays ?? 0),
-                0,
-              )}
-            />
-          </div>
-          <div className="mb-6">
-            <PremiumBanner access={access} />
+            <Link
+              href="/dashboard/analytics"
+              className="mb-4 inline-flex items-center gap-2 rounded-xl border border-white/25 bg-lime/10 px-5 py-3 font-bold text-white/80"
+            >
+              Analytics 2.0 →
+            </Link>
+            <div
+              id="estadisticas"
+              className="mb-6 scroll-mt-24 grid gap-4 sm:grid-cols-3"
+            >
+              <StatCard
+                icon={<Eye size={20} />}
+                label="Vistas de página (histórico)"
+                value={totalViews}
+              />
+              <StatCard
+                icon={<MousePointerClick size={20} />}
+                label="Clics en enlaces"
+                value={profile.links.reduce(
+                  (total, link) => total + (link.clicks ?? 0),
+                  0,
+                )}
+              />
+              <StatCard
+                icon={<Play size={20} />}
+                label="Reproducciones"
+                value={profile.links.reduce(
+                  (total, link) => total + (link.plays ?? 0),
+                  0,
+                )}
+              />
+            </div>
+            <div className="mb-6">
+              <PremiumBanner access={access} />
+            </div>
+            <div className="mb-6 grid gap-3 sm:grid-cols-3">
+              {(
+                [
+                  ["perfil", "Editar perfil", "Foto, nombre y biografía"],
+                  ["apariencia", "Personalizar", "Fondos, paletas y botones"],
+                  [
+                    "enlaces",
+                    "Administrar enlaces",
+                    "Contenido y orden de publicación",
+                  ],
+                ] as const
+              ).map(([section, title, description]) => (
+                <button
+                  key={section}
+                  type="button"
+                  onClick={() => setActiveSection(section)}
+                  className="rounded-2xl border border-white/10 bg-[#171717] p-4 text-left transition-colors hover:border-white/25 hover:bg-[#202020] focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+                >
+                  <span className="block text-sm font-semibold">{title} →</span>
+                  <span className="mt-2 block text-xs leading-5 text-white/65">
+                    {description}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
           <div
             id="perfil"
-            className="scroll-mt-24 rounded-[2rem] border border-white/12 bg-card/95 p-6"
+            hidden={activeSection !== "perfil"}
+            className="scroll-mt-24 rounded-[2rem] border border-white/[.10] bg-[#161616] p-6"
           >
-            <h2 className="font-display text-lg font-black">Perfil</h2>
+            <h2 className="font-display text-lg font-semibold">Perfil</h2>
             <div className="mt-5 flex flex-wrap items-center gap-4">
-              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-lime/35 bg-lime text-xl font-black text-ink shadow-[0_0_24px_rgba(201,255,88,.16)]">
+              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-white/35 bg-white text-xl font-semibold text-ink shadow-[0_0_24px_rgba(255,255,255,.16)]">
                 {profile.avatarImage ? (
                   <div
                     role="img"
@@ -1264,7 +1321,7 @@ export default function Dashboard() {
                 )}
               </div>
               <div>
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/15 bg-white/[.045] px-4 py-2 text-sm font-bold text-white/70 transition hover:border-lime/45 hover:text-lime motion-reduce:transition-none">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/15 bg-white/[.045] px-4 py-2 text-sm font-bold text-white/70 transition hover:border-white/45 hover:text-white/80 motion-reduce:transition-none">
                   <ImagePlus size={17} /> Subir foto
                   <input
                     type="file"
@@ -1284,7 +1341,7 @@ export default function Dashboard() {
                     Quitar
                   </button>
                 ) : null}
-                <p className="mt-2 text-xs text-white/35">
+                <p className="mt-2 text-xs text-white/60">
                   JPG, PNG o WebP · máximo 1 MB
                 </p>
                 {photoError ? (
@@ -1326,20 +1383,21 @@ export default function Dashboard() {
                   setProfile({ ...profile, bio: e.target.value })
                 }
                 rows={3}
-                className="mt-2 w-full resize-none rounded-xl border border-white/10 bg-white/[.045] px-4 py-3 font-normal text-white outline-none placeholder:text-white/25 focus:border-lime/70 focus:bg-white/[.07]"
+                className="mt-2 w-full resize-none rounded-xl border border-white/10 bg-white/[.045] px-4 py-3 font-normal text-white outline-none placeholder:text-white/25 focus:border-white/70 focus:bg-white/[.07]"
               />
             </label>
           </div>
           <div
             id="apariencia"
-            className="mt-6 scroll-mt-24 rounded-[2rem] border border-white/12 bg-card/95 p-6"
+            hidden={activeSection !== "apariencia"}
+            className="mt-6 scroll-mt-24 rounded-[2rem] border border-white/[.10] bg-[#161616] p-6"
           >
             <div className="flex items-center justify-between gap-4">
-              <h2 className="font-display text-lg font-black">Apariencia</h2>
+              <h2 className="font-display text-lg font-semibold">Apariencia</h2>
               {!isPro ? (
                 <Link
                   href="/planes"
-                  className="inline-flex items-center gap-1 text-xs font-black text-lime"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-white/80"
                 >
                   <Crown size={14} /> Desbloquear Premium
                 </Link>
@@ -1349,14 +1407,14 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => setAppearanceTab("fondo")}
-                className={`rounded-lg px-3 py-2 text-sm font-black transition motion-reduce:transition-none ${appearanceTab === "fondo" ? "bg-white/[.08] text-white" : "text-white/45 hover:text-white/80"}`}
+                className={`rounded-lg px-3 py-2 text-sm font-semibold transition motion-reduce:transition-none ${appearanceTab === "fondo" ? "bg-white/[.08] text-white" : "text-white/65 hover:text-white/80"}`}
               >
                 Fondo y color
               </button>
               <button
                 type="button"
                 onClick={() => setAppearanceTab("botones")}
-                className={`rounded-lg px-3 py-2 text-sm font-black transition motion-reduce:transition-none ${appearanceTab === "botones" ? "bg-white/[.08] text-white" : "text-white/45 hover:text-white/80"}`}
+                className={`rounded-lg px-3 py-2 text-sm font-semibold transition motion-reduce:transition-none ${appearanceTab === "botones" ? "bg-white/[.08] text-white" : "text-white/65 hover:text-white/80"}`}
               >
                 Botones
               </button>
@@ -1367,7 +1425,7 @@ export default function Dashboard() {
                   <p className="text-sm font-bold text-white/75">
                     Temas rápidos
                   </p>
-                  <div className="mt-3 flex flex-wrap gap-3">
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {(["lime", "violet", "sunset", "neon"] as const).map(
                       (theme) => {
                         const color =
@@ -1403,9 +1461,23 @@ export default function Dashboard() {
                                         : profile.accentColor,
                                   })
                             }
-                            className={`relative h-11 w-11 rounded-full border-2 transition motion-reduce:transition-none ${profile.theme === theme && !profile.backgroundPreset ? "border-lime ring-2 ring-lime/35 ring-offset-2 ring-offset-card" : "border-white/15 hover:border-white/35"}`}
+                            aria-pressed={
+                              profile.theme === theme &&
+                              !profile.backgroundPreset
+                            }
+                            className={`relative h-20 w-full overflow-hidden rounded-xl border transition motion-reduce:transition-none ${profile.theme === theme && !profile.backgroundPreset ? "border-white ring-2 ring-white/35" : "border-white/15 hover:border-white/35"}`}
                             style={{ backgroundColor: color }}
                           >
+                            <span className="absolute inset-x-0 bottom-0 bg-black/80 py-1.5 text-xs font-medium text-white">
+                              {
+                                {
+                                  lime: "Lima",
+                                  violet: "Violeta",
+                                  sunset: "Coral",
+                                  neon: "Black",
+                                }[theme]
+                              }
+                            </span>
                             {locked ? (
                               <span className="absolute -right-2 -top-2 grid h-5 w-5 place-items-center rounded-full bg-lime text-ink">
                                 <Crown size={11} />
@@ -1422,24 +1494,30 @@ export default function Dashboard() {
                     type="button"
                     onClick={() => setBackgroundsOpen((open) => !open)}
                     aria-expanded={backgroundsOpen}
-                    className="flex w-full items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[.035] px-4 py-4 text-left transition hover:border-lime/35 motion-reduce:transition-none"
+                    className="flex w-full items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[.035] px-4 py-4 text-left transition hover:border-white/35 motion-reduce:transition-none"
                   >
                     <span>
-                      <span className="flex items-center gap-2 font-display text-sm font-black">
+                      <span className="flex items-center gap-2 font-display text-sm font-semibold">
                         {isPro ? (
-                          <Check size={16} className="text-lime" />
+                          <Check size={16} className="text-white/80" />
                         ) : (
-                          <Crown size={16} className="text-lime" />
+                          <Crown size={16} className="text-white/80" />
                         )}
                         Fondos Premium
                       </span>
-                      <span className="mt-1 block text-xs text-white/35">
-                        24 diseños · 3 gratis · toca para desplegar
+                      <span className="mt-1 block text-xs text-white/60">
+                        {premiumBackgrounds.length} diseños ·{" "}
+                        {
+                          premiumBackgrounds.filter((background) =>
+                            isFreeBackground(background.id),
+                          ).length
+                        }{" "}
+                        gratis · ver colección
                       </span>
                     </span>
                     <ChevronDown
                       size={20}
-                      className={`text-white/45 transition motion-reduce:transition-none ${backgroundsOpen ? "rotate-180" : ""}`}
+                      className={`text-white/65 transition motion-reduce:transition-none ${backgroundsOpen ? "rotate-180" : ""}`}
                     />
                   </button>
                   {backgroundsOpen ? (
@@ -1472,13 +1550,13 @@ export default function Dashboard() {
                                   : "#8566ff",
                               });
                             }}
-                            className={`group relative overflow-hidden rounded-2xl border-2 text-left transition hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none ${selected ? "border-lime shadow-[0_0_24px_rgba(201,255,88,.18)]" : "border-white/10 hover:border-white/30"}`}
+                            className={`group relative overflow-hidden rounded-2xl border-2 text-left transition hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none ${selected ? "border-white shadow-[0_0_24px_rgba(255,255,255,.18)]" : "border-white/10 hover:border-white/30"}`}
                           >
                             <span
                               className="block aspect-[9/13] bg-cover"
                               style={premiumBackgroundStyle(background.id)}
                             />
-                            <span className="absolute inset-x-0 bottom-0 bg-black/70 px-2 py-2 text-[10px] font-black text-white backdrop-blur-sm">
+                            <span className="absolute inset-x-0 bottom-0 bg-black/70 px-2 py-2 text-[10px] font-semibold text-white backdrop-blur-sm">
                               {background.name}
                             </span>
                             {!isPro && !availableForFree ? (
@@ -1486,7 +1564,7 @@ export default function Dashboard() {
                                 <Crown size={13} />
                               </span>
                             ) : !isPro && availableForFree ? (
-                              <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[9px] font-black uppercase text-ink">
+                              <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[9px] font-semibold uppercase text-ink">
                                 Gratis
                               </span>
                             ) : null}
@@ -1499,22 +1577,22 @@ export default function Dashboard() {
                 <div className="mt-6 border-t border-white/10 pt-6">
                   <div className="flex items-center justify-between gap-4">
                     <span>
-                      <span className="flex items-center gap-2 font-display text-sm font-black">
+                      <span className="flex items-center gap-2 font-display text-sm font-semibold">
                         {isPro ? (
-                          <ImagePlus size={16} className="text-lime" />
+                          <ImagePlus size={16} className="text-white/80" />
                         ) : (
-                          <Crown size={16} className="text-lime" />
+                          <Crown size={16} className="text-white/80" />
                         )}
                         Imagen de fondo
                       </span>
-                      <span className="mt-1 block text-xs text-white/35">
+                      <span className="mt-1 block text-xs text-white/60">
                         {isPro
                           ? "JPG, PNG o WebP · máximo 3 MB"
                           : "Sube tu propia imagen con MultiLinks Premium"}
                       </span>
                     </span>
                     {isPro ? (
-                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-xl border border-white/15 bg-white/[.045] px-4 py-2 text-sm font-bold text-white/70 transition hover:border-lime/45 hover:text-lime motion-reduce:transition-none">
+                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-xl border border-white/15 bg-white/[.045] px-4 py-2 text-sm font-bold text-white/70 transition hover:border-white/45 hover:text-white/80 motion-reduce:transition-none">
                         <ImagePlus size={16} />{" "}
                         {profile.backgroundImage ? "Cambiar" : "Subir"}
                         <input
@@ -1529,7 +1607,7 @@ export default function Dashboard() {
                     ) : (
                       <Link
                         href="/planes"
-                        className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-lime px-4 py-2 text-sm font-black text-ink transition hover:shadow-[0_10px_26px_rgba(201,255,88,.16)] motion-reduce:transition-none"
+                        className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:shadow-[0_10px_26px_rgba(255,255,255,.16)] motion-reduce:transition-none"
                       >
                         <Crown size={14} /> Premium
                       </Link>
@@ -1563,22 +1641,22 @@ export default function Dashboard() {
                 <div className="mt-6 border-t border-white/10 pt-6">
                   <div className="flex items-center justify-between gap-4">
                     <span>
-                      <span className="flex items-center gap-2 font-display text-sm font-black">
+                      <span className="flex items-center gap-2 font-display text-sm font-semibold">
                         {isPro ? (
-                          <ImagePlus size={16} className="text-lime" />
+                          <ImagePlus size={16} className="text-white/80" />
                         ) : (
-                          <Crown size={16} className="text-lime" />
+                          <Crown size={16} className="text-white/80" />
                         )}
                         Portada
                       </span>
-                      <span className="mt-1 block text-xs text-white/35">
+                      <span className="mt-1 block text-xs text-white/60">
                         {isPro
                           ? "Banner arriba de tu foto · relación 3:1 recomendada"
                           : "Agrega un banner con MultiLinks Premium"}
                       </span>
                     </span>
                     {isPro ? (
-                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-xl border border-white/15 bg-white/[.045] px-4 py-2 text-sm font-bold text-white/70 transition hover:border-lime/45 hover:text-lime motion-reduce:transition-none">
+                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-xl border border-white/15 bg-white/[.045] px-4 py-2 text-sm font-bold text-white/70 transition hover:border-white/45 hover:text-white/80 motion-reduce:transition-none">
                         <ImagePlus size={16} />{" "}
                         {profile.coverImage ? "Cambiar" : "Subir"}
                         <input
@@ -1591,7 +1669,7 @@ export default function Dashboard() {
                     ) : (
                       <Link
                         href="/planes"
-                        className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-lime px-4 py-2 text-sm font-black text-ink transition hover:shadow-[0_10px_26px_rgba(201,255,88,.16)] motion-reduce:transition-none"
+                        className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:shadow-[0_10px_26px_rgba(255,255,255,.16)] motion-reduce:transition-none"
                       >
                         <Crown size={14} /> Premium
                       </Link>
@@ -1626,11 +1704,11 @@ export default function Dashboard() {
                   <p className="text-sm font-bold text-white/75">
                     Paletas curadas
                   </p>
-                  <p className="mt-1 text-xs text-white/35">
+                  <p className="mt-1 text-xs text-white/60">
                     Combinaciones equilibradas para mantener una presencia
                     visual limpia.
                   </p>
-                  <div className="mt-3 flex flex-wrap gap-3">
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
                     {CURATED_PALETTES.map((palette) => {
                       const selected =
                         !profile.backgroundPreset &&
@@ -1653,7 +1731,7 @@ export default function Dashboard() {
                               accentColor: palette.accent,
                             })
                           }
-                          className={`relative h-11 w-11 overflow-hidden rounded-full border-2 transition hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none ${selected ? "border-lime ring-2 ring-lime/35 ring-offset-2 ring-offset-card" : "border-white/15 hover:border-white/35"}`}
+                          className={`relative h-24 w-full overflow-hidden rounded-xl border transition hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none ${selected ? "border-white ring-2 ring-white/35" : "border-white/15 hover:border-white/35"}`}
                         >
                           <span
                             className="absolute inset-0"
@@ -1663,6 +1741,9 @@ export default function Dashboard() {
                             }}
                             aria-hidden="true"
                           />
+                          <span className="absolute inset-x-0 bottom-0 z-10 bg-[#101010]/95 px-2 py-2 text-xs font-medium text-white">
+                            {palette.name}
+                          </span>
                           <span
                             className="absolute inset-0"
                             style={{
@@ -1681,28 +1762,34 @@ export default function Dashboard() {
                     })}
                   </div>
 
-                  <p className="mt-6 text-xs font-black uppercase tracking-[.12em] text-white/35">
-                    Personalizado
-                  </p>
-                  <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                    <ColorField
-                      label="Color de fondo"
-                      value={profile.backgroundColor ?? "#c9ff58"}
-                      onChange={(backgroundColor) =>
-                        chooseColorBackground({
-                          backgroundColor,
-                          backgroundPreset: undefined,
-                        })
-                      }
-                    />
-                    <ColorField
-                      label="Color de acento"
-                      value={profile.accentColor ?? "#8566ff"}
-                      onChange={(accentColor) =>
-                        setProfile({ ...profile, accentColor })
-                      }
-                    />
-                  </div>
+                  <details className="mt-6 rounded-xl border border-white/10 p-3">
+                    <summary className="cursor-pointer text-sm font-semibold text-white/80">
+                      Colores personalizados
+                    </summary>
+                    <p className="mt-2 text-xs leading-5 text-white/60">
+                      Ajusta el fondo y el acento después de elegir una paleta.
+                      Puedes ver el resultado antes de publicar.
+                    </p>
+                    <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                      <ColorField
+                        label="Color de fondo"
+                        value={profile.backgroundColor ?? "#c9ff58"}
+                        onChange={(backgroundColor) =>
+                          chooseColorBackground({
+                            backgroundColor,
+                            backgroundPreset: undefined,
+                          })
+                        }
+                      />
+                      <ColorField
+                        label="Color de acento"
+                        value={profile.accentColor ?? "#8566ff"}
+                        onChange={(accentColor) =>
+                          setProfile({ ...profile, accentColor })
+                        }
+                      />
+                    </div>
+                  </details>
                 </div>
               </>
             ) : null}
@@ -1711,7 +1798,7 @@ export default function Dashboard() {
                 <p className="text-sm font-bold text-white/75">
                   Forma de botones
                 </p>
-                <p className="mt-1 text-xs text-white/35">
+                <p className="mt-1 text-xs text-white/60">
                   Aplica a todos los enlaces de tu página.
                 </p>
                 <div className="mt-4 grid grid-cols-3 gap-2">
@@ -1721,10 +1808,10 @@ export default function Dashboard() {
                       onClick={() =>
                         setProfile({ ...profile, buttonStyle: style })
                       }
-                      className={`flex flex-col items-center gap-2 rounded-xl border px-3 py-4 text-xs font-bold transition motion-reduce:transition-none ${profile.buttonStyle === style ? "border-lime/60 bg-lime/10 text-white" : "border-white/12 bg-white/[.03] text-white/55 hover:border-white/25 hover:text-white"}`}
+                      className={`flex flex-col items-center gap-2 rounded-xl border px-3 py-4 text-xs font-bold transition motion-reduce:transition-none ${profile.buttonStyle === style ? "border-white/60 bg-lime/10 text-white" : "border-white/[.10] bg-white/[.03] text-white/55 hover:border-white/25 hover:text-white"}`}
                     >
                       <span
-                        className={`h-7 w-full border ${style === "pill" ? "rounded-full" : style === "square" ? "rounded-md" : "rounded-xl"} ${profile.buttonStyle === style ? "border-lime/50 bg-lime/15" : "border-white/20 bg-white/[.05]"}`}
+                        className={`h-7 w-full border ${style === "pill" ? "rounded-full" : style === "square" ? "rounded-md" : "rounded-xl"} ${profile.buttonStyle === style ? "border-white/50 bg-lime/15" : "border-white/20 bg-white/[.05]"}`}
                       />
                       {style === "rounded"
                         ? "Redondeado"
@@ -1739,19 +1826,22 @@ export default function Dashboard() {
           </div>
           <div
             id="enlaces"
-            className="mt-6 scroll-mt-24 rounded-[2rem] border border-white/12 bg-card/95 p-6"
+            hidden={activeSection !== "enlaces"}
+            className="mt-6 scroll-mt-24 rounded-[2rem] border border-white/[.10] bg-[#161616] p-6"
           >
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="font-display text-lg font-black">Mis enlaces</h2>
-                <p className="mt-1 text-xs text-white/35">
+                <h2 className="font-display text-lg font-semibold">
+                  Mis enlaces
+                </h2>
+                <p className="mt-1 text-xs text-white/60">
                   Añade títulos de sección e íconos opcionales para organizar
                   mejor tu página.
                 </p>
               </div>
               <button
                 onClick={addLink}
-                className="flex items-center gap-2 rounded-xl bg-lime px-4 py-2 text-sm font-black text-ink transition hover:shadow-[0_10px_26px_rgba(201,255,88,.16)] motion-reduce:transition-none"
+                className="flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:shadow-[0_10px_26px_rgba(255,255,255,.16)] motion-reduce:transition-none"
               >
                 <Plus size={17} /> Agregar
               </button>
@@ -1775,12 +1865,12 @@ export default function Dashboard() {
                         profile.links
                           .filter((item) => item.active)
                           .findIndex((item) => item.id === link.id) > 0 && (
-                          <p className="mb-2 rounded-xl border border-lime/20 bg-lime/5 p-3 text-xs text-white/60">
+                          <p className="mb-2 rounded-xl border border-white/20 bg-lime/5 p-3 text-xs text-white/60">
                             🔒 Este enlace está guardado pero bloqueado por el
                             límite de tu plan.{" "}
                             <Link
                               href="/planes"
-                              className="font-bold text-lime"
+                              className="font-bold text-white/80"
                             >
                               Activar Premium
                             </Link>
@@ -1800,12 +1890,12 @@ export default function Dashboard() {
               </SortableContext>
               <DragOverlay dropAnimation={reducedMotion ? null : undefined}>
                 {activeLinkId ? (
-                  <div className="scale-[1.02] rounded-2xl border border-lime/35 bg-card/95 p-4 opacity-95 shadow-[0_24px_60px_rgba(0,0,0,.55)]">
+                  <div className="scale-[1.02] rounded-2xl border border-white/35 bg-[#161616] p-4 opacity-95 shadow-[0_24px_60px_rgba(0,0,0,.55)]">
                     <p className="truncate text-sm font-bold text-white">
                       {profile.links.find((link) => link.id === activeLinkId)
                         ?.title || "Enlace"}
                     </p>
-                    <p className="mt-1 truncate text-xs text-white/40">
+                    <p className="mt-1 truncate text-xs text-white/60">
                       {profile.links.find((link) => link.id === activeLinkId)
                         ?.url || ""}
                     </p>
@@ -1815,9 +1905,20 @@ export default function Dashboard() {
             </DndContext>
           </div>
         </section>
-        <aside className="hidden lg:block">
+        <aside
+          id="vista-previa"
+          aria-label="Vista previa del perfil"
+          className={previewOpen ? "block" : "hidden lg:block"}
+        >
+          <button
+            type="button"
+            onClick={() => setPreviewOpen(false)}
+            className="mb-3 min-h-11 rounded-lg border border-white/15 px-3 text-sm lg:hidden"
+          >
+            Cerrar vista previa
+          </button>
           <div className="sticky top-6">
-            <p className="mb-3 text-center text-xs font-black uppercase tracking-widest text-white/30">
+            <p className="mb-3 text-center text-xs font-semibold uppercase tracking-widest text-white/30">
               Vista previa
             </p>
             <div className="mx-auto h-[720px] max-w-[390px] overflow-hidden rounded-[42px] border-[10px] border-card-border bg-card-border shadow-[0_30px_90px_rgba(0,0,0,.45)]">
@@ -1855,7 +1956,7 @@ function Field({
         maxLength={maxLength}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-2 w-full rounded-xl border border-white/10 bg-white/[.045] px-4 py-3 font-normal text-white outline-none placeholder:text-white/25 focus:border-lime/70 focus:bg-white/[.07]"
+        className="mt-2 w-full rounded-xl border border-white/10 bg-white/[.045] px-4 py-3 font-normal text-white outline-none placeholder:text-white/25 focus:border-white/70 focus:bg-white/[.07]"
       />
     </label>
   );
@@ -1872,14 +1973,15 @@ function ColorField({
   return (
     <label className="text-sm font-bold text-white/75">
       {label}
-      <span className="mt-2 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[.045] p-2 focus-within:border-lime/70">
+      <span className="mt-2 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[.045] p-2 focus-within:border-white/70">
         <input
           type="color"
+          aria-label={label}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className="h-9 w-12 cursor-pointer rounded border-0 bg-transparent"
         />
-        <span className="font-mono text-xs font-normal uppercase text-white/45">
+        <span className="font-mono text-xs font-normal uppercase text-white/65">
           {value}
         </span>
       </span>
@@ -1896,15 +1998,15 @@ function StatCard({
   value: number;
 }) {
   return (
-    <div className="flex items-center gap-4 rounded-2xl border border-white/12 bg-card/95 p-5">
-      <span className="grid h-11 w-11 place-items-center rounded-xl border border-lime/25 bg-lime/10 text-lime">
+    <div className="flex items-center gap-4 rounded-2xl border border-white/[.10] bg-[#161616] p-5">
+      <span className="grid h-11 w-11 place-items-center rounded-xl border border-white/25 bg-lime/10 text-white/80">
         {icon}
       </span>
       <div>
-        <p className="font-display text-2xl font-black text-white">
+        <p className="font-display text-2xl font-semibold text-white">
           {value.toLocaleString("es-DO")}
         </p>
-        <p className="text-xs font-bold text-white/40">{label}</p>
+        <p className="text-xs font-bold text-white/60">{label}</p>
       </div>
     </div>
   );

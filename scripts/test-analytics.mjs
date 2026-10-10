@@ -16,6 +16,9 @@ create function public.account_has_pro(id uuid) returns boolean language sql as 
 const migration = await readFile(new URL('../supabase/migrations/027_analytics_v2.sql', import.meta.url), 'utf8');
 await db.exec(migration);
 await db.exec(migration); // Normal setup script can replay migrations.
+const conversionMigration = await readFile(new URL('../supabase/migrations/031_visitor_conversion.sql', import.meta.url), 'utf8');
+await db.exec(conversionMigration);
+await db.exec(conversionMigration);
 const owner='00000000-0000-0000-0000-000000000001';
 const other='00000000-0000-0000-0000-000000000002';
 const link='00000000-0000-0000-0000-000000000003';
@@ -23,7 +26,7 @@ const otherLink='00000000-0000-0000-0000-000000000004';
 await db.query('insert into profiles(id) values($1),($2)',[owner,other]);
 await db.query(`insert into links(id,profile_id,title,provider,link_type) values($1,$2,'Spotify','spotify','media'),($3,$4,'Other','generic','standard')`,[link,owner,otherLink,other]);
 await db.query("select set_config('test.user',$1,false), set_config('test.pro','true',false)",[owner]);
-await db.exec("update analytics_configuration set activated_at=now()-interval '200 days'");
+await db.exec("update analytics_configuration set activated_at=now()-interval '200 days', conversion_activated_at=now()-interval '200 days'");
 const now=new Date(); const end=new Date(now);end.setUTCMinutes(0,0,0);end.setUTCHours(end.getUTCHours()+1);
 const start=new Date(end.getTime()-7*86400000);
 const report=async(a=start,b=end)=> (await db.query('select analytics_report($1,$2,$3) result',[a.toISOString(),b.toISOString(),'America/Santo_Domingo'])).rows[0].result;
@@ -35,7 +38,7 @@ await event('link_click',null,link); await event('link_click',null,link); await 
 await event('link_views',owner,null,{...context,links:[link,otherLink]});
 await event('link_views',owner,null,{...context,links:[link]});
 let r=await report();
-assert.deepEqual(r.overview.current,{visits:1,visitors:1,clicks:2});
+assert.deepEqual(r.overview.current,{visits:1,visitors:1,clicks:2,engaged_visitors:1});
 assert.equal(r.links[0].plays,1);assert.equal(r.links[0].views,1);assert.equal(r.links[0].provider,'spotify');assert.equal(r.links[0].content_type,'playlist');
 assert.equal(r.campaigns[0].clicks,2);assert.equal(r.campaigns[0].visits,1);assert.equal(r.live,1);
 assert.equal(r.dimensions.find(d=>d.dimension==='sources').label,'tiktok');

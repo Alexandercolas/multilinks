@@ -274,16 +274,19 @@ export function ProfileCard({
             const detectedPlatform = detectPlatform(link.url);
             const platform = customIcon ? null : detectedPlatform;
             const platformKind = detectedPlatform?.kind;
-            const featured = Boolean(link.featured);
+            const featured =
+              Boolean(link.featured) || link.linkType === "featured";
             const iconSizeClass = "h-9 w-9 text-base";
 
             // Decide the card shape from the persisted type, falling back to detection.
             const linkType =
               link.linkType ?? (brandedMedia ? "action" : "standard");
             const isMediaKind =
-              linkType === "media" ||
-              platformKind === "video" ||
-              platformKind === "music";
+              linkType !== "simple" &&
+              linkType !== "featured" &&
+              (linkType === "media" ||
+                platformKind === "video" ||
+                platformKind === "music");
             // Official embed (Spotify/YouTube/SoundCloud/Apple Music/Deezer/Vimeo iframe),
             // click-to-play. A platform can be embeddable even before it has a saved
             // thumbnail (Deezer/Apple Music have no oEmbed), so this doesn't require mediaThumb.
@@ -308,6 +311,8 @@ export function ProfileCard({
                       : "Abrir enlace");
             const showActionCard =
               !showMediaCard &&
+              linkType !== "simple" &&
+              linkType !== "featured" &&
               Boolean(actionPlatform) &&
               (linkType === "action" || Boolean(brandedMedia));
             const showPlayButton =
@@ -361,7 +366,7 @@ export function ProfileCard({
                   <span className="line-clamp-2 break-words [overflow-wrap:anywhere] text-[15px] font-semibold leading-snug">
                     {link.title}
                   </span>
-                  {link.description ? (
+                  {link.description && linkType !== "simple" ? (
                     <span
                       className={`mt-1 line-clamp-1 break-words [overflow-wrap:anywhere] text-[13px] font-normal leading-5 ${darkSurface ? "text-white/75" : "text-ink/75"}`}
                     >
@@ -471,7 +476,7 @@ export function ProfileCard({
                     href={href}
                     target={!preview ? "_blank" : undefined}
                     rel="noreferrer"
-                    className={`profile-link group relative flex min-h-[60px] w-full min-w-0 items-center gap-3 overflow-hidden ${featured ? cardRadius : buttonRadius} px-3.5 py-2.5 text-left hover:-translate-y-px motion-reduce:transform-none ${cardSurface}`}
+                    className={`profile-link group relative flex min-h-[60px] w-full min-w-0 items-center gap-3 overflow-hidden ${featured ? cardRadius : buttonRadius} ${featured ? "ring-1 ring-current/20 shadow-sm" : ""} px-3.5 py-2.5 text-left hover:-translate-y-px motion-reduce:transform-none ${cardSurface}`}
                   >
                     {rowInner}
                   </a>

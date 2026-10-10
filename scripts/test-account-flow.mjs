@@ -1,7 +1,7 @@
 // Local integration against Supabase: creates one isolated QA account and deletes it in finally.
 // Signup email UI is simulated; this test does not send mail or use an existing person's account.
 import assert from "node:assert/strict";
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { mkdir, readFile } from "node:fs/promises";
 import ts from "typescript";
 import { pathToFileURL } from "node:url";
@@ -228,6 +228,19 @@ try {
     await page.getByLabel("Color de fondo", { exact: true }).inputValue(),
     "#101010",
   );
+  for (const [name, color] of [
+    ["Crema", "#f5f0e8"],
+    ["Blanco limpio", "#ffffff"],
+    ["Black elegante", "#101010"],
+  ]) {
+    await page
+      .getByRole("button", { name: `Aplicar tema ${name}`, exact: true })
+      .click();
+    assert.equal(
+      await page.getByLabel("Color de fondo", { exact: true }).inputValue(),
+      color,
+    );
+  }
   for (const width of [390, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.addScriptTag({
@@ -295,9 +308,52 @@ try {
   await page
     .getByLabel("Título del enlace", { exact: true })
     .fill("Mi primer enlace");
+  await page.route("**/api/link-preview", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        preview: {
+          provider: "generic",
+          kind: "website",
+          cardType: "standard",
+          title: "Example QA",
+          description: "Descripción automática",
+          image: "",
+          favicon: "",
+          siteName: "Example QA",
+        },
+      }),
+    });
+  });
+  const previewResponse = page.waitForResponse("**/api/link-preview");
   await page
     .getByPlaceholder("https://...", { exact: true })
     .fill("https://example.com/bienvenida");
+  await page
+    .getByLabel("Presentación del enlace", { exact: true })
+    .selectOption("simple");
+  await previewResponse;
+  await page.getByText("Detectado: Example QA", { exact: true }).waitFor();
+  assert.equal(
+    await page
+      .getByLabel("Presentación del enlace", { exact: true })
+      .inputValue(),
+    "simple",
+    "Automatic preview preserves manually selected presentation",
+  );
+  await page.getByRole("button", { name: /^Redes sociales \(/ }).click();
+  assert.equal(
+    await page.getByLabel("Título del enlace", { exact: true }).isVisible(),
+    false,
+  );
+  await page.getByRole("button", { name: /^Enlaces \(/ }).click();
+  assert.equal(
+    await page.getByLabel("Título del enlace", { exact: true }).isVisible(),
+    true,
+  );
+  await page.getByRole("button", { name: /^Todos \(/ }).click();
   const failLinks = (route) =>
     route.request().method() === "POST"
       ? route.fulfill({
@@ -349,11 +405,71 @@ try {
   );
   const saved = await admin
     .from("links")
-    .select("title,url")
+    .select("id,title,url,link_type")
     .eq("profile_id", userId);
   assert.equal(saved.error, null);
   assert.equal(saved.data.length, 1);
   assert.equal(saved.data[0].title, "Mi primer enlace");
+  assert.equal(
+    saved.data[0].link_type,
+    "simple",
+    "Presentation survives publication",
+  );
+  const session = randomUUID(),
+    visitor = randomUUID();
+  for (const kind of ["page_view", "link_click", "link_click"]) {
+    const result = await admin.rpc("record_analytics_event", {
+      p_profile: userId,
+      p_link: kind === "page_view" ? null : saved.data[0].id,
+      p_kind: kind,
+      p_context: { session, visitor },
+    });
+    assert.equal(result.error, null);
+  }
+  const tracked = await admin
+    .from("analytics_sessions")
+    .select("first_clicked_at")
+    .eq("profile_id", userId)
+    .eq("session_id", session)
+    .single();
+  assert.equal(tracked.error, null);
+  assert.ok(tracked.data.first_clicked_at, "Clicks record visitor engagement");
+  const start = new Date(Date.now() + 3600000),
+    end = new Date(Date.now() + 7200000);
+  const unique = randomUUID();
+  const fixture = await admin.from("analytics_sessions").insert(
+    [unique, unique, randomUUID()].map((visitor_id, i) => ({
+      profile_id: userId,
+      session_id: randomUUID(),
+      visitor_id,
+      viewed: true,
+      started_at: start.toISOString(),
+      first_clicked_at: i < 2 ? start.toISOString() : null,
+      device: "Other",
+      browser: "Other",
+      os: "Other",
+      source: "QA",
+    })),
+  );
+  assert.equal(fixture.error, null);
+  assert.equal(
+    (await auth.auth.signInWithPassword({ email, password })).error,
+    null,
+  );
+  const conversion = await auth.rpc("analytics_report", {
+    p_start: start.toISOString(),
+    p_end: end.toISOString(),
+    p_timezone: "UTC",
+  });
+  assert.equal(conversion.error, null);
+  assert.equal(conversion.data.conversionAvailable, true);
+  assert.equal(conversion.data.overview.current.visitors, 2);
+  assert.equal(
+    conversion.data.overview.current.engaged_visitors,
+    1,
+    "Repeated clicks and sessions count the visitor once",
+  );
+
   await panelNav.getByRole("button", { name: "Perfil", exact: true }).click();
   await page.getByLabel("Usuario", { exact: true }).fill(username + "-edit");
   await panelNav.getByRole("button", { name: "Resumen", exact: true }).click();
@@ -368,6 +484,27 @@ try {
     path: ".profile-test-runtime/screenshots/account-launch-390.png",
     fullPage: true,
   });
+  await page.goto(base + "/dashboard/analytics");
+  await page.getByText("Enlace líder", { exact: true }).waitFor();
+  assert.equal(
+    await page
+      .getByText("Visitantes que hicieron clic", { exact: true })
+      .isVisible(),
+    true,
+  );
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    assert.ok(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      "Analytics does not overflow",
+    );
+    await page.screenshot({
+      path: `.profile-test-runtime/screenshots/analytics-conversion-${width}.png`,
+      fullPage: true,
+    });
+  }
   await page.goto(base + "/dashboard/ajustes");
   await page
     .getByRole("heading", { name: "Configuración y seguridad" })

@@ -54,7 +54,7 @@ import { canUseFeature, hasPremiumAccess } from "@/lib/premium-access";
 import { demoProfile } from "@/lib/demo-profile";
 import { isSafeLink } from "@/lib/profile-storage";
 import { getLinkMedia } from "@/lib/link-media";
-import { detectPlatform } from "@/lib/platforms";
+import { detectPlatform, isSocialProfileLink } from "@/lib/platforms";
 import {
   CARD_TYPE_LABELS,
   CARD_TYPE_OPTIONS,
@@ -147,8 +147,10 @@ function SortableLinkRow({
   const [previewState, setPreviewState] = useState<PreviewState>("idle");
   const analyzedUrl = useRef("");
   const onUpdateRef = useRef(onUpdate);
+  const latestLink = useRef(link);
   useEffect(() => {
     onUpdateRef.current = onUpdate;
+    latestLink.current = link;
   });
 
   useEffect(() => {
@@ -167,6 +169,8 @@ function SortableLinkRow({
       })
         .then(async (response) => {
           const data = await response.json().catch(() => null);
+          const currentLink = latestLink.current;
+          if (currentLink.url.trim() !== url) return;
           if (!response.ok || !data?.preview) {
             setPreviewState(response.status === 422 ? "blocked" : "error");
             return;
@@ -178,18 +182,21 @@ function SortableLinkRow({
           );
           setPreviewState("done");
           const patch: Partial<LinkItem> = { provider: result.provider };
-          const currentTitle = link.title.trim();
+          const currentTitle = currentLink.title.trim();
           if (
             (!currentTitle || currentTitle === "Nuevo enlace") &&
             result.title
           )
             patch.title = result.title;
-          if (!link.description?.trim() && result.description)
+          if (!currentLink.description?.trim() && result.description)
             patch.description = result.description;
-          if (!link.thumbnail && result.image) patch.thumbnail = result.image;
+          if (!currentLink.thumbnail && result.image)
+            patch.thumbnail = result.image;
           if (result.favicon) patch.faviconUrl = result.favicon;
-          if (!link.linkType)
-            patch.linkType = link.featured ? "featured" : result.cardType;
+          if (!currentLink.linkType)
+            patch.linkType = currentLink.featured
+              ? "featured"
+              : result.cardType;
           onUpdateRef.current(link.id, patch);
         })
         .catch(() => setPreviewState("error"));
@@ -306,6 +313,52 @@ function SortableLinkRow({
                 ) : null}
               </div>
 
+              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 p-3">
+                <label className="text-xs text-white/70">
+                  Presentación
+                  <select
+                    aria-label="Presentación del enlace"
+                    className="ml-2 rounded-lg bg-[#242424] px-2 py-2 text-white"
+                    value={link.linkType ?? "standard"}
+                    onChange={(e) =>
+                      onUpdate(link.id, {
+                        linkType: e.target.value as SmartCardType,
+                        featured: e.target.value === "featured",
+                      })
+                    }
+                  >
+                    {CARD_TYPE_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {CARD_TYPE_LABELS[option]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <span className="text-xs text-white/60">
+                  {link.linkType === "simple"
+                    ? "Solo título e icono"
+                    : link.linkType === "featured"
+                      ? "Prioridad visual y descripción breve"
+                      : link.linkType === "media"
+                        ? "Imagen o reproductor cuando esté disponible"
+                        : "Título, favicon y descripción breve"}
+                </span>
+              </div>
+              {link.linkType === "media" && (
+                <label className="block text-xs text-white/70">
+                  Imagen de la tarjeta (HTTPS)
+                  <input
+                    aria-label="Imagen de la tarjeta"
+                    type="url"
+                    value={link.thumbnail ?? ""}
+                    onChange={(e) =>
+                      onUpdate(link.id, { thumbnail: e.target.value })
+                    }
+                    placeholder="https://…"
+                    className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm"
+                  />
+                </label>
+              )}
               {(previewState === "done" && preview) || link.thumbnail ? (
                 <div className="rounded-xl border border-white/10 bg-white/[.03] p-2">
                   <div className="flex min-w-0 items-center gap-2.5">
@@ -324,28 +377,6 @@ function SortableLinkRow({
                     </p>
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-white/60">
-                    <label className="flex items-center gap-1.5">
-                      Estilo
-                      <select
-                        value={link.linkType ?? "standard"}
-                        onChange={(event) =>
-                          onUpdate(link.id, {
-                            linkType: event.target.value as SmartCardType,
-                          })
-                        }
-                        className="max-w-[8rem] rounded-md border border-white/10 bg-white/[.05] px-2 py-1 text-[11px] font-semibold text-white/80 outline-none focus:border-white/60"
-                      >
-                        {CARD_TYPE_OPTIONS.map((option) => (
-                          <option
-                            key={option}
-                            value={option}
-                            className="bg-card text-white"
-                          >
-                            {CARD_TYPE_LABELS[option]}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
                     {(link.clicks ?? 0) > 0 || (link.plays ?? 0) > 0 ? (
                       <span className="flex items-center gap-2.5">
                         {(link.clicks ?? 0) > 0 ? (
@@ -418,7 +449,12 @@ function SortableLinkRow({
               ? "Enlace destacado"
               : "Destacar (se muestra más grande)"
           }
-          onClick={() => onUpdate(link.id, { featured: !link.featured })}
+          onClick={() =>
+            onUpdate(link.id, {
+              featured: !link.featured,
+              linkType: !link.featured ? "featured" : "standard",
+            })
+          }
           className={`shrink-0 rounded-lg p-2 transition motion-reduce:transition-none ${link.featured ? "text-white/80" : "text-white/25 hover:text-white/60"}`}
         >
           <Star size={17} className={link.featured ? "fill-current" : ""} />
@@ -448,6 +484,7 @@ function SortableLinkRow({
 
 export default function Dashboard() {
   const router = useRouter();
+  const [linkGroup, setLinkGroup] = useState("todos");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [activeSection, setActiveSection] =
     useState<DashboardSection>("resumen");
@@ -1185,11 +1222,9 @@ export default function Dashboard() {
                   setPreviewOpen(!previewOpen);
                   if (!previewOpen)
                     requestAnimationFrame(() =>
-                      document
-                        .getElementById("vista-previa")
-                        ?.scrollIntoView({
-                          behavior: reducedMotion ? "auto" : "smooth",
-                        }),
+                      document.getElementById("vista-previa")?.scrollIntoView({
+                        behavior: reducedMotion ? "auto" : "smooth",
+                      }),
                     );
                 }}
                 className="mr-2 inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/20 px-3 text-sm font-medium lg:hidden"
@@ -1702,12 +1737,66 @@ export default function Dashboard() {
                 </div>
                 <div className="mt-6 border-t border-white/10 pt-6">
                   <p className="text-sm font-bold text-white/75">
-                    Paletas curadas
+                    Temas y paletas
                   </p>
                   <p className="mt-1 text-xs text-white/60">
                     Combinaciones equilibradas para mantener una presencia
                     visual limpia.
                   </p>
+                  <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    {[
+                      {
+                        name: "Black elegante",
+                        background: "#101010",
+                        accent: "#dedbd4",
+                        style: "rounded",
+                      },
+                      {
+                        name: "Crema",
+                        background: "#f5f0e8",
+                        accent: "#735c40",
+                        style: "pill",
+                      },
+                      {
+                        name: "Blanco limpio",
+                        background: "#ffffff",
+                        accent: "#303030",
+                        style: "square",
+                      },
+                    ].map((theme) => (
+                      <button
+                        key={theme.name}
+                        type="button"
+                        aria-label={`Aplicar tema ${theme.name}`}
+                        onClick={() =>
+                          chooseColorBackground({
+                            theme: "violet",
+                            backgroundPreset: undefined,
+                            backgroundColor: theme.background,
+                            accentColor: theme.accent,
+                            buttonStyle: theme.style as Profile["buttonStyle"],
+                          })
+                        }
+                        className="rounded-xl border border-white/15 p-3 text-left"
+                        style={{
+                          backgroundColor: theme.background,
+                          color:
+                            theme.background === "#101010"
+                              ? "#ffffff"
+                              : "#151515",
+                        }}
+                      >
+                        <span className="text-sm font-semibold">
+                          {theme.name}
+                        </span>
+                        <span
+                          className={`mt-3 block border border-current/20 px-3 py-2 text-xs ${theme.style === "pill" ? "rounded-full" : theme.style === "square" ? "rounded-md" : "rounded-xl"}`}
+                        >
+                          Tu enlace ↗
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                   <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
                     {CURATED_PALETTES.map((palette) => {
                       const selected =
@@ -1846,6 +1935,52 @@ export default function Dashboard() {
                 <Plus size={17} /> Agregar
               </button>
             </div>
+            <div
+              role="group"
+              aria-label="Filtrar enlaces"
+              className="mt-5 flex flex-wrap gap-2"
+            >
+              {[
+                ["todos", "Todos"],
+                ["enlaces", "Enlaces"],
+                ["social", "Redes sociales"],
+                ["media", "Multimedia"],
+              ].map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={linkGroup === id}
+                  onClick={() => setLinkGroup(id)}
+                  className={`min-h-11 rounded-lg px-3 text-sm ${linkGroup === id ? "bg-white text-ink" : "bg-white/5 text-white/70"}`}
+                >
+                  {label} (
+                  {
+                    profile.links.filter(
+                      (link) =>
+                        id === "todos" ||
+                        (id === "social"
+                          ? isSocialProfileLink(link)
+                          : id === "media"
+                            ? !isSocialProfileLink(link) &&
+                              (link.linkType === "media" ||
+                                ["music", "video"].includes(
+                                  detectPlatform(link.url)?.kind ?? "",
+                                ))
+                            : !isSocialProfileLink(link) &&
+                              link.linkType !== "media" &&
+                              !["music", "video"].includes(
+                                detectPlatform(link.url)?.kind ?? "",
+                              )),
+                    ).length
+                  }
+                  )
+                </button>
+              ))}
+            </div>
+            <p className="mt-3 text-xs text-white/60">
+              Las redes aparecen bajo tu foto. Usa Todos para ordenar tu página
+              completa.
+            </p>
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -1859,7 +1994,25 @@ export default function Dashboard() {
               >
                 <div className="mt-5 space-y-3">
                   {profile.links.map((link) => (
-                    <div key={link.id}>
+                    <div
+                      key={link.id}
+                      hidden={
+                        linkGroup !== "todos" &&
+                        (linkGroup === "social"
+                          ? !isSocialProfileLink(link)
+                          : linkGroup === "media"
+                            ? isSocialProfileLink(link) ||
+                              (link.linkType !== "media" &&
+                                !["music", "video"].includes(
+                                  detectPlatform(link.url)?.kind ?? "",
+                                ))
+                            : isSocialProfileLink(link) ||
+                              link.linkType === "media" ||
+                              ["music", "video"].includes(
+                                detectPlatform(link.url)?.kind ?? "",
+                              ))
+                      }
+                    >
                       {!isPro &&
                         link.active &&
                         profile.links

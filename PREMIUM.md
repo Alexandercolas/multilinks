@@ -22,7 +22,7 @@ Configurar en el servidor y en Vercel, sin publicar valores:
 - `LEMONSQUEEZY_WEBHOOK_SECRET`
 - `NEXT_PUBLIC_APP_URL`: origen público del proyecto.
 - `LEMONSQUEEZY_TEST_MODE=true` únicamente para pruebas con recursos de prueba.
-- `LEMONSQUEEZY_PRO_ANNUAL_VARIANT_ID` opcional: muestra la oferta anual existente de US$39.99 si está configurada.
+- `LEMONSQUEEZY_PRO_ANNUAL_VARIANT_ID` opcional: se conserva únicamente para reconocer eventos de suscripciones anteriores. La oferta pública y los nuevos checkouts son exclusivamente Pro mensual por US$3.00.
 
 La variante mensual debe ser una suscripción estándar mensual, USD, sin cuota inicial ni facturación por uso. El servidor verifica el producto y establece el precio desde `plans` mediante `custom_price`, que también se aplica a renovaciones. `skip_trial` evita crear una segunda prueba del proveedor después de la prueba local. El checkout muestra los impuestos y condiciones antes de confirmar. Referencias: [precios](https://docs.lemonsqueezy.com/api/prices/the-price-object) y [checkout](https://docs.lemonsqueezy.com/api/checkouts/create-checkout).
 

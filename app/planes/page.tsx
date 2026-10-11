@@ -60,17 +60,12 @@ export default async function PlansPage({
   const {
     data: { user },
   } = await client.auth.getUser();
-  const { data: plan } = await client
-    .from("plans")
-    .select("price_monthly")
-    .eq("id", "pro")
-    .maybeSingle();
   const access: AccountAccess | null = user
     ? (await client.rpc("account_access")).data
     : null;
   const params = await searchParams;
   const subscribed = access?.source === "subscription";
-  const price = access?.price_monthly ?? plan?.price_monthly ?? 300;
+  const price = 300;
   return (
     <main className="min-h-screen overflow-hidden bg-[#090b0d] px-4 py-8 text-white sm:px-6 sm:py-12">
       <div className="mx-auto max-w-5xl">
@@ -149,13 +144,7 @@ export default async function PlansPage({
               </div>
             ) : user ? (
               <div className="mt-5">
-                <ProCheckout
-                  userId={user.id}
-                  monthlyPrice={price}
-                  annualAvailable={Boolean(
-                    process.env.LEMONSQUEEZY_PRO_ANNUAL_VARIANT_ID,
-                  )}
-                />
+                <ProCheckout userId={user.id} />
                 <p className="mt-4 text-xs leading-5 text-white/45">
                   Activar Premium ahora inicia el cobro indicado en el checkout.
                   La prueba inicial no requiere pago ni se renueva

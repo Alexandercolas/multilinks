@@ -18,6 +18,8 @@ try {
  };
  assert.equal(await createProCheckout({id:'fixture-user'},'monthly'),'https://store.lemonsqueezy.com/checkout/fixture');
  assert.equal(checkout.data.attributes.custom_price,300);
+ await assert.rejects(()=>createProCheckout({id:'fixture-user'},'annual'));
+ await assert.rejects(()=>createProCheckout({id:'fixture-user'},'monthly',350));
  assert.equal(checkout.data.attributes.checkout_options.skip_trial,true);
  assert.equal(checkout.data.attributes.test_mode,true);
  console.log('Monthly checkout uses USD 3 and does not start a second provider trial. No payment created.');

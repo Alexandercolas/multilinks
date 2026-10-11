@@ -36,6 +36,8 @@ export async function createProCheckout(
   interval: BillingInterval,
   monthlyPrice = 300,
 ) {
+  if (interval !== "monthly" || monthlyPrice !== 300)
+    throw new Error("Only the USD 3 monthly plan is available");
   const config = billingConfiguration();
   const variantId =
     interval === "monthly"
@@ -61,7 +63,7 @@ export async function createProCheckout(
     data: {
       type: "checkouts",
       attributes: {
-        custom_price: interval === "monthly" ? monthlyPrice : 3999,
+        custom_price: 300,
         test_mode: config.testMode,
         expires_at: new Date(Date.now() + 30 * 60000).toISOString(),
         checkout_options: { skip_trial: true, subscription_preview: true },

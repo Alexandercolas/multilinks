@@ -26,7 +26,7 @@ export function ProfileQr({
     <div
       role="img"
       aria-label={`Código QR del perfil de ${title}`}
-      className={`${large ? "h-56 w-56" : "h-28 w-28"} shrink-0 overflow-hidden rounded-xl bg-white [&_svg]:block [&_svg]:h-full [&_svg]:w-full`}
+      className={`${large ? "h-56 w-56" : "h-24 w-24"} shrink-0 overflow-hidden rounded-xl bg-white [&_svg]:block [&_svg]:h-full [&_svg]:w-full`}
       dangerouslySetInnerHTML={{ __html: qrSvg }}
     />
   );
@@ -45,10 +45,10 @@ export function DesktopQrPanel({
   return (
     <aside
       aria-label="Compartir perfil en escritorio"
-      className="hidden lg:block"
+      className="hidden max-w-64 rounded-2xl border border-current/10 p-4 lg:block"
     >
       <h2 className="text-sm font-semibold">Compartir perfil</h2>
-      <div className="mt-5 flex items-center gap-2">
+      <div className="mt-4 flex items-center gap-3">
         <ProfileQr qrSvg={qrSvg} title={title} />
         <CreateProfileShortcut />
       </div>
@@ -58,7 +58,9 @@ export function DesktopQrPanel({
       <p className="mt-4 break-all text-xs leading-5 opacity-80">
         {url.replace(/^https?:\/\//, "")}
       </p>
-      <div className="mt-5 space-y-2">{children}</div>
+      <div className="mt-4 grid gap-1 [&_button]:min-h-11 [&_button]:justify-start [&_button]:px-2">
+        {children}
+      </div>
     </aside>
   );
 }

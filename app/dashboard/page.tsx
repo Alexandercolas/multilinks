@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/logo";
+import { AvatarCropEditor } from "@/components/avatar-crop-editor";
 import { ProfileCard } from "@/components/profile-card";
 import {
   DashboardNavigation,
@@ -489,6 +490,7 @@ export default function Dashboard() {
   const [activeSection, setActiveSection] =
     useState<DashboardSection>("resumen");
   const [profile, setProfile] = useState<Profile>(demoProfile);
+  const [cropSource, setCropSource] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoError, setPhotoError] = useState("");
   const [backgroundFile, setBackgroundFile] = useState<File | null>(null);
@@ -741,8 +743,10 @@ export default function Dashboard() {
     }
     setPhotoFile(file);
     const reader = new FileReader();
-    reader.onload = () =>
+    reader.onload = () => {
       setProfile((p) => ({ ...p, avatarImage: String(reader.result) }));
+      setCropSource(String(reader.result));
+    };
     reader.onerror = () => setPhotoError("No pudimos leer la imagen.");
     reader.readAsDataURL(file);
   }
@@ -894,8 +898,9 @@ export default function Dashboard() {
           setSaving(false);
           return;
         }
-        avatarUrl = supabase.storage.from("avatars").getPublicUrl(path)
-          .data.publicUrl;
+        avatarUrl =
+          supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl +
+          `?v=${Date.now()}`;
       }
 
       let backgroundImagePath = profile.backgroundImagePath;
@@ -1366,15 +1371,25 @@ export default function Dashboard() {
                   />
                 </label>
                 {profile.avatarImage ? (
-                  <button
-                    onClick={() => {
-                      setProfile({ ...profile, avatarImage: undefined });
-                      setPhotoFile(null);
-                    }}
-                    className="ml-2 text-sm font-semibold text-red-300"
-                  >
-                    Quitar
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setCropSource(profile.avatarImage!)}
+                      className="ml-2 min-h-11 text-sm font-semibold text-lime"
+                    >
+                      Ajustar foto
+                    </button>
+                    <button
+                      onClick={() => {
+                        setProfile({ ...profile, avatarImage: undefined });
+                        setPhotoFile(null);
+                        setCropSource(null);
+                      }}
+                      className="ml-2 text-sm font-semibold text-red-300"
+                    >
+                      Quitar
+                    </button>
+                  </>
                 ) : null}
                 <p className="mt-2 text-xs text-white/60">
                   JPG, PNG o WebP · máximo 1 MB
@@ -1386,6 +1401,27 @@ export default function Dashboard() {
                 ) : null}
               </div>
             </div>
+            {cropSource && (
+              <AvatarCropEditor
+                key={cropSource}
+                src={cropSource}
+                onCancel={() => setCropSource(null)}
+                onApply={(file) => {
+                  setPhotoFile(file);
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    setProfile((p) => ({
+                      ...p,
+                      avatarImage: String(reader.result),
+                    }));
+                    setCropSource(null);
+                  };
+                  reader.onerror = () =>
+                    setPhotoError("No pudimos leer el recorte.");
+                  reader.readAsDataURL(file);
+                }}
+              />
+            )}
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <Field
                 label="Nombre"

@@ -1,6 +1,6 @@
 # Free, Premium y prueba de 30 días
 
-La identidad y el catálogo siguen en Supabase (`auth.users`, `subscriptions`, `plans`). Se conserva Lemon Squeezy como proveedor de pago y la clave interna `pro`; el nombre comercial es Premium, US$3.50/mes. No se inicia un cobro por registrarse.
+La identidad y el catálogo siguen en Supabase (`auth.users`, `subscriptions`, `plans`). Se conserva Lemon Squeezy como proveedor de pago y la clave interna `pro`; el nombre comercial es Premium, US$3.00/mes. No se inicia un cobro por registrarse.
 
 ## Acceso y contenido
 

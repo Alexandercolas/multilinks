@@ -37,6 +37,9 @@ const old='00000000-0000-0000-0000-000000000001';const young='00000000-0000-0000
 await db.query("insert into auth.users(id,created_at) values($1,now()-interval '80 days'),($2,now()-interval '3 days')",[old,young]);
 const migration=await readFile(new URL('../supabase/migrations/028_premium_trial_and_access.sql',import.meta.url),'utf8');
 await db.exec(migration);await db.exec(migration);
+const priceMigration=await readFile(new URL('../supabase/migrations/033_pro_monthly_price.sql',import.meta.url),'utf8');
+await db.exec(priceMigration);await db.exec(priceMigration);
+assert.equal((await db.query("select price_monthly from plans where id='pro'")).rows[0].price_monthly,300);
 await db.exec(await readFile(new URL("../supabase/migrations/027_analytics_v2.sql",import.meta.url),"utf8"));
 await db.exec(`create trigger profile_gate before insert or update on profiles for each row execute function enforce_profile_pro_features();`);
 const user=async id=>db.query("select set_config('test.user',$1,false)",[id]);
@@ -44,7 +47,7 @@ const access=async()=>(await db.query('select account_access() value')).rows[0].
 await user(old);assert.equal((await access()).has_premium,false);assert.equal((await access()).active_link_limit,1);
 await user(young);const youngTrialEnd=(await access()).trial_ends_at;assert.equal((await access()).source,'trial');assert.equal((await access()).days_remaining,27);
 await db.query('insert into auth.users(id) values($1)',[fresh]);await user(fresh);
-let a=await access();assert.equal(a.source,'trial');assert.equal(a.days_remaining,30);assert.equal(Object.values(a.features).every(Boolean),true);assert.equal(a.active_link_limit,null);
+let a=await access();assert.equal(a.source,'trial');assert.equal(a.days_remaining,30);assert.equal(a.price_monthly,300);assert.equal(new Date(a.trial_ends_at)-new Date(a.trial_started_at),30*86400000);assert.equal(Object.values(a.features).every(Boolean),true);assert.equal(a.active_link_limit,null);
 await db.query("insert into profiles(id,theme,background_color) values($1,'neon','preset:black-gold-marble')",[fresh]);
 const l1='10000000-0000-0000-0000-000000000001',l2='10000000-0000-0000-0000-000000000002';
 await db.query("insert into links(id,profile_id,url,position) values($1,$3,'https://example.com/one',0),($2,$3,'https://example.com/two',1)",[l1,l2,fresh]);

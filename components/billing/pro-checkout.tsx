@@ -4,14 +4,39 @@ import { useState } from "react";
 import { CheckoutButton } from "@/components/billing/checkout-button";
 
 const OPTIONS = [
-  { interval: "monthly" as const, label: "Mensual", price: "US$3.50", note: "cada mes" },
-  { interval: "annual" as const, label: "Anual", price: "US$39.99", note: "cada año · ahorras US$2.01" },
+  {
+    interval: "monthly" as const,
+    label: "Mensual",
+    price: "US$3.00",
+    note: "cada mes",
+  },
+  {
+    interval: "annual" as const,
+    label: "Anual",
+    price: "US$39.99",
+    note: "cada año",
+  },
 ];
 
-export function ProCheckout({ userId, monthlyPrice = 350, annualAvailable = false }: { userId: string; monthlyPrice?: number; annualAvailable?: boolean }) {
+export function ProCheckout({
+  userId,
+  monthlyPrice = 300,
+  annualAvailable = false,
+}: {
+  userId: string;
+  monthlyPrice?: number;
+  annualAvailable?: boolean;
+}) {
   const [interval, setInterval] = useState<"monthly" | "annual">("monthly");
-  const options = OPTIONS.filter(option => option.interval === "monthly" || annualAvailable).map(option => option.interval === "monthly" ? { ...option, price: `US$${(monthlyPrice/100).toFixed(2)}` } : option);
-  const selected = options.find((option) => option.interval === interval) ?? options[0];
+  const options = OPTIONS.filter(
+    (option) => option.interval === "monthly" || annualAvailable,
+  ).map((option) =>
+    option.interval === "monthly"
+      ? { ...option, price: `US$${(monthlyPrice / 100).toFixed(2)}` }
+      : option,
+  );
+  const selected =
+    options.find((option) => option.interval === interval) ?? options[0];
 
   return (
     <div>
@@ -33,7 +58,9 @@ export function ProCheckout({ userId, monthlyPrice = 350, annualAvailable = fals
           </button>
         ))}
       </div>
-      <p className="mt-5 font-display text-4xl font-black text-lime">{selected.price}</p>
+      <p className="mt-5 font-display text-4xl font-black text-lime">
+        {selected.price}
+      </p>
       <p className="mt-1 text-xs font-bold text-white/40">{selected.note}</p>
       <div className="mt-6">
         <CheckoutButton interval={interval} userId={userId} />

@@ -47,6 +47,8 @@ export function AdminUsersTable({
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
+  const [commands, setCommands] = useState<Record<string, string>>({});
+  const [openUsers, setOpenUsers] = useState<Record<string, boolean>>({});
   useEffect(() => {
     const controller = new AbortController();
     const timer = setTimeout(async () => {
@@ -220,59 +222,93 @@ export function AdminUsersTable({
               </p>
             )}
             {!user.is_owner && (
-              <details className="mt-4 border-t border-white/10 pt-3">
-                <summary className="min-h-11 cursor-pointer text-sm font-medium">
-                  Gestionar cuenta
-                </summary>
-                <form
-                  onSubmit={(event) => submit(event, user)}
-                  className="mt-2 grid gap-3 sm:grid-cols-2"
+              <div className="mt-4">
+                <button
+                  type="button"
+                  disabled={pending !== null || loading}
+                  onClick={() => {
+                    setCommands((values) => ({
+                      ...values,
+                      [user.id]: user.premium ? "premium_off" : "premium_on",
+                    }));
+                    setOpenUsers((values) => ({ ...values, [user.id]: true }));
+                  }}
+                  className={`min-h-11 rounded-lg px-4 text-sm font-semibold disabled:opacity-50 ${user.premium ? "border border-white/20 text-white" : "bg-lime text-ink"}`}
                 >
-                  <label className="text-xs text-white/70">
-                    Acción
-                    <select
-                      name="command"
-                      className="mt-1 block min-h-11 w-full rounded-lg bg-[#242424] px-3 text-sm text-white"
-                    >
-                      {actions.map(([id, label]) => (
-                        <option key={id} value={id}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="text-xs text-white/70">
-                    Duración al activar Premium
-                    <select
-                      name="days"
-                      defaultValue="30"
-                      className="mt-1 block min-h-11 w-full rounded-lg bg-[#242424] px-3 text-sm text-white"
-                    >
-                      <option value="30">30 días</option>
-                      <option value="90">90 días</option>
-                      <option value="365">1 año</option>
-                      <option value="none">Sin vencimiento</option>
-                    </select>
-                  </label>
-                  <label className="text-xs text-white/70 sm:col-span-2">
-                    Motivo obligatorio
-                    <input
-                      name="reason"
-                      required
-                      minLength={3}
-                      maxLength={500}
-                      placeholder="Ej. cortesía, soporte o moderación"
-                      className="mt-1 block w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white"
-                    />
-                  </label>
-                  <button
-                    disabled={pending !== null}
-                    className="min-h-11 rounded-lg bg-lime px-4 text-sm font-semibold text-ink disabled:opacity-50"
+                  {user.premium ? "Desactivar Pro" : "Activar Pro"}
+                </button>
+                <details
+                  open={openUsers[user.id] ?? false}
+                  onToggle={(event) => {
+                    const open = event.currentTarget.open;
+                    setOpenUsers((values) =>
+                      values[user.id] === open
+                        ? values
+                        : { ...values, [user.id]: open },
+                    );
+                  }}
+                  className="mt-3 border-t border-white/10 pt-3"
+                >
+                  <summary className="min-h-11 cursor-pointer text-sm font-medium">
+                    Gestionar cuenta
+                  </summary>
+                  <form
+                    onSubmit={(event) => submit(event, user)}
+                    className="mt-2 grid gap-3 sm:grid-cols-2"
                   >
-                    {pending === user.id ? "Aplicando…" : "Aplicar cambio"}
-                  </button>
-                </form>
-              </details>
+                    <label className="text-xs text-white/70">
+                      Acción
+                      <select
+                        name="command"
+                        value={commands[user.id] ?? "premium_on"}
+                        onChange={(event) =>
+                          setCommands((values) => ({
+                            ...values,
+                            [user.id]: event.target.value,
+                          }))
+                        }
+                        className="mt-1 block min-h-11 w-full rounded-lg bg-[#242424] px-3 text-sm text-white"
+                      >
+                        {actions.map(([id, label]) => (
+                          <option key={id} value={id}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="text-xs text-white/70">
+                      Duración al activar Premium
+                      <select
+                        name="days"
+                        defaultValue="30"
+                        className="mt-1 block min-h-11 w-full rounded-lg bg-[#242424] px-3 text-sm text-white"
+                      >
+                        <option value="30">30 días</option>
+                        <option value="90">90 días</option>
+                        <option value="365">1 año</option>
+                        <option value="none">Sin vencimiento</option>
+                      </select>
+                    </label>
+                    <label className="text-xs text-white/70 sm:col-span-2">
+                      Motivo obligatorio
+                      <input
+                        name="reason"
+                        required
+                        minLength={3}
+                        maxLength={500}
+                        placeholder="Ej. cortesía, soporte o moderación"
+                        className="mt-1 block w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white"
+                      />
+                    </label>
+                    <button
+                      disabled={pending !== null}
+                      className="min-h-11 rounded-lg bg-lime px-4 text-sm font-semibold text-ink disabled:opacity-50"
+                    >
+                      {pending === user.id ? "Aplicando…" : "Aplicar cambio"}
+                    </button>
+                  </form>
+                </details>
+              </div>
             )}
           </article>
         ))}

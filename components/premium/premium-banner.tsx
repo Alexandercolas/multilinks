@@ -7,6 +7,7 @@ export function PremiumBanner({access}: {access:AccountAccess|null}) {
   const trial=access.source==='trial';const managing=access.source==='subscription';
   const title=trial ? 'PREMIUM TRIAL · 30 días de acceso completo' : access.has_premium ? 'MULTILINKS PREMIUM' : 'MULTILINKS FREE';
   const message=trial ? access.days_remaining===1 ? 'Tu acceso Premium termina en menos de 24 horas.' : (access.days_remaining??30)<=7 ? `Tu acceso Premium termina en ${access.days_remaining} días.` : 'Estás disfrutando de todas las funcionalidades Premium durante tus primeros 30 días.'
+    : access.admin_controlled && !access.has_premium ? 'Tu acceso está configurado en Free por el administrador. Tus datos se conservan.'
     : access.state==='PREMIUM_PAST_DUE' ? 'Hay un problema con tu pago. Actualiza tu método de pago para mantener Premium.'
     : access.state==='PREMIUM_CANCELED' ? 'Cancelaste la renovación. Premium continúa activo hasta la fecha indicada.'
     : access.has_premium ? 'Tienes acceso completo a las herramientas Premium.'

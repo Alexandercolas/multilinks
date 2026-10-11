@@ -1,6 +1,6 @@
 export type PremiumFeature = 'unlimited_links' | 'smart_media' | 'custom_background' | 'premium_themes' | 'cover_image' | 'advanced_analytics' | 'analytics_export' | 'remove_branding';
 export type AccountAccess = {
-  has_premium: boolean;
+  has_premium: boolean; admin_controlled?: boolean;
   source: 'free' | 'trial' | 'subscription' | 'admin';
   state: 'FREE' | 'TRIAL' | 'PREMIUM_ACTIVE' | 'PREMIUM_PAST_DUE' | 'PREMIUM_CANCELED' | 'PREMIUM_EXPIRED';
   trial_started_at: string | null; trial_ends_at: string | null; trial_status: 'active' | 'expired';

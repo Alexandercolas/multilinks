@@ -144,6 +144,8 @@ try {
       { path, body },
     );
   assert.equal((await publicRequest("/api/account/password", {})).status, 401);
+  assert.equal((await publicRequest("/api/admin/users")).status, 401);
+  assert.equal((await publicRequest("/api/admin/users", {})).status, 401);
   assert.equal(
     (await publicRequest("/api/auth", { mode: "signup" })).status,
     400,
@@ -183,6 +185,30 @@ try {
   await page
     .getByRole("heading", { name: "Publica tu primera página" })
     .waitFor();
+  for (const method of ["GET", "POST"]) {
+    const status = await page.evaluate(
+      async (method) =>
+        (
+          await fetch(
+            "/api/admin/users",
+            method === "POST"
+              ? {
+                  method,
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    userId: "10000000-0000-0000-0000-000000000002",
+                    command: "premium_on",
+                    reason: "unauthorized test",
+                    days: 30,
+                  }),
+                }
+              : {},
+          )
+        ).status,
+      method,
+    );
+    assert.equal(status, 403, "Regular accounts cannot use admin controls");
+  }
   const publish = page.getByRole("button", {
     name: "3. Publicar mi página",
     exact: true,

@@ -47,8 +47,8 @@ export function AdminUsersTable({
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
-  const [commands, setCommands] = useState<Record<string, string>>({});
-  const [openUsers, setOpenUsers] = useState<Record<string, boolean>>({});
+  const [selectedUser, setSelectedUser] = useState<AdminUserRow | null>(null);
+  const [command, setCommand] = useState("premium_on");
   useEffect(() => {
     const controller = new AbortController();
     const timer = setTimeout(async () => {
@@ -110,6 +110,7 @@ export function AdminUsersTable({
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
       setMessage(`Cambio aplicado a ${name}.`);
+      setSelectedUser(null);
       setRevision((v) => v + 1);
       router.refresh();
     } catch (e) {
@@ -123,19 +124,20 @@ export function AdminUsersTable({
   return (
     <section
       id="usuarios"
-      className="mt-8 rounded-2xl border border-white/10 bg-[#101010] p-5 sm:p-6"
+      className="mt-8 min-w-0 max-w-full rounded-2xl border border-white/10 bg-[#101010] p-5 sm:p-6"
     >
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs font-semibold text-lime">CONTROL DE CUENTAS</p>
           <h2 className="mt-1 text-xl font-semibold">Usuarios y Premium</h2>
         </div>
-        <label className="text-xs text-white/70">
-          Buscar usuarios
+        <label className="w-full text-xs text-white/70 sm:w-72">
+          Buscar usuarios ⌕
           <input
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
+              setSelectedUser(null);
               setPage(1);
             }}
             placeholder="Correo, nombre o usuario"
@@ -164,155 +166,213 @@ export function AdminUsersTable({
           {message}
         </p>
       )}
+      <p className="mt-4 text-xs text-white/45 sm:hidden">
+        Desliza la tabla para ver todos los detalles y acciones →
+      </p>
       <div
+        role="region"
+        aria-label="Tabla de usuarios"
+        tabIndex={0}
         aria-busy={loading}
-        className={`mt-5 space-y-3 ${loading ? "opacity-60" : ""}`}
+        className={`mt-3 max-w-full overflow-x-auto rounded-xl border border-white/10 ${loading ? "opacity-60" : ""}`}
       >
-        {rows.map((user) => (
-          <article
-            key={user.id}
-            className="rounded-xl border border-white/10 p-4"
-          >
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h3 className="break-words font-semibold">
-                  {user.display_name || "Sin nombre"}{" "}
-                  {user.is_owner && (
-                    <span className="text-xs text-lime">· Propietario</span>
-                  )}
-                </h3>
-                <p className="mt-1 break-all text-xs text-white/65">
-                  {user.email}
-                </p>
-                {user.username && (
-                  <Link
-                    href={`/${user.username}`}
-                    target="_blank"
-                    className="mt-2 inline-block text-xs text-lime"
+        <table className="w-full min-w-[960px] text-left text-sm">
+          <caption className="sr-only">
+            Usuarios registrados: cinco por página
+          </caption>
+          <thead className="bg-white/5 text-xs text-white/60">
+            <tr>
+              {[
+                "Usuario",
+                "Correo",
+                "Plan y acceso",
+                "Estado",
+                "Registro",
+                "Acciones",
+              ].map((label) => (
+                <th key={label} scope="col" className="px-4 py-3 font-medium">
+                  {label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/10">
+            {rows.map((user) => (
+              <tr key={user.id} className="hover:bg-white/[0.03]">
+                <th scope="row" className="px-4 py-3 font-normal">
+                  <span
+                    className="block max-w-48 truncate font-medium"
+                    title={user.display_name || "Sin nombre"}
                   >
-                    Ver @{user.username} ↗
-                  </Link>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-2 text-xs">
-                <span className="rounded-full bg-white/10 px-2 py-1">
-                  {user.premium ? "Premium" : "Free"}
-                </span>
-                <span
-                  className={`rounded-full px-2 py-1 ${user.suspended ? "bg-red-400/10 text-red-300" : "bg-white/5 text-white/70"}`}
-                >
-                  {user.suspended
-                    ? "Suspendida"
-                    : user.published
-                      ? "Perfil público"
-                      : "Perfil privado"}
-                </span>
-              </div>
-            </div>
-            <p className="mt-3 text-xs text-white/60">
-              {user.premium_override
-                ? `Control manual${user.override_ends_at ? " hasta " + new Date(user.override_ends_at).toLocaleDateString("es-DO") : " sin vencimiento"}`
-                : user.billing_connected
-                  ? `Suscripción conectada · ${user.subscription_status}`
-                  : "Acceso automático según plan y prueba"}
-            </p>
-            {user.suspension_reason && (
-              <p className="mt-2 text-xs text-red-300">
-                {user.suspension_reason}
-              </p>
-            )}
-            {!user.is_owner && (
-              <div className="mt-4">
-                <button
-                  type="button"
-                  disabled={pending !== null || loading}
-                  onClick={() => {
-                    setCommands((values) => ({
-                      ...values,
-                      [user.id]: user.premium ? "premium_off" : "premium_on",
-                    }));
-                    setOpenUsers((values) => ({ ...values, [user.id]: true }));
-                  }}
-                  className={`min-h-11 rounded-lg px-4 text-sm font-semibold disabled:opacity-50 ${user.premium ? "border border-white/20 text-white" : "bg-lime text-ink"}`}
-                >
-                  {user.premium ? "Desactivar Pro" : "Activar Pro"}
-                </button>
-                <details
-                  open={openUsers[user.id] ?? false}
-                  onToggle={(event) => {
-                    const open = event.currentTarget.open;
-                    setOpenUsers((values) =>
-                      values[user.id] === open
-                        ? values
-                        : { ...values, [user.id]: open },
-                    );
-                  }}
-                  className="mt-3 border-t border-white/10 pt-3"
-                >
-                  <summary className="min-h-11 cursor-pointer text-sm font-medium">
-                    Gestionar cuenta
-                  </summary>
-                  <form
-                    onSubmit={(event) => submit(event, user)}
-                    className="mt-2 grid gap-3 sm:grid-cols-2"
-                  >
-                    <label className="text-xs text-white/70">
-                      Acción
-                      <select
-                        name="command"
-                        value={commands[user.id] ?? "premium_on"}
-                        onChange={(event) =>
-                          setCommands((values) => ({
-                            ...values,
-                            [user.id]: event.target.value,
-                          }))
-                        }
-                        className="mt-1 block min-h-11 w-full rounded-lg bg-[#242424] px-3 text-sm text-white"
-                      >
-                        {actions.map(([id, label]) => (
-                          <option key={id} value={id}>
-                            {label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="text-xs text-white/70">
-                      Duración al activar Premium
-                      <select
-                        name="days"
-                        defaultValue="30"
-                        className="mt-1 block min-h-11 w-full rounded-lg bg-[#242424] px-3 text-sm text-white"
-                      >
-                        <option value="30">30 días</option>
-                        <option value="90">90 días</option>
-                        <option value="365">1 año</option>
-                        <option value="none">Sin vencimiento</option>
-                      </select>
-                    </label>
-                    <label className="text-xs text-white/70 sm:col-span-2">
-                      Motivo obligatorio
-                      <input
-                        name="reason"
-                        required
-                        minLength={3}
-                        maxLength={500}
-                        placeholder="Ej. cortesía, soporte o moderación"
-                        className="mt-1 block w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white"
-                      />
-                    </label>
-                    <button
-                      disabled={pending !== null}
-                      className="min-h-11 rounded-lg bg-lime px-4 text-sm font-semibold text-ink disabled:opacity-50"
+                    {user.display_name || "Sin nombre"}
+                  </span>
+                  {user.username && (
+                    <Link
+                      href={`/${user.username}`}
+                      target="_blank"
+                      className="text-xs text-lime"
                     >
-                      {pending === user.id ? "Aplicando…" : "Aplicar cambio"}
-                    </button>
-                  </form>
-                </details>
-              </div>
-            )}
-          </article>
-        ))}
+                      @{user.username} ↗
+                    </Link>
+                  )}
+                  {user.is_owner && (
+                    <span className="block text-xs text-white/50">
+                      Propietario
+                    </span>
+                  )}
+                </th>
+                <td className="px-4 py-3">
+                  <span
+                    className="block max-w-56 truncate text-white/70"
+                    title={user.email}
+                  >
+                    {user.email}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span
+                    className={user.premium ? "text-lime" : "text-white/70"}
+                  >
+                    {user.premium ? "Pro" : "Free"}
+                  </span>
+                  <span className="mt-1 block whitespace-nowrap text-xs text-white/45">
+                    {user.premium_override
+                      ? user.override_ends_at
+                        ? "Manual hasta " +
+                          new Date(user.override_ends_at).toLocaleDateString(
+                            "es-DO",
+                          )
+                        : "Manual · sin vencimiento"
+                      : user.billing_connected
+                        ? `Suscripción · ${user.subscription_status}`
+                        : "Automático"}
+                  </span>
+                </td>
+                <td className="whitespace-nowrap px-4 py-3">
+                  <span
+                    title={user.suspension_reason || undefined}
+                    className={
+                      user.suspended ? "text-red-300" : "text-white/65"
+                    }
+                  >
+                    {user.suspended
+                      ? "Suspendida"
+                      : user.published
+                        ? "Público"
+                        : "Privado"}
+                  </span>
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 text-xs text-white/60">
+                  {new Date(user.created_at).toLocaleDateString("es-DO")}
+                </td>
+                <td className="px-4 py-3">
+                  {user.is_owner ? (
+                    <span className="text-xs text-white/45">
+                      Cuenta protegida
+                    </span>
+                  ) : (
+                    <div className="flex items-center gap-2 whitespace-nowrap">
+                      <button
+                        type="button"
+                        disabled={pending !== null || loading}
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setCommand(
+                            user.premium ? "premium_off" : "premium_on",
+                          );
+                        }}
+                        className={`min-h-11 rounded-lg px-3 text-xs font-semibold disabled:opacity-50 ${user.premium ? "border border-white/20 text-white" : "bg-lime text-ink"}`}
+                      >
+                        {user.premium ? "Desactivar Pro" : "Activar Pro"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={pending !== null || loading}
+                        aria-label={`Gestionar ${user.username || user.email}`}
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setCommand("premium_reset");
+                        }}
+                        className="min-h-11 rounded-lg border border-white/15 px-3 text-xs text-white/70 disabled:opacity-50"
+                      >
+                        Gestionar
+                      </button>
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+      {selectedUser && (
+        <div className="mt-4 rounded-xl border border-white/15 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="min-w-0 break-words font-medium">
+              Gestionar @{selectedUser.username || selectedUser.email}
+            </h3>
+            <button
+              type="button"
+              disabled={pending !== null}
+              onClick={() => setSelectedUser(null)}
+              className="min-h-11 px-3 text-sm text-white/60"
+            >
+              Cerrar
+            </button>
+          </div>
+          <form
+            key={selectedUser.id}
+            onSubmit={(event) => submit(event, selectedUser)}
+            className="mt-2 grid gap-3 sm:grid-cols-2"
+          >
+            <label className="text-xs text-white/70">
+              Acción
+              <select
+                name="command"
+                value={command}
+                onChange={(event) => setCommand(event.target.value)}
+                className="mt-1 block min-h-11 w-full rounded-lg bg-[#242424] px-3 text-sm text-white"
+              >
+                {actions.map(([id, label]) => (
+                  <option key={id} value={id}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs text-white/70">
+              Duración al activar Premium
+              <select
+                name="days"
+                defaultValue="30"
+                className="mt-1 block min-h-11 w-full rounded-lg bg-[#242424] px-3 text-sm text-white"
+              >
+                <option value="30">30 días</option>
+                <option value="90">90 días</option>
+                <option value="365">1 año</option>
+                <option value="none">Sin vencimiento</option>
+              </select>
+            </label>
+            <label className="text-xs text-white/70 sm:col-span-2">
+              Motivo obligatorio
+              <input
+                name="reason"
+                required
+                minLength={3}
+                maxLength={500}
+                placeholder="Ej. cortesía, soporte o moderación"
+                className="mt-1 block w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white"
+              />
+            </label>
+            <button
+              disabled={pending !== null}
+              className="min-h-11 rounded-lg bg-lime px-4 text-sm font-semibold text-ink disabled:opacity-50"
+            >
+              {pending === selectedUser.id ? "Aplicando…" : "Aplicar cambio"}
+            </button>
+          </form>
+        </div>
+      )}
       {!rows.length && !loading && (
         <p className="mt-5 text-sm text-white/60">No encontramos usuarios.</p>
       )}

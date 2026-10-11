@@ -36,6 +36,7 @@ export function AdminAudit({ logs }: { logs: AdminLogRow[] }) {
           log.target_email,
           log.target_display_name,
           log.target_username,
+          typeof log.details.reason === "string" ? log.details.reason : null,
         ].some((value) => value?.toLowerCase().includes(deferredSearch));
       })
     : logs;
@@ -80,45 +81,78 @@ export function AdminAudit({ logs }: { logs: AdminLogRow[] }) {
           />
         </label>
       </div>
-      <div className="divide-y divide-white/10">
-        {pageLogs.map((log) => (
-          <article
-            key={log.id}
-            className="flex flex-col gap-2 p-5 sm:flex-row sm:items-center sm:justify-between"
-          >
-            <div>
-              <p className="font-black text-white">
-                {actionLabels[log.action] ?? log.action}
-              </p>
-              <p className="mt-1 text-sm text-white/45">
-                {log.target_email ?? "Cuenta no disponible"}
-              </p>
-              {typeof log.details.reason === "string" && (
-                <p className="mt-2 break-words text-xs text-white/65">
-                  Motivo: {log.details.reason}
-                </p>
-              )}
-              {typeof log.details.command === "string" && (
-                <p className="mt-1 text-xs text-white/65">
-                  {log.details.command === "premium_on"
-                    ? "Premium activado"
-                    : log.details.command === "premium_off"
-                      ? "Premium desactivado"
-                      : "Plan automático restaurado"}
-                  {typeof log.details.days === "number"
-                    ? ` · ${log.details.days} días`
-                    : ""}
-                </p>
-              )}
-            </div>
-            <time className="font-display text-[10px] font-black uppercase tracking-[.1em] text-white/35">
-              {new Intl.DateTimeFormat("es-DO", {
-                dateStyle: "medium",
-                timeStyle: "short",
-              }).format(new Date(log.created_at))}
-            </time>
-          </article>
-        ))}
+      <p className="px-5 pt-3 text-xs text-white/45">
+        Últimos 100 movimientos · 5 por página
+      </p>
+      <div
+        role="region"
+        aria-label="Tabla de actividad administrativa"
+        tabIndex={0}
+        className="m-5 max-w-full overflow-x-auto rounded-lg border border-white/10"
+      >
+        <table className="w-full min-w-[760px] text-left text-sm">
+          <thead className="bg-white/5 text-xs text-white/60">
+            <tr>
+              {["Acción", "Cuenta", "Detalle", "Fecha"].map((label) => (
+                <th key={label} scope="col" className="px-4 py-3 font-medium">
+                  {label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/10">
+            {pageLogs.map((log) => (
+              <tr key={log.id}>
+                <th scope="row" className="px-4 py-3 font-medium text-white">
+                  {actionLabels[log.action] ?? log.action}
+                </th>
+                <td className="px-4 py-3 text-white/60">
+                  <span className="block">
+                    {log.target_display_name || log.target_username}
+                  </span>
+                  <span
+                    className="block max-w-56 truncate text-xs"
+                    title={log.target_email || undefined}
+                  >
+                    {log.target_email || "Cuenta no disponible"}
+                  </span>
+                </td>
+                <td className="max-w-64 px-4 py-3 text-xs text-white/60">
+                  {typeof log.details.command === "string" && (
+                    <p>
+                      {(
+                        {
+                          premium_on: "Pro activado",
+                          premium_off: "Pro desactivado",
+                          premium_reset: "Plan automático restaurado",
+                        } as Record<string, string>
+                      )[log.details.command] || log.details.command}
+                      {typeof log.details.days === "number"
+                        ? ` · ${log.details.days} días`
+                        : ""}
+                    </p>
+                  )}
+                  {typeof log.details.reason === "string" && (
+                    <details>
+                      <summary className="min-h-11 cursor-pointer content-center text-lime">
+                        Ver motivo
+                      </summary>
+                      <p className="break-words py-2">{log.details.reason}</p>
+                    </details>
+                  )}
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 text-xs text-white/45">
+                  <time>
+                    {new Intl.DateTimeFormat("es-DO", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    }).format(new Date(log.created_at))}
+                  </time>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
       {filteredLogs.length === 0 ? (
         <p className="p-8 text-center font-bold text-white/40">

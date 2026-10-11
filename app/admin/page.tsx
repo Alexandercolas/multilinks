@@ -28,7 +28,44 @@ import { createClient } from "@/lib/supabase/server";
 
 type DailyClick = { clicks: number };
 type AdminMetrics = { total_users: number; active_profiles: number };
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const query = Object.fromEntries(
+    Object.entries(params).filter(
+      (entry): entry is [string, string] => typeof entry[1] === "string",
+    ),
+  );
+  const controls = (id: string, allowed: string[]) => ({
+    query,
+    total: 0,
+    page: Math.min(
+      100000,
+      Math.max(1, Number.parseInt(query[id + "_page"] || "1", 10) || 1),
+    ),
+    search: (query[id + "_search"] || "").slice(0, 100),
+    status: allowed.includes(query[id + "_status"])
+      ? query[id + "_status"]
+      : "active",
+  });
+  const reportControls = controls("reportes", [
+    "active",
+    "pending",
+    "reviewing",
+    "resolved",
+    "dismissed",
+    "all",
+  ]);
+  const supportControls = controls("soporte", [
+    "active",
+    "open",
+    "in_progress",
+    "closed",
+    "all",
+  ]);
   const supabase = await createClient();
   const {
     data: { user },
@@ -37,6 +74,35 @@ export default async function AdminPage() {
   const { data: isAdmin } = await supabase.rpc("is_admin");
   if (!isAdmin) redirect("/dashboard");
 
+  let reportQuery = supabase
+    .from("profile_reports")
+    .select(
+      "id,reason,description,status,created_at,profiles(username,display_name)",
+      { count: "exact" },
+    );
+  let supportQuery = supabase
+    .from("support_requests")
+    .select("id,email,subject,message,status,created_at", { count: "exact" });
+  if (reportControls.status === "active")
+    reportQuery = reportQuery.in("status", ["pending", "reviewing"]);
+  else if (reportControls.status !== "all")
+    reportQuery = reportQuery.eq("status", reportControls.status);
+  if (supportControls.status === "active")
+    supportQuery = supportQuery.in("status", ["open", "in_progress"]);
+  else if (supportControls.status !== "all")
+    supportQuery = supportQuery.eq("status", supportControls.status);
+  const safeSearch = (value: string) =>
+    value.replace(/[,().%_*\\"]/g, " ").trim();
+  const reportSearch = safeSearch(reportControls.search);
+  const supportSearch = safeSearch(supportControls.search);
+  if (reportSearch)
+    reportQuery = reportQuery.or(
+      `description.ilike.%${reportSearch}%,reason.ilike.%${reportSearch}%`,
+    );
+  if (supportSearch)
+    supportQuery = supportQuery.or(
+      `email.ilike.%${supportSearch}%,subject.ilike.%${supportSearch}%,message.ilike.%${supportSearch}%`,
+    );
   const today = new Date().toISOString().slice(0, 10);
   const [
     usersResult,
@@ -45,6 +111,7 @@ export default async function AdminPage() {
     supportResult,
     clicksResult,
     logsResult,
+    pendingReportsResult,
   ] = await Promise.all([
     supabase.rpc("admin_user_control_page", {
       search_query: "",
@@ -52,20 +119,20 @@ export default async function AdminPage() {
       page_offset: 0,
     }),
     supabase.rpc("admin_platform_metrics").single(),
-    supabase
-      .from("profile_reports")
-      .select(
-        "id,reason,description,status,created_at,profiles(username,display_name)",
-      )
-      .in("status", ["pending", "reviewing"])
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("support_requests")
-      .select("id,email,subject,message,status,created_at")
-      .in("status", ["open", "in_progress"])
-      .order("created_at", { ascending: true }),
+    reportQuery
+      .order("created_at", { ascending: true })
+      .order("id")
+      .range((reportControls.page - 1) * 5, reportControls.page * 5 - 1),
+    supportQuery
+      .order("created_at", { ascending: true })
+      .order("id")
+      .range((supportControls.page - 1) * 5, supportControls.page * 5 - 1),
     supabase.from("link_daily_clicks").select("clicks").eq("day", today),
     supabase.rpc("admin_recent_audit", { max_rows: 100 }),
+    supabase
+      .from("profile_reports")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["pending", "reviewing"]),
   ]);
 
   if (
@@ -74,7 +141,8 @@ export default async function AdminPage() {
     reportsResult.error ||
     supportResult.error ||
     clicksResult.error ||
-    logsResult.error
+    logsResult.error ||
+    pendingReportsResult.error
   ) {
     const error =
       usersResult.error ??
@@ -82,7 +150,8 @@ export default async function AdminPage() {
       reportsResult.error ??
       supportResult.error ??
       clicksResult.error ??
-      logsResult.error;
+      logsResult.error ??
+      pendingReportsResult.error;
     Sentry.captureException(new Error("Admin dashboard loading failed"));
     console.error("Admin dashboard loading failed", error);
     throw new Error("No se pudieron cargar los datos administrativos.");
@@ -225,15 +294,21 @@ export default async function AdminPage() {
               <Metric
                 icon={<Flag />}
                 label="Reportes pendientes"
-                value={reports.length}
+                value={pendingReportsResult.count ?? 0}
                 accent="bg-cream text-ink"
                 delay="260ms"
               />
             </section>
 
             <AdminUsersTable users={users} initialTotal={totalUsers} />
-            <AdminReports reports={reports} />
-            <AdminSupport requests={supportRequests} />
+            <AdminReports
+              reports={reports}
+              controls={{ ...reportControls, total: reportsResult.count ?? 0 }}
+            />
+            <AdminSupport
+              requests={supportRequests}
+              controls={{ ...supportControls, total: supportResult.count ?? 0 }}
+            />
 
             <AdminAudit logs={logs} />
           </div>

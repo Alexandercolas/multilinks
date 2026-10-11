@@ -9,3 +9,10 @@ Cada cambio requiere motivo y confirmación con el usuario de destino. El servid
 El control de Premium afecta acceso a funciones, no facturación: no cancela ni reembolsa pagos externos. El webhook mantiene la suscripción original mientras el control manual tiene prioridad. Restaurar automático recupera el acceso según suscripción/prueba. Una concesión temporal vencida deja de aplicar automáticamente. Nunca se borran enlaces ni datos de la cuenta al forzar Free.
 
 Migración 032 aplicada a Supabase el 10 de octubre de 2026. Pruebas SQL: node scripts/test-admin-controls.mjs (PGlite aislado). Pruebas de cuenta: scripts/test-account-flow.mjs valida que cuentas ordinarias y peticiones sin sesión no accedan al API. La revisión visual local usa datos simulados y no modifica usuarios reales.
+
+## Organización del panel
+
+- Usuarios: tabla horizontal, búsqueda en el servidor por nombre, correo o usuario y 5 cuentas por página. Activar/desactivar Pro abre un único formulario para la cuenta seleccionada.
+- Reportes y soporte: tablas con 5 casos por página, filtros de estado y búsqueda en el servidor; el detalle y las decisiones se abren mediante «Ver caso». Los filtros permiten consultar casos cerrados y resueltos.
+- Actividad: tabla de los últimos 100 movimientos, búsqueda y 5 registros por página.
+- En móvil, cada tabla se desplaza horizontalmente dentro de su sección.

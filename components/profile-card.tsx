@@ -116,8 +116,11 @@ export function ProfileCard({
         <div
           role="img"
           aria-label={`Portada de ${profile.displayName}`}
-          className="relative -mx-5 -mt-8 mb-3 h-36 bg-cover bg-center sm:-mx-9 sm:-mt-10 sm:h-44"
-          style={{ backgroundImage: `url(${profile.coverImage})` }}
+          className="relative -mx-5 -mt-8 mb-3 h-44 bg-contain bg-center bg-no-repeat sm:-mx-9 sm:-mt-10 sm:h-52"
+          style={{
+            backgroundColor,
+            backgroundImage: `url(${profile.coverImage})`,
+          }}
         >
           <span
             aria-hidden="true"
@@ -134,9 +137,9 @@ export function ProfileCard({
               : undefined
           }
         >
-          <div className={`${profile.coverImage ? "-mt-14 sm:-mt-16" : ""}`}>
+          <div className={`${profile.coverImage ? "-mt-16 sm:-mt-20" : ""}`}>
             <div
-              className={`mx-auto flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center overflow-hidden rounded-[1.5rem] font-display text-2xl font-black ${profile.coverImage ? (darkSurface ? "ring-[3px] ring-[#141414]" : "ring-[3px] ring-white") : darkSurface ? "ring-1 ring-white/20" : "ring-1 ring-black/10"}`}
+              className={`mx-auto flex h-28 w-28 sm:h-36 sm:w-36 items-center justify-center overflow-hidden rounded-[1.5rem] font-display text-2xl font-black ${profile.coverImage ? (darkSurface ? "ring-[3px] ring-[#141414]" : "ring-[3px] ring-white") : darkSurface ? "ring-1 ring-white/20" : "ring-1 ring-black/10"}`}
               style={{
                 backgroundColor: profile.accentColor ?? "#c9ff58",
                 color: accessibleProfileTextColor(profile.accentColor),
@@ -147,8 +150,8 @@ export function ProfileCard({
                   unoptimized
                   src={profile.avatarImage}
                   alt={`Foto de ${profile.displayName}`}
-                  width={96}
-                  height={96}
+                  width={144}
+                  height={144}
                   className="h-full w-full object-cover"
                 />
               ) : (
@@ -157,7 +160,7 @@ export function ProfileCard({
             </div>
           </div>
 
-          <div className="mt-5">
+          <div className="mt-4">
             <h1 className="break-words [overflow-wrap:anywhere] font-display text-[1.75rem] font-bold leading-[1.2] tracking-[-.03em] sm:text-[1.875rem]">
               {profile.displayName}
             </h1>

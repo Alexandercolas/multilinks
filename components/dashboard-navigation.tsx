@@ -26,7 +26,7 @@ export function DashboardNavigation({
   onSelect: (section: DashboardSection) => void;
 }) {
   const itemClass =
-    "flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-white/70 motion-reduce:transition-none lg:w-full";
+    "flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-lime/70 motion-reduce:transition-none lg:w-full";
   return (
     <nav
       aria-label="Secciones del panel"
@@ -42,7 +42,7 @@ export function DashboardNavigation({
           aria-current={activeSection === id ? "page" : undefined}
           aria-controls={id}
           onClick={() => onSelect(id)}
-          className={`${itemClass} ${activeSection === id ? "bg-white/[.09] text-white" : "text-white/65 hover:bg-white/[.04] hover:text-white"}`}
+          className={`${itemClass} ${activeSection === id ? "bg-lime/[.08] text-lime" : "text-white/65 hover:bg-white/[.04] hover:text-white"}`}
         >
           <Icon size={17} aria-hidden="true" />
           {label}

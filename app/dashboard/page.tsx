@@ -1235,7 +1235,7 @@ export default function Dashboard() {
               <button
                 onClick={save}
                 disabled={saving}
-                className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-ink transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(255,255,255,.18)] disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none"
+                className="rounded-xl bg-lime px-6 py-3 text-sm font-semibold text-ink transition hover:-translate-y-0.5 hover:bg-[#d5ff80] hover:shadow-[0_8px_20px_rgba(201,255,88,.12)] disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none"
               >
                 {saving ? "Publicando…" : "Guardar y publicar"}
               </button>
@@ -1442,14 +1442,14 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => setAppearanceTab("fondo")}
-                className={`rounded-lg px-3 py-2 text-sm font-semibold transition motion-reduce:transition-none ${appearanceTab === "fondo" ? "bg-white/[.08] text-white" : "text-white/65 hover:text-white/80"}`}
+                className={`rounded-lg px-3 py-2 text-sm font-semibold transition motion-reduce:transition-none ${appearanceTab === "fondo" ? "bg-lime/[.08] text-lime" : "text-white/65 hover:text-white/80"}`}
               >
                 Fondo y color
               </button>
               <button
                 type="button"
                 onClick={() => setAppearanceTab("botones")}
-                className={`rounded-lg px-3 py-2 text-sm font-semibold transition motion-reduce:transition-none ${appearanceTab === "botones" ? "bg-white/[.08] text-white" : "text-white/65 hover:text-white/80"}`}
+                className={`rounded-lg px-3 py-2 text-sm font-semibold transition motion-reduce:transition-none ${appearanceTab === "botones" ? "bg-lime/[.08] text-lime" : "text-white/65 hover:text-white/80"}`}
               >
                 Botones
               </button>
@@ -1743,8 +1743,14 @@ export default function Dashboard() {
                     Combinaciones equilibradas para mantener una presencia
                     visual limpia.
                   </p>
-                  <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  <div className="mt-4 grid grid-cols-2 gap-2">
                     {[
+                      {
+                        name: "Lemon Black",
+                        background: "#101010",
+                        accent: "#c9ff58",
+                        style: "rounded",
+                      },
                       {
                         name: "Black elegante",
                         background: "#101010",

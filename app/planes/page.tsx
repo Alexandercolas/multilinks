@@ -7,7 +7,14 @@ import { Logo } from "@/components/logo";
 import { createClient } from "@/lib/supabase/server";
 import type { AccountAccess } from "@/lib/premium-access";
 export const metadata = {
-  title: "Free y Premium",
+  title: "Free y Pro por US$3 al mes",
+  alternates: { canonical: "/planes" },
+  openGraph: {
+    title: "MultiLinks Pro por US$3 al mes",
+    description:
+      "Prueba Pro gratis durante 30 días. Después elige Free o Pro por US$3 al mes.",
+    url: "/planes",
+  },
   description:
     "30 días de Premium completo, luego Free o Premium por US$3.00 al mes.",
 };

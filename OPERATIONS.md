@@ -16,7 +16,7 @@ Revisión: 12 de octubre de 2026.
 
 El SMTP propio aún no está configurado. El envío predeterminado de Supabase tiene restricciones de destinatarios y no debe considerarse una solución de envío para los usuarios de producción.
 
-Se propone Resend y el dominio elegido por el propietario, `multilinksrd.com`, disponible en la búsqueda de Vercel por US$11.25/año al momento de esta revisión. El registro y la renovación aún requieren aprobación del propietario. Preparar el remitente `MultiLinks <no-reply@multilinksrd.com>` tras verificar el dominio; configurar SMTP en Supabase y comprobar confirmación de registro y recuperación en correo real. No guardar credenciales en el repositorio.
+Se propone Resend y el dominio elegido por el propietario, `multilinksrd.com`, disponible en la búsqueda de Vercel por US$11.25/año al momento de esta revisión. El propietario decidió posponer el registro del dominio; no se efectuó ninguna compra. Preparar el remitente `MultiLinks <no-reply@multilinksrd.com>` tras verificar el dominio; configurar SMTP en Supabase y comprobar confirmación de registro y recuperación en correo real. No guardar credenciales en el repositorio.
 
 ## Pendiente de pagos reales
 
@@ -27,3 +27,7 @@ La última revisión de Lemon Squeezy mostró la activación de tienda en revisi
 `node scripts/check-production.mjs` revisa páginas públicas, precio y restricciones de acceso sin enviar correos ni efectuar pagos.
 
 Referencias: [SMTP de Supabase](https://supabase.com/docs/guides/auth/auth-smtp), [Resend con Supabase](https://resend.com/supabase).
+
+## Indexación en Google
+
+Se conserva el dominio actual de Vercel. Search Console debe verificar la propiedad de prefijo `https://multilinksrd.vercel.app/`, enviar `/sitemap.xml` e inspeccionar la página de inicio. La etiqueta de la cuenta actual se añade sin eliminar la verificación anterior. La página `/planes` dispone de canonical propio. El sitemap pagina los perfiles públicos como visitante anónimo y usa sus fechas reales; incluye hasta 50.000 URLs por XML. Superado ese límite, implementar un índice de varios sitemaps. Google decide cuándo rastrear, indexar y posicionar; no existe una prioridad garantizada por robots ni por enviar el sitemap.

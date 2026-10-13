@@ -23,12 +23,22 @@ export const metadata: Metadata = {
     default: "MultiLinks | Todos tus enlaces en un solo lugar",
     template: "%s | MultiLinks",
   },
-  description: "Crea una página personal, reúne todos tus enlaces y compártela con una sola URL. Personaliza colores, foto y botones gratis.",
-  keywords: ["multilinks", "enlaces en bio", "link en bio", "página de enlaces", "redes sociales"],
+  description:
+    "Crea una página personal, reúne todos tus enlaces y compártela con una sola URL. Personaliza colores, foto y botones gratis.",
+  keywords: [
+    "multilinks",
+    "enlaces en bio",
+    "link en bio",
+    "página de enlaces",
+    "redes sociales",
+  ],
   authors: [{ name: "MultiLinks" }],
   creator: "MultiLinks",
   verification: {
-    google: "fLPfuWtVQLcRkpuNcEx9b_o5Ttno6uADEzXjisX6Lds",
+    google: [
+      "fLPfuWtVQLcRkpuNcEx9b_o5Ttno6uADEzXjisX6Lds",
+      "zfcnR_ldDwELGhbkTPvPwnbfQ9wMJibaKxq84BJzK6g",
+    ],
   },
   alternates: { canonical: "/" },
   openGraph: {
@@ -37,12 +47,14 @@ export const metadata: Metadata = {
     url: siteUrl,
     siteName: "MultiLinks",
     title: "MultiLinks | Todos tus enlaces en un solo lugar",
-    description: "Crea una página personal y comparte todos tus enlaces con una sola URL.",
+    description:
+      "Crea una página personal y comparte todos tus enlaces con una sola URL.",
   },
   twitter: {
     card: "summary_large_image",
     title: "MultiLinks | Todos tus enlaces en un solo lugar",
-    description: "Crea una página personal y comparte todos tus enlaces con una sola URL.",
+    description:
+      "Crea una página personal y comparte todos tus enlaces con una sola URL.",
   },
   robots: { index: true, follow: true },
 };
@@ -53,7 +65,9 @@ export const viewport: Viewport = {
   themeColor: "#8566ff",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es" className={`${inter.variable} ${unbounded.variable}`}>
       <body>{children}</body>

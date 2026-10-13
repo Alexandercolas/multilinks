@@ -1,27 +1,44 @@
 import type { MetadataRoute } from "next";
-import { createClient } from "@/lib/supabase/server";
-
+import { createClient } from "@supabase/supabase-js";
+import { supabaseUrl, supabaseAnonKey } from "@/lib/supabase/env";
 const siteUrl = "https://multilinksrd.vercel.app";
-
+export const dynamic = "force-dynamic";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const supabase = await createClient();
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("username,updated_at")
-    .eq("published", true)
-    .order("updated_at", { ascending: false });
-
-  return [
-    { url: siteUrl, lastModified: new Date(), changeFrequency: "weekly", priority: 1 },
-    { url: `${siteUrl}/demo`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
-    { url: `${siteUrl}/ayuda`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
-    { url: `${siteUrl}/terminos`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
-    { url: `${siteUrl}/privacidad`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
-    ...(profiles ?? []).map((profile) => ({
-      url: `${siteUrl}/${profile.username}`,
-      lastModified: new Date(profile.updated_at),
-      changeFrequency: "weekly" as const,
-      priority: 0.8,
-    })),
-  ];
+  const entries: MetadataRoute.Sitemap = [
+    "",
+    "/demo",
+    "/planes",
+    "/ayuda",
+    "/terminos",
+    "/privacidad",
+  ].map((path) => ({ url: siteUrl + path }));
+  if (!supabaseUrl || !supabaseAnonKey) return entries;
+  // Always use anonymous visibility rules: private/suspended profiles cannot leak
+  // into the public sitemap through the requesting administrator's session.
+  const client = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const batchSize = 1000;
+  // One XML sitemap supports at most 50,000 URLs, including static pages.
+  for (let offset = 0; entries.length < 50000; offset += batchSize) {
+    const { data, error } = await client
+      .from("profiles")
+      .select("username,updated_at")
+      .eq("published", true)
+      .order("username")
+      .range(offset, offset + batchSize - 1);
+    if (error) throw new Error("Could not load public sitemap profiles");
+    for (const profile of data || []) {
+      if (!profile.username || !/^[-a-z0-9_]{3,30}$/.test(profile.username))
+        continue;
+      const date = new Date(profile.updated_at);
+      entries.push({
+        url: `${siteUrl}/${profile.username}`,
+        ...(Number.isFinite(date.getTime()) ? { lastModified: date } : {}),
+      });
+      if (entries.length === 50000) break;
+    }
+    if (!data || data.length < batchSize) break;
+  }
+  return entries;
 }

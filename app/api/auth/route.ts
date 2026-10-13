@@ -20,6 +20,7 @@ const requestSchema = z.discriminatedUnion("mode", [
   }),
   z.object({ mode: z.literal("magic"), email: z.string().email().max(320) }),
   z.object({ mode: z.literal("forgot"), email: z.string().email().max(320) }),
+  z.object({ mode: z.literal("resend"), email: z.string().email().max(320) }),
 ]);
 
 const limits = {
@@ -27,6 +28,7 @@ const limits = {
   signup: { maxHits: 3, windowSeconds: 60 * 60 },
   magic: { maxHits: 3, windowSeconds: 15 * 60 },
   forgot: { maxHits: 3, windowSeconds: 15 * 60 },
+  resend: { maxHits: 3, windowSeconds: 60 * 60 },
 } as const;
 
 function requestFingerprint(
@@ -119,6 +121,23 @@ export async function POST(request: Request) {
       ok: true,
       needsEmailConfirmation: !data.session,
     });
+  }
+
+  if (mode === "resend") {
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: redirectTo },
+    });
+    if (error) {
+      Sentry.captureException(new Error("Confirmation email resend failed"));
+      console.error("Confirmation email resend failed", {
+        code: error.code,
+        status: error.status,
+      });
+    }
+    // Keep the response neutral for unknown, confirmed and pending accounts.
+    return NextResponse.json({ ok: true });
   }
 
   if (mode === "magic") {

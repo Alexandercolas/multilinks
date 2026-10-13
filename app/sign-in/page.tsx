@@ -16,6 +16,15 @@ export default function SignInPage() {
   const [message, setMessage] = useState("");
   const [confirm, setConfirm] = useState("");
   const [confirmationEmail, setConfirmationEmail] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(
+      () => setResendCooldown((value) => Math.max(0, value - 1)),
+      1000,
+    );
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -53,6 +62,7 @@ export default function SignInPage() {
         setMessage(result?.message ?? "No pudimos completar la solicitud.");
       else if (result?.needsEmailConfirmation) {
         setConfirmationEmail(email);
+        setResendCooldown(60);
         setPassword("");
         setConfirm("");
       } else {
@@ -63,6 +73,34 @@ export default function SignInPage() {
         );
         router.refresh();
       }
+    } catch {
+      setMessage("No pudimos conectar con el servidor. Inténtalo nuevamente.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function resendConfirmation() {
+    if (loading || resendCooldown > 0 || !confirmationEmail) return;
+    setLoading(true);
+    setMessage("");
+    try {
+      const response = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "resend", email: confirmationEmail }),
+      });
+      const result = await response.json().catch(() => null);
+      if (response.ok) {
+        setResendCooldown(60);
+        setMessage(
+          "Si hay un registro pendiente con ese correo, recibirás un nuevo enlace. Revisa tu bandeja y spam.",
+        );
+      } else
+        setMessage(
+          result?.message ||
+            "No pudimos procesar el reenvío. Inténtalo nuevamente.",
+        );
     } catch {
       setMessage("No pudimos conectar con el servidor. Inténtalo nuevamente.");
     } finally {
@@ -172,6 +210,37 @@ export default function SignInPage() {
               Revisa también spam. Por seguridad, un correo que ya tiene cuenta
               puede requerir que inicies sesión o recuperes su contraseña.
             </p>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                disabled={loading || resendCooldown > 0}
+                onClick={resendConfirmation}
+                className="min-h-11 rounded-lg border border-lime/30 px-3 text-sm font-semibold text-lime disabled:opacity-50"
+              >
+                {loading
+                  ? "Solicitando…"
+                  : resendCooldown > 0
+                    ? `Reenviar enlace (${resendCooldown}s)`
+                    : "Reenviar enlace"}
+              </button>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => {
+                  setConfirmationEmail("");
+                  setMessage("");
+                  setResendCooldown(0);
+                }}
+                className="min-h-11 px-2 text-sm font-semibold text-white/75"
+              >
+                Corregir correo
+              </button>
+            </div>
+            {message && (
+              <p role="status" className="break-words text-sm text-white/80">
+                {message}
+              </p>
+            )}
             <button
               type="button"
               onClick={() => {

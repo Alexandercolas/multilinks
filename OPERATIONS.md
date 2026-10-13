@@ -31,3 +31,7 @@ Referencias: [SMTP de Supabase](https://supabase.com/docs/guides/auth/auth-smtp)
 ## Indexación en Google
 
 Se conserva el dominio actual de Vercel. Search Console verificó la propiedad de prefijo `https://multilinksrd.vercel.app/` mediante etiqueta HTML. Se reenvió `/sitemap.xml` el 12 de octubre de 2026 y Google confirmó el envío con éxito. Inspección de URLs confirmó que el inicio ya está indexado en Google. La solicitud manual de nuevo rastreo no se procesó porque Google indicó cuota diaria agotada; no se insistió ni se cambió de cuenta para evitar el límite. La etiqueta de la cuenta actual se añade sin eliminar la verificación anterior. La página `/planes` dispone de canonical propio. El sitemap pagina los perfiles públicos como visitante anónimo y usa sus fechas reales; incluye hasta 50.000 URLs por XML. Superado ese límite, implementar un índice de varios sitemaps. Google decide cuándo rastrear, indexar y posicionar; no existe una prioridad garantizada por robots ni por enviar el sitemap.
+
+## Confirmación del registro
+
+El registro permite reenviar el enlace después de 60 segundos y corregir el correo. El servidor limita el reenvío a tres solicitudes por hora para cada combinación de correo e IP y responde sin revelar si existe una cuenta. La confirmación de la solicitud no garantiza la entrega: SMTP sigue pendiente. Las pruebas de reenvío y de interfaz usan respuestas simuladas, sin enviar correos reales.
